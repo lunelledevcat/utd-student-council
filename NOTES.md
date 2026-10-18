@@ -40,3 +40,42 @@ Kae Farang) are placeholders too.
 Protection raises the cost of scraping; it cannot stop a determined scraper. In-memory rate limiting is per-instance — use Upstash in
 production. Headless browsers that spoof a normal UA are only slowed by rate limits + Turnstile. UA blocking can be bypassed by
 changing the header.
+
+---
+
+# Redesign v2 (2026-10-18) — single page + tabs + popups
+
+Replaces section 4 (pages) of the original brief. Everything else (security, auth, review flow) kept.
+
+## Reference analysis (REA, https://pnr-student-council.vercel.app/)
+Captured with REA `capture_browser_scenario` (Chrome, 1440 wide, th-TH). Shots + DOM in `C:\dev\utd-shots\ref-analysis\`.
+Behaviour only was studied; no code, images, text or logos were copied.
+- Stack: static HTML + Bootstrap 5 + Font Awesome, data from one Google Apps Script JSON endpoint
+  (`?type=api&year=latest`) -> skeleton shimmer while loading (~5-10 s), welcome modal on first load.
+- Header navy gradient: 2 round logos + Thai name + English name; Facebook / Instagram pill buttons right.
+- Banner: rounded 16:5 Bootstrap carousel (fade), pill indicators bottom-centre, optional "open link" chip per slide.
+- Control card: year `<select>` (server returns available years, default latest), search box (300 ms debounce),
+  pill tabs (activities / election roster / operation roster / advisors). Tab NOT stored in URL.
+- Tab 1: "ประชาสัมพันธ์" grid of cards (cover, pin icon top-right, date, title + link chip, 3-line excerpt) -> modal
+  (navy header + close, title, date, image, text, outlined "open related link" button).
+  "ภาพผลงาน" = full-width 16:5 cards, each an auto-rotating carousel of the activity's photos, caption under (date + title)
+  -> modal with navy header (title) + long text only (no gallery in the modal).
+- Roster tabs: 4/3/2-column grid, portrait on sky-blue photo, crown badge (president) / medal (vice), name, position,
+  party chip; president card gets a gold bottom border. Sorted by a rank column. Operation tab groups by department.
+- Profile modal "ข้อมูลแนะนำรายบุคคล": photo left (5/12), right: name, nickname, election position, operation position,
+  department, party, education status, contact box.
+- Advisors: heading + same card with "ที่ปรึกษา" badge, subject group, "ครู<nickname>" chip; modal adds year + contact.
+- Search filters roster/advisor tabs (name, nickname, positions, dept, party); empty -> "not found" box + clear button.
+- Footer navy centred copyright; round scroll-to-top button bottom-right.
+
+## Decisions (v2)
+- Sketches `C:\dev\utd-shots\ref\sketch-1.png` / `sketch-2.png` were **not found** on disk -> built from the written brief only.
+- Welcome modal of the reference is **not** reproduced (not in the brief; it delays first use).
+- The reference's separate "election" and "operation" roster tabs are merged into one tab ③ (brief); a member has both
+  `role_title` (ตำแหน่ง วาระ) and `exec_title` (ตำแหน่งผู้บริหาร) and a `dept` (สังกัดฝ่าย), shown in the popup.
+- Search covers every tab at once; each tab label shows its hit count while a query is active.
+- Tab + year live in the URL (`/?tab=news|policy|council|advisor&year=2569`); default tab omitted from the URL.
+- Old routes (/news, /events, /members, /council, /policies) redirect to the matching tab. `/voice` stays (existing feature),
+  linked from the footer.
+- IG / contact of a member or advisor is only sent to the browser when `consent_public` is true (filtered server-side).
+- Gallery modal for activities is an addition over the reference (brief).
