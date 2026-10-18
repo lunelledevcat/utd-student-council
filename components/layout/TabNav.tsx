@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 // Main menu = the reference's pill tabs. Pages not listed here (contact, documents) live in the menu overlay + footer.
 const TABS = [
   { label: "ข่าว & กิจกรรม", href: "/", also: ["/news", "/events"] },
+  { label: "สภานักเรียน", href: "/council", also: [] },
+  { label: "สมาชิก", href: "/members", also: [] },
   { label: "นโยบาย", href: "/policies", also: [] },
-  { label: "ทีมงาน", href: "/team", also: [] },
-  { label: "เกี่ยวกับสภา", href: "/about", also: [] },
   { label: "ส่งเสียงถึงสภา", href: "/voice", also: [] },
 ];
 

@@ -8,12 +8,12 @@ import { thaiDate } from "@/lib/utils";
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const n = getNewsBySlug((await params).slug);
+  const n = await getNewsBySlug((await params).slug);
   return n ? { title: n.title, description: n.excerpt, openGraph: { title: n.title, description: n.excerpt } } : {};
 }
 
 export default async function NewsDetail({ params }: Props) {
-  const n = getNewsBySlug((await params).slug);
+  const n = await getNewsBySlug((await params).slug);
   if (!n) notFound();
   return (
     <>

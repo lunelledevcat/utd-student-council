@@ -8,12 +8,12 @@ import { thaiDate } from "@/lib/utils";
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const e = getEventBySlug((await params).slug);
+  const e = await getEventBySlug((await params).slug);
   return e ? { title: e.title, description: e.summary, openGraph: { title: e.title, description: e.summary } } : {};
 }
 
 export default async function EventDetail({ params }: Props) {
-  const e = getEventBySlug((await params).slug);
+  const e = await getEventBySlug((await params).slug);
   if (!e) notFound();
   const d = daysUntil(e.date);
   return (

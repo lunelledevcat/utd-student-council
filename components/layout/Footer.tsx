@@ -13,7 +13,9 @@ export function Footer() {
             {NAV.slice(1).map((n) => (
               <li key={n.href}><Link href={n.href} className="hover:text-pink-soft">{n.label}</Link></li>
             ))}
+            <li><Link href="/policies" className="hover:text-pink-soft">นโยบาย</Link></li>
             <li><Link href="/documents" className="hover:text-pink-soft">เอกสาร</Link></li>
+            <li><Link href="/login" className="hover:text-pink-soft">เข้าสู่ระบบ</Link></li>
           </ul>
         </nav>
         <ul className="flex flex-wrap justify-center gap-x-5 gap-y-1 text-on-brand/85">

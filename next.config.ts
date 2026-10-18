@@ -20,6 +20,12 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
   reactStrictMode: true,
+  async redirects() {
+    return [
+      { source: "/about", destination: "/council", permanent: true },
+      { source: "/team", destination: "/members", permanent: true },
+    ];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

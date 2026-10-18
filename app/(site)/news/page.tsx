@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "ข่าวและประกา
 
 export default async function NewsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const { page } = await searchParams;
-  const r = paginate(getNews(), Number(page), 6);
+  const r = paginate(await getNews(), Number(page), 6);
   return (
     <>
       <PageHero title="ข่าวและประกาศ" sub="ข่าวล่าสุดจากสภานักเรียน" />

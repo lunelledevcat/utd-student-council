@@ -10,19 +10,20 @@ import { Section, SectionHead } from "@/components/ui/bits";
 import { getEvents, getNews, getPolicies } from "@/lib/content";
 
 // Order follows the reference's first tab (announcements -> activities); sections the reference lacks follow, grouped by kind.
-// Banner (Hero) and tab bar are rendered by the (site) layout.
-export default function HomePage() {
+// Banner (Hero, the approved-photo slideshow) and the tab bar are rendered by the (site) layout.
+export default async function HomePage() {
+  const [news, events] = await Promise.all([getNews(), getEvents()]);
   return (
     <>
-      <NewsSection items={getNews().slice(0, 6)} />
+      <NewsSection items={news.slice(0, 6)} />
+      <EventsSection items={events.slice(0, 4)} />
       <Gallery />
-      <EventsSection items={getEvents().slice(0, 4)} />
+      <Stats />
       <Section>
         <SectionHead title="ติดตามนโยบาย" sub="ความคืบหน้าของนโยบายสภานักเรียน [ตัวอย่าง]" href="/policies" />
-        <PolicyTracker policies={getPolicies()} limit={8} />
+        <PolicyTracker policies={getPolicies()} limit={4} />
       </Section>
       <President />
-      <Stats />
       <VoiceSection />
       <PrideStrip />
     </>

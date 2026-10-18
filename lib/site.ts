@@ -19,9 +19,8 @@ export const SITE = {
 
 export const NAV = [
   { label: "หน้าแรก", href: "/" },
-  { label: "เกี่ยวกับสภา", href: "/about" },
-  { label: "ทีมงาน", href: "/team" },
-  { label: "นโยบาย", href: "/policies" },
+  { label: "สภานักเรียน", href: "/council" },
+  { label: "สมาชิก", href: "/members" },
   { label: "ข่าว", href: "/news" },
   { label: "กิจกรรม", href: "/events" },
   { label: "ส่งเสียง", href: "/voice" },

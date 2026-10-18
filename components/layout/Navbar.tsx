@@ -76,8 +76,8 @@ export function Navbar() {
               ))}
             </ul>
             <ThemeToggle />
-            <Link href="/voice" className="hidden rounded-full bg-pink px-5 py-2 font-display text-[17px] font-semibold text-white transition-shadow hover:shadow-glow lg:inline-block">
-              ส่งความคิดเห็น
+            <Link href="/login" className="hidden rounded-full bg-pink px-5 py-2 font-display text-[17px] font-semibold text-white transition-shadow hover:shadow-glow sm:inline-block">
+              เข้าสู่ระบบ
             </Link>
             <button
               type="button"
@@ -110,7 +110,7 @@ export function Navbar() {
                 </motion.li>
               ))}
             </ul>
-            <Link href="/voice" onClick={() => setOpen(false)} className="mt-8 w-fit rounded-full bg-pink px-8 py-3.5 font-display text-lg font-semibold text-white">ส่งความคิดเห็น</Link>
+            <Link href="/login" onClick={() => setOpen(false)} className="mt-8 w-fit rounded-full bg-pink px-8 py-3.5 font-display text-lg font-semibold text-white">เข้าสู่ระบบ</Link>
           </motion.div>
         )}
       </AnimatePresence>

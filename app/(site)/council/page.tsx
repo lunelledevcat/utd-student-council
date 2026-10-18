@@ -3,8 +3,9 @@ import { Timeline } from "@/components/sections/Timeline";
 import { FlipCard } from "@/components/ui/FlipCard";
 import { Reveal } from "@/components/ui/Reveal";
 import { PageHero, Section, SectionHead } from "@/components/ui/bits";
+import { getAlbums } from "@/lib/content";
 
-export const metadata: Metadata = { title: "เกี่ยวกับสภา", description: "สภานักเรียนโรงเรียนอุตรดิตถ์ วิสัยทัศน์ พันธกิจ โครงสร้าง และประวัติโรงเรียน" };
+export const metadata: Metadata = { title: "สภานักเรียน", description: "สภานักเรียนโรงเรียนอุตรดิตถ์ วิสัยทัศน์ พันธกิจ โครงสร้าง และประวัติโรงเรียน" };
 
 const SYMBOLS = [
   { title: "ตราโรงเรียน", icon: "🏛", body: "[ความหมายของตราโรงเรียน — ใส่ข้อมูลจริง]" },
@@ -13,10 +14,11 @@ const SYMBOLS = [
 ];
 const ORG = ["ประธานสภา", "รองประธาน", "เลขานุการ", "เหรัญญิก", "ฝ่ายกิจกรรม", "ฝ่ายวิชาการ", "ฝ่ายประชาสัมพันธ์", "ฝ่ายสวัสดิการ"];
 
-export default function AboutPage() {
+export default async function CouncilPage() {
+  const albums = await getAlbums();
   return (
     <>
-      <PageHero title="เกี่ยวกับสภา" sub="เสียงของนักเรียน อ.ต. — [สโลแกน]" />
+      <PageHero title="สภานักเรียน" sub="เสียงของนักเรียน อ.ต. — [สโลแกน]" />
       <Section>
         <div className="grid gap-10 md:grid-cols-3">
           {[
@@ -43,6 +45,27 @@ export default function AboutPage() {
             ))}
           </ul>
         </Reveal>
+      </Section>
+
+      <Section>
+        <SectionHead title="ผลงานและแกลเลอรี" sub={albums.length ? "แยกตามอัลบั้ม" : "[ยังไม่มีรูปที่อนุมัติ — เพิ่มรูปได้ที่หลังบ้าน]"} />
+        <div className="space-y-8">
+          {albums.map((a) => (
+            <Reveal key={a.slug} className="space-y-3">
+              <h3 className="text-xl font-semibold">{a.title}</h3>
+              {a.description && <p className="text-sm text-muted">{a.description}</p>}
+              <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+                {a.photos.map((p) => (
+                  <li key={p.id} className="overflow-hidden rounded-lg border border-line bg-pink-soft">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- pre-sized webp variants */}
+                    <img src={p.src[480]} srcSet={`${p.src[480]} 480w, ${p.src[960]} 960w`} sizes="(max-width: 1024px) 50vw, 320px" alt={p.caption || a.title} width={p.w} height={p.h} loading="lazy" draggable={false} className="no-select aspect-[4/3] w-full object-cover" />
+                    {p.caption && <p className="px-3 py-2 text-sm text-muted">{p.caption}</p>}
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
+          ))}
+        </div>
       </Section>
 
       <Section tone="brand">
