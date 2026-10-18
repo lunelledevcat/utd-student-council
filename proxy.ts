@@ -8,8 +8,8 @@ const isDev = process.env.NODE_ENV === "development";
 const SB_ORIGIN = SUPABASE_URL ? new URL(SUPABASE_URL).origin : "";
 
 // Back office + auth pages: never indexed, require a session (role is checked again server-side in every page/action).
-const PRIVATE = /^/(dashboard|admin|pending-access)(/|$)/;
-const NOINDEX = /^/(dashboard|admin|pending-access|login|auth)(/|$)/;
+const PRIVATE = /^\/(dashboard|admin|pending-access)(\/|$)/;
+const NOINDEX = /^\/(dashboard|admin|pending-access|login|auth)(\/|$)/;
 
 function csp(nonce: string) {
   return [
