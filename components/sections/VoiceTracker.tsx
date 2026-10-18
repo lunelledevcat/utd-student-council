@@ -41,7 +41,7 @@ export function VoiceTracker() {
         <Button type="submit" disabled={busy || code.trim().length < 6}>{busy ? "กำลังค้นหา…" : "ตรวจสอบ"}</Button>
       </div>
       <div aria-live="polite">
-        {res && "error" in res && <p className="text-[#b42318] dark:text-[#ff8a8a]">{res.error}</p>}
+        {res && "error" in res && <p className="text-danger">{res.error}</p>}
         {res && "status" in res && (
           <p>
             สถานะ: <strong>{LABEL[res.status]}</strong>

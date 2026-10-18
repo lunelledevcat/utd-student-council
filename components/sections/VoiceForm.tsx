@@ -64,13 +64,13 @@ export function VoiceForm() {
           <option value="" disabled>เลือกหมวด</option>
           {VOICE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <p id="category-err" className="text-sm text-[#b42318] dark:text-[#ff8a8a]">{state.fieldErrors?.category}</p>
+        <p id="category-err" className="text-sm text-danger">{state.fieldErrors?.category}</p>
       </div>
 
       <div className="space-y-2">
         <label htmlFor="message" className="text-sm font-medium">ข้อความ</label>
         <textarea id="message" name="message" rows={6} maxLength={1000} placeholder="พิมพ์ข้อความของคุณที่นี่…" className={input} aria-invalid={!!state.fieldErrors?.message} aria-describedby="message-err" />
-        <p id="message-err" className="text-sm text-[#b42318] dark:text-[#ff8a8a]">{state.fieldErrors?.message}</p>
+        <p id="message-err" className="text-sm text-danger">{state.fieldErrors?.message}</p>
       </div>
 
       <label className="flex items-center gap-3">

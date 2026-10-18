@@ -18,12 +18,16 @@
   --c-done: #16a34a;
   --c-progress: #f59e0b;
   --c-planned: #94a3b8;
+  --c-strong: #0b1f4d;
+  --c-danger: #b42318;
   --shadow-soft: 0 8px 24px rgb(11 31 77 / 0.08);
   --shadow-glow: 0 0 24px 2px rgb(232 80 139 / 0.45);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :root[data-theme="dark"] {
+  --c-strong: #fbf7f2;
+  --c-danger: #ff8a8a;
   --c-page: #071431;
   --c-surface: #0b1f4d;
   --c-brand: #1e3a8a;
@@ -35,6 +39,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    --c-strong: #fbf7f2;
+    --c-danger: #ff8a8a;
     --c-page: #071431;
     --c-surface: #0b1f4d;
     --c-brand: #1e3a8a;
@@ -61,6 +67,8 @@
   --color-done: var(--c-done);
   --color-progress: var(--c-progress);
   --color-planned: var(--c-planned);
+  --color-strong: var(--c-strong);
+  --color-danger: var(--c-danger);
 
   --font-display: var(--font-kanit), sans-serif;
   --font-sans: var(--font-plex), sans-serif;

@@ -18,7 +18,7 @@ export function Stats() {
         {STATS.map((s, i) => (
           <Reveal as="li" key={s.label} index={i} className="rounded-lg border border-line bg-page p-8">
             <span aria-hidden className="mb-3 block h-[3px] w-12 bg-gold" />
-            <p className="font-serif text-6xl font-bold text-brand dark:text-on-brand" style={{ fontFamily: "var(--font-noto-serif)" }}>
+            <p className="font-serif text-6xl font-bold text-strong" style={{ fontFamily: "var(--font-noto-serif)" }}>
               <Counter value={s.value} />
             </p>
             <p className="mt-2 font-medium text-muted">{s.label}</p>

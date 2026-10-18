@@ -12,6 +12,7 @@ function ThemeToggle() {
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     const isDark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only storage; read after hydration to avoid SSR mismatch
     setDark(isDark);
     if (saved) document.documentElement.dataset.theme = saved;
   }, []);
@@ -40,7 +41,6 @@ export function Navbar() {
   const { scrollY, scrollYProgress } = useScroll();
   const bar = useSpring(scrollYProgress, { stiffness: 120, damping: 24 });
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 40));
-  useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -115,11 +115,11 @@ export function Navbar() {
             <ul className="flex flex-col gap-2">
               {NAV.map((n, i) => (
                 <motion.li key={n.href} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 + i * 0.05, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
-                  <Link href={n.href} className="block py-2 font-display text-3xl font-semibold hover:text-pink">{n.label}</Link>
+                  <Link href={n.href} onClick={() => setOpen(false)} className="block py-2 font-display text-3xl font-semibold hover:text-pink">{n.label}</Link>
                 </motion.li>
               ))}
             </ul>
-            <Link href="/voice" className="mt-8 w-fit rounded-full bg-pink px-8 py-3.5 font-display text-lg font-semibold text-white">ส่งความคิดเห็น</Link>
+            <Link href="/voice" onClick={() => setOpen(false)} className="mt-8 w-fit rounded-full bg-pink px-8 py-3.5 font-display text-lg font-semibold text-white">ส่งความคิดเห็น</Link>
           </motion.div>
         )}
       </AnimatePresence>

@@ -15,6 +15,7 @@ export function Preloader() {
   useEffect(() => {
     let seen = false;
     try { seen = sessionStorage.getItem(KEY) === "1"; } catch {}
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- session flag lives in browser storage
     if (seen || reduce) { setShow(false); return; }
     const a = setTimeout(() => setLogo(true), 1200);
     const b = setTimeout(() => {

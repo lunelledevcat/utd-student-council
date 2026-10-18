@@ -9,5 +9,5 @@ export function GET(req: Request) {
   const url = new URL(req.url);
   const r = paginate(getNews(), Number(url.searchParams.get("page")), Number(url.searchParams.get("size") ?? 10));
   // list view: no full body
-  return NextResponse.json({ ...r, items: r.items.map(({ body, ...rest }) => rest) }, noStore);
+  return NextResponse.json({ ...r, items: r.items.map(({ slug, title, tag, date, excerpt }) => ({ slug, title, tag, date, excerpt })) }, noStore);
 }
