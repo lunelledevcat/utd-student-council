@@ -31,6 +31,8 @@ export function Footer() {
           </ul>
         </div>
       </div>
+      {/* honeypot: invisible to people, followed by scrapers -> proxy.ts bans the IP for 1h (disallowed in robots.txt) */}
+      <a href="/_hp/directory" rel="nofollow noindex" tabIndex={-1} aria-hidden style={{ display: "none" }}>ทะเบียนสมาชิก</a>
       <div className="relative border-t border-brand-mid">
         <p className="mx-auto max-w-[1440px] px-4 py-6 text-sm text-on-brand/80 lg:px-20">
           © 2569 {SITE.name} · ก่อตั้ง พ.ศ. {SITE.founded}
