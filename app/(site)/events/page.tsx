@@ -11,7 +11,7 @@ export default function EventsPage() {
     <>
       <PageHero title="กิจกรรม" sub="ปฏิทินกิจกรรมที่ใกล้ถึง" />
       <Section>
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
           {getEvents().map((e, i) => (
             <Reveal as="li" key={e.slug} index={i % 4}><EventCard item={e} /></Reveal>
           ))}

@@ -15,9 +15,9 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
     <>
       <PageHero title="ข่าวและประกาศ" sub="ข่าวล่าสุดจากสภานักเรียน" />
       <Section>
-        <ul className="grid gap-6 md:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
           {r.items.map((n, i) => (
-            <Reveal as="li" key={n.slug} index={i % 2}><NewsCard item={n} /></Reveal>
+            <Reveal as="li" key={n.slug} index={i % 3}><NewsCard item={n} /></Reveal>
           ))}
         </ul>
         <Pager base="/news" page={r.page} pages={r.pages} />

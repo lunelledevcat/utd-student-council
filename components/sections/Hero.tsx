@@ -5,30 +5,33 @@ import { WordReveal } from "@/components/ui/WordReveal";
 import { SITE } from "@/lib/site";
 import { thaiWords } from "@/lib/utils";
 
+/** Banner: rounded 16:5 card inside the container (reference layout), home page only. */
 export function Hero() {
   return (
-    <section className="relative isolate min-h-[640px] overflow-hidden bg-gradient-to-br from-brand-deep via-brand to-brand-mid px-4 pb-24 pt-40 text-on-brand md:min-h-[780px] lg:px-20">
-      <HeroParallax />
-      <Petals />
-      <div className="relative mx-auto max-w-[1280px]">
-        <div className="max-w-[720px] space-y-6">
-          <p className="inline-flex items-center gap-2 rounded-full border border-gold px-4 py-1.5 font-serif text-xl text-gold">
+    <div className="mx-auto max-w-[1320px] px-3 pt-4 md:pt-7">
+      <section
+        aria-label="แบนเนอร์"
+        className="relative isolate flex items-center overflow-hidden rounded-lg border border-line bg-gradient-to-br from-brand-deep via-brand to-brand-mid text-on-brand shadow-soft md:aspect-[16/5]"
+      >
+        <HeroParallax />
+        <Petals />
+        <div className="relative max-w-[720px] space-y-3 px-6 py-10 md:space-y-4 md:px-12 md:py-8">
+          <p className="inline-flex items-center gap-2 rounded-full border border-gold px-4 py-1 font-serif text-lg text-gold">
             ก่อตั้ง พ.ศ. {SITE.founded}
           </p>
-          <h1 className="text-[40px] font-bold leading-[1.25] md:text-[64px]">
-            <WordReveal words={thaiWords("สภานักเรียน")} delay={0.1} />
-            <br />
+          <h1 className="text-[32px] font-bold leading-[1.25] md:text-[44px] lg:text-[52px]">
+            <WordReveal words={thaiWords("สภานักเรียน")} delay={0.1} />{" "}
             <WordReveal words={thaiWords("โรงเรียนอุตรดิตถ์")} delay={0.35} />
           </h1>
-          <p className="font-serif text-xl text-pink-soft">
+          <p className="font-serif text-lg text-pink-soft">
             {SITE.slogan} · วาระปี {SITE.term}
           </p>
-          <div className="flex flex-wrap gap-4 pt-2">
+          <div className="flex flex-wrap gap-3 pt-1">
             <Button href="/policies">ดูนโยบาย</Button>
             <Button href="/voice" variant="outline">ส่งเสียงถึงสภา</Button>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll, useSpring } from "motion/react";
 import { useEffect, useState } from "react";
 import { NAV, SITE } from "@/lib/site";
@@ -35,7 +34,6 @@ function ThemeToggle() {
 }
 
 export function Navbar() {
-  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { scrollY, scrollYProgress } = useScroll();
@@ -49,48 +47,41 @@ export function Navbar() {
   return (
     <>
       <motion.div aria-hidden style={{ scaleX: bar }} className="fixed inset-x-0 top-0 z-[70] h-1 origin-left bg-pink" />
-      <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 lg:px-20">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-brand-deep text-on-brand shadow-soft">
         <nav
           aria-label="เมนูหลัก"
           className={cn(
-            "mx-auto flex max-w-[1280px] items-center justify-between rounded-full border text-on-brand backdrop-blur-xl transition-all duration-300",
-            scrolled
-              ? "border-white/10 bg-brand-deep/90 px-5 py-2 shadow-soft"
-              : "border-white/25 bg-white/10 px-6 py-3",
+            "mx-auto flex max-w-[1320px] items-center justify-between gap-3 px-3 transition-all duration-300",
+            scrolled ? "py-2" : "py-3.5 md:py-4",
           )}
         >
-          <Link href="/" className="flex items-center gap-3" aria-label={`${SITE.name} หน้าแรก`}>
-            <span className="no-select grid h-10 w-10 place-items-center rounded-full bg-gold font-display text-sm font-semibold text-brand-deep" title="[ใส่โลโก้สภานักเรียน]">
+          <Link href="/" className="flex min-w-0 items-center gap-3" aria-label={`${SITE.name} หน้าแรก`}>
+            <span className="no-select grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gold font-display text-sm font-semibold text-brand-deep md:h-[52px] md:w-[52px]" title="[ใส่โลโก้สภานักเรียน]">
               {SITE.abbr}
             </span>
-            <span className="font-display text-lg font-semibold">สภานักเรียน {SITE.abbr}</span>
+            <span className="min-w-0">
+              <span className="block truncate font-display text-[1.05rem] font-semibold leading-snug md:text-[1.4rem]">{SITE.name}</span>
+              <span className="block truncate text-xs tracking-wide text-on-brand/65 md:text-sm">{SITE.nameEn}</span>
+            </span>
           </Link>
 
-          <ul className="hidden items-center gap-5 xl:flex">
-            {NAV.map((n) => {
-              const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
-              return (
-                <li key={n.href}>
-                  <Link
-                    href={n.href}
-                    aria-current={active ? "page" : undefined}
-                    className={cn("text-[15px] font-medium transition-colors hover:text-pink-soft", active && "border-b-2 border-pink")}
-                  >
-                    {n.label}
-                  </Link>
+          <div className="flex shrink-0 items-center gap-2">
+            <ul className="mr-1 hidden items-center gap-2 md:flex">
+              {SITE.social.slice(0, 2).map((s) => (
+                <li key={s.label}>
+                  <a href={s.href} rel="noopener noreferrer" className="inline-block rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-white/20">
+                    {s.label}
+                  </a>
                 </li>
-              );
-            })}
-          </ul>
-
-          <div className="flex items-center gap-2">
+              ))}
+            </ul>
             <ThemeToggle />
-            <Link href="/voice" className="hidden rounded-full bg-pink px-5 py-2 font-display text-[17px] font-semibold text-white transition-shadow hover:shadow-glow sm:inline-block">
+            <Link href="/voice" className="hidden rounded-full bg-pink px-5 py-2 font-display text-[17px] font-semibold text-white transition-shadow hover:shadow-glow lg:inline-block">
               ส่งความคิดเห็น
             </Link>
             <button
               type="button"
-              className="grid h-10 w-10 place-items-center rounded-full hover:bg-white/15 xl:hidden"
+              className="grid h-10 w-10 place-items-center rounded-full hover:bg-white/15"
               aria-label={open ? "ปิดเมนู" : "เปิดเมนู"}
               aria-expanded={open}
               aria-controls="mobile-menu"
@@ -110,7 +101,7 @@ export function Navbar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-40 flex flex-col justify-center bg-brand-deep px-8 text-on-brand xl:hidden"
+            className="fixed inset-0 z-40 flex flex-col justify-center bg-brand-deep px-8 pt-24 text-on-brand"
           >
             <ul className="flex flex-col gap-2">
               {NAV.map((n, i) => (

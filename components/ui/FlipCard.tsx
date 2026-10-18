@@ -35,13 +35,13 @@ export function FlipCard({
         transition={t}
       >
         <div
-          className="absolute inset-0 rounded-lg border border-line bg-surface p-6 shadow-soft [backface-visibility:hidden]"
+          className="absolute inset-0 rounded-lg border border-line bg-surface p-3 shadow-soft [backface-visibility:hidden] md:p-4"
           style={reduce ? { opacity: flipped ? 0 : 1 } : undefined}
         >
           {front}
         </div>
         <div
-          className="absolute inset-0 rounded-lg bg-brand p-6 text-on-brand [backface-visibility:hidden]"
+          className="absolute inset-0 rounded-lg bg-brand p-3 text-on-brand md:p-4 [backface-visibility:hidden]"
           style={reduce ? { opacity: flipped ? 1 : 0 } : { transform: "rotateY(180deg)" }}
         >
           {back}

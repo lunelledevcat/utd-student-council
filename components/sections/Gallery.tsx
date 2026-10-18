@@ -1,26 +1,27 @@
 import { Reveal } from "@/components/ui/Reveal";
 import { Section, SectionHead } from "@/components/ui/bits";
-import { cn } from "@/lib/utils";
 
-// [placeholder] รูปกิจกรรม — ใส่รูปจริงด้วย next/image แล้วคงลายน้ำโลโก้สภา
+// [placeholder] รูปกิจกรรม — ใส่รูปจริงด้วย next/image (สัดส่วน 16:5) แล้วคงลายน้ำโลโก้สภา
 const TILES = [
-  { label: "กีฬาสี", cls: "row-span-2 bg-brand-mid text-on-brand" },
+  { label: "กีฬาสี", cls: "bg-brand-mid text-on-brand" },
   { label: "วันสำคัญ", cls: "bg-pink-soft text-ink" },
   { label: "ดนตรี", cls: "bg-brand text-on-brand" },
-  { label: "วิชาการ", cls: "row-span-2 bg-pink-soft text-ink" },
-  { label: "ค่ายอาสา", cls: "bg-brand text-on-brand" },
-  { label: "เลือกตั้งสภา", cls: "bg-pink-soft text-ink" },
 ];
 
+/** Reference "activity wrapper": full-width 16:5 image with a centred title bar, stacked. */
 export function Gallery() {
   return (
     <Section>
-      <SectionHead title="แกลเลอรีกิจกรรม" sub="ภาพบรรยากาศจากกิจกรรมของสภา [ใส่รูปจริง]" />
-      <ul className="grid auto-rows-[200px] grid-cols-2 gap-4 lg:grid-cols-4 lg:auto-rows-[270px]">
-        {TILES.map((t, i) => (
-          <Reveal as="li" key={t.label} index={i % 4} className={cn("group relative overflow-hidden rounded-lg", t.cls)}>
-            <div className="no-select absolute inset-0 transition-transform duration-500 group-hover:scale-105" style={{ transitionTimingFunction: "var(--ease-out)" }} />
-            <span className="absolute bottom-4 left-4 rounded-full bg-surface px-3 py-1 text-sm font-medium text-ink">{t.label}</span>
+      <SectionHead title="ภาพผลงานและกิจกรรม" sub="ภาพบรรยากาศจากกิจกรรมของสภา [ใส่รูปจริง]" />
+      <ul className="space-y-6 md:space-y-8">
+        {TILES.map((t) => (
+          <Reveal as="li" key={t.label}>
+            <figure className="group overflow-hidden rounded-lg border border-line bg-surface shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-glow">
+              <div className={`relative aspect-[16/7] overflow-hidden md:aspect-[16/5] ${t.cls}`}>
+                <div className="no-select absolute inset-0 transition-transform duration-500 group-hover:scale-105" style={{ transitionTimingFunction: "var(--ease-out)" }} />
+              </div>
+              <figcaption className="border-t border-line px-5 py-4 text-center font-medium">{t.label}</figcaption>
+            </figure>
           </Reveal>
         ))}
       </ul>

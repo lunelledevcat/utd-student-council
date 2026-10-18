@@ -1,19 +1,24 @@
 import Link from "next/link";
+import { AnnouncementMarquee } from "@/components/sections/AnnouncementMarquee";
 import { Reveal } from "@/components/ui/Reveal";
 import { TiltCard } from "@/components/ui/TiltCard";
 import { ImagePlaceholder, Section, SectionHead, Tag } from "@/components/ui/bits";
 import type { NewsItem } from "@/lib/content";
 import { thaiDate } from "@/lib/utils";
 
-export function NewsCard({ item, featured }: { item: NewsItem; featured?: boolean }) {
+/** Reference "announcement card": image on top, date + title + excerpt below. */
+export function NewsCard({ item }: { item: NewsItem }) {
   return (
-    <TiltCard className="h-full rounded-lg border border-line bg-page p-4">
-      <Link href={`/news/${item.slug}`} className={featured ? "flex h-full flex-col gap-4" : "flex items-center gap-4"}>
-        <ImagePlaceholder label="[รูปข่าว]" className={featured ? "min-h-[260px] flex-1" : "h-28 w-28 shrink-0 text-xs"} />
-        <div className={featured ? "space-y-3 px-2 pb-4" : "space-y-2"}>
-          <Tag>{item.tag}</Tag>
-          <h3 className={featured ? "text-[28px] font-semibold" : "text-xl font-semibold"}>{item.title}</h3>
-          <p className="text-sm text-muted">{thaiDate(item.date)}</p>
+    <TiltCard className="h-full overflow-hidden rounded-lg border border-line bg-surface shadow-soft">
+      <Link href={`/news/${item.slug}`} className="flex h-full flex-col">
+        <ImagePlaceholder label="[รูปข่าว]" className="aspect-video w-full" />
+        <div className="flex flex-1 flex-col gap-2 p-4">
+          <div className="flex items-center justify-between gap-2">
+            <Tag>{item.tag}</Tag>
+            <p className="text-sm font-medium text-gold">{thaiDate(item.date)}</p>
+          </div>
+          <h3 className="text-lg font-semibold">{item.title}</h3>
+          <p className="line-clamp-2 text-sm text-muted">{item.excerpt}</p>
         </div>
       </Link>
     </TiltCard>
@@ -21,18 +26,15 @@ export function NewsCard({ item, featured }: { item: NewsItem; featured?: boolea
 }
 
 export function NewsSection({ items }: { items: NewsItem[] }) {
-  const [first, ...rest] = items;
   return (
-    <Section tone="surface">
-      <SectionHead title="ข่าวและประกาศ" sub="ข่าวล่าสุดจากสภานักเรียน" href="/news" linkLabel="ข่าวทั้งหมด" />
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Reveal><NewsCard item={first} featured /></Reveal>
-        <div className="grid gap-6">
-          {rest.slice(0, 3).map((n, i) => (
-            <Reveal key={n.slug} index={i + 1}><NewsCard item={n} /></Reveal>
-          ))}
-        </div>
-      </div>
+    <Section>
+      <SectionHead title="ประชาสัมพันธ์" sub="ข่าวและประกาศล่าสุดจากสภานักเรียน" href="/news" linkLabel="ข่าวทั้งหมด" />
+      <AnnouncementMarquee />
+      <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+        {items.map((n, i) => (
+          <Reveal as="li" key={n.slug} index={i % 3}><NewsCard item={n} /></Reveal>
+        ))}
+      </ul>
     </Section>
   );
 }

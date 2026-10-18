@@ -12,13 +12,13 @@ const STATS = [
 
 export function Stats() {
   return (
-    <Section tone="surface">
+    <Section>
       <SectionHead title="สภาของเราในตัวเลข" sub="[ตัวเลขตัวอย่าง — ใส่ข้อมูลจริง]" />
-      <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
         {STATS.map((s, i) => (
-          <Reveal as="li" key={s.label} index={i} className="rounded-lg border border-line bg-page p-8">
+          <Reveal as="li" key={s.label} index={i} className="rounded-lg border border-line bg-surface p-5 shadow-soft md:p-8">
             <span aria-hidden className="mb-3 block h-[3px] w-12 bg-gold" />
-            <p className="font-serif text-6xl font-bold text-strong" style={{ fontFamily: "var(--font-noto-serif)" }}>
+            <p className="font-serif text-5xl font-bold md:text-6xl text-strong" style={{ fontFamily: "var(--font-noto-serif)" }}>
               <Counter value={s.value} />
             </p>
             <p className="mt-2 font-medium text-muted">{s.label}</p>

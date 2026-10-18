@@ -15,7 +15,7 @@ export function AnnouncementMarquee() {
       </span>
     ));
   return (
-    <div className="marquee flex items-center gap-6 overflow-hidden bg-brand-deep px-4 py-4 text-on-brand lg:px-20" role="region" aria-label="ประกาศด่วน">
+    <div className="marquee mb-5 flex items-center gap-4 overflow-hidden rounded-lg bg-brand-deep px-4 py-3 text-on-brand md:mb-6" role="region" aria-label="ประกาศด่วน">
       <span className="shrink-0 rounded-full bg-pink px-4 py-1 font-display text-[17px] font-semibold text-white">ประกาศด่วน</span>
       <div className="relative flex-1 overflow-hidden">
         <div className="marquee-track flex w-max gap-8 text-[15px]">

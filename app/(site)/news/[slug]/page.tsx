@@ -21,7 +21,7 @@ export default async function NewsDetail({ params }: Props) {
       <Section>
         <article className="mx-auto max-w-3xl space-y-6">
           <Tag>{n.tag}</Tag>
-          <ImagePlaceholder label="[รูปประกอบข่าว]" className="aspect-video w-full" />
+          <ImagePlaceholder label="[รูปประกอบข่าว]" className="aspect-video w-full rounded-lg" />
           {n.body.map((p, i) => <p key={i} className="text-lg">{p}</p>)}
           <Link href="/news" className="inline-block font-medium text-pink hover:underline">← กลับไปหน้าข่าว</Link>
         </article>

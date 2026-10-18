@@ -7,7 +7,7 @@ export default function NotFound() {
   return (
     <>
       <Navbar />
-      <main className="relative isolate grid min-h-dvh place-items-center overflow-hidden bg-gradient-to-br from-brand-deep to-brand-mid px-4 text-center text-on-brand">
+      <main className="relative isolate grid min-h-[calc(100dvh-72px)] place-items-center overflow-hidden bg-gradient-to-br from-brand-deep to-brand-mid px-4 text-center text-on-brand">
         <Petals />
         <div className="relative space-y-5">
           <p className="font-serif text-8xl font-bold text-gold" style={{ fontFamily: "var(--font-noto-serif)" }}>404</p>

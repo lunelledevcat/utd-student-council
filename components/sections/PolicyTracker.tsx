@@ -25,7 +25,7 @@ export function PolicyTracker({ policies, limit }: { policies: Policy[]; limit?:
 
   return (
     <div>
-      <div role="group" aria-label="กรองตามสถานะ" className="mb-8 flex flex-wrap gap-3">
+      <div role="group" aria-label="กรองตามสถานะ" className="mb-5 flex flex-wrap gap-2 md:mb-6">
         {FILTERS.map((f) => (
           <button
             key={f.key}
@@ -41,10 +41,10 @@ export function PolicyTracker({ policies, limit }: { policies: Policy[]; limit?:
           </button>
         ))}
       </div>
-      <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3" aria-live="polite">
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4" aria-live="polite">
         {shown.map((p, i) => (
           <Reveal as="li" key={p.slug} index={i % 3}>
-            <TiltCard className="h-full rounded-lg border border-line bg-surface p-8 shadow-soft">
+            <TiltCard className="h-full rounded-lg border border-line bg-surface p-5 shadow-soft">
               <div className="mb-4 flex items-center justify-between gap-2">
                 <span className="flex items-center gap-2 text-sm font-medium">
                   <span aria-hidden className="h-2.5 w-2.5 rounded-full" style={{ background: COLOR[p.status] }} />

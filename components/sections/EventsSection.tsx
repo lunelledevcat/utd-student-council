@@ -30,7 +30,7 @@ export function EventsSection({ items }: { items: EventItem[] }) {
   return (
     <Section>
       <SectionHead title="กิจกรรมที่ใกล้ถึง" sub="ปฏิทินกิจกรรมของสภานักเรียน" href="/events" linkLabel="ดูปฏิทิน" />
-      <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
         {items.map((e, i) => (
           <Reveal as="li" key={e.slug} index={i}><EventCard item={e} /></Reveal>
         ))}

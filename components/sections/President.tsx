@@ -1,17 +1,18 @@
 import { Reveal } from "@/components/ui/Reveal";
-import { ImagePlaceholder, Section } from "@/components/ui/bits";
+import { ImagePlaceholder, Section, SectionHead } from "@/components/ui/bits";
 import { SITE } from "@/lib/site";
 
+/** Profile card laid out like the reference's profile modal: photo 5/12, details 7/12. */
 export function President() {
   return (
     <Section>
-      <div className="grid items-center gap-10 md:grid-cols-[420px_1fr] md:gap-16">
-        <Reveal>
-          <ImagePlaceholder label="[รูปประธานสภา]" className="aspect-[7/8] w-full rounded-lg" />
+      <SectionHead title="สารจากประธานสภานักเรียน" />
+      <div className="grid items-center gap-6 rounded-lg border border-line bg-surface p-5 shadow-soft md:grid-cols-12 md:gap-8 md:p-8">
+        <Reveal className="md:col-span-5">
+          <ImagePlaceholder label="[รูปประธานสภา]" className="mx-auto aspect-[3/4] w-full max-w-sm rounded-lg" />
         </Reveal>
-        <Reveal className="space-y-6">
-          <p className="font-medium text-pink">สารจากประธานสภานักเรียน</p>
-          <blockquote className="font-serif text-2xl leading-[1.7] md:text-[28px]" style={{ fontFamily: "var(--font-noto-serif)" }}>
+        <Reveal className="space-y-6 md:col-span-7">
+          <blockquote className="font-serif text-xl leading-[1.7] md:text-[26px]" style={{ fontFamily: "var(--font-noto-serif)" }}>
             “[คำกล่าวของประธานสภานักเรียน — ใส่ข้อความจริง]”
           </blockquote>
           <div>
