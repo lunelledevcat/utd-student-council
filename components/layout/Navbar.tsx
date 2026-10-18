@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { AnimatePresence, motion, useMotionValueEvent, useScroll, useSpring } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
-import { NAV, SITE } from "@/lib/site";
-import { cn } from "@/lib/utils";
+import { IconFacebook, IconInstagram, IconMoon, IconSun } from "@/components/ui/icons";
+import { SITE } from "@/lib/site";
 
 function ThemeToggle() {
   const [dark, setDark] = useState(false);
@@ -20,7 +20,7 @@ function ThemeToggle() {
       type="button"
       aria-label={dark ? "สลับเป็นโหมดสว่าง" : "สลับเป็นโหมดมืด"}
       aria-pressed={dark}
-      className="grid h-10 w-10 place-items-center rounded-full text-on-brand hover:bg-white/15"
+      className="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-white/5 text-on-brand transition hover:-translate-y-0.5 hover:bg-white/15"
       onClick={() => {
         const next = dark ? "light" : "dark";
         setDark(!dark);
@@ -28,92 +28,64 @@ function ThemeToggle() {
         localStorage.setItem("theme", next);
       }}
     >
-      <span aria-hidden>{dark ? "☀" : "☾"}</span>
+      {dark ? <IconSun width={18} height={18} /> : <IconMoon width={18} height={18} />}
     </button>
   );
 }
 
-export function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);
-  const { scrollY, scrollYProgress } = useScroll();
-  const bar = useSpring(scrollYProgress, { stiffness: 120, damping: 24 });
-  useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 40));
-  useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [open]);
-
+/** Round logo slot. [placeholder] until the real crest / council logo files are added to /public. */
+function LogoSlot({ label, text, delay }: { label: string; text: string; delay: number }) {
+  const reduce = useReducedMotion();
   return (
-    <>
-      <motion.div aria-hidden style={{ scaleX: bar }} className="fixed inset-x-0 top-0 z-[70] h-1 origin-left bg-pink" />
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-brand-deep text-on-brand shadow-soft">
-        <nav
-          aria-label="เมนูหลัก"
-          className={cn(
-            "mx-auto flex max-w-[1320px] items-center justify-between gap-3 px-3 transition-all duration-300",
-            scrolled ? "py-2" : "py-3.5 md:py-4",
-          )}
-        >
-          <Link href="/" className="flex min-w-0 items-center gap-3" aria-label={`${SITE.name} หน้าแรก`}>
-            <span className="no-select grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gold font-display text-sm font-semibold text-brand-deep md:h-[52px] md:w-[52px]" title="[ใส่โลโก้สภานักเรียน]">
-              {SITE.abbr}
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate font-display text-[1.05rem] font-semibold leading-snug md:text-[1.4rem]">{SITE.name}</span>
-              <span className="block truncate text-xs tracking-wide text-on-brand/65 md:text-sm">{SITE.nameEn}</span>
-            </span>
-          </Link>
+    <motion.span
+      title={label}
+      aria-hidden
+      initial={reduce ? false : { scale: 0.3, opacity: 0, rotate: -20 }}
+      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+      transition={{ type: "spring", stiffness: 380, damping: 16, delay }}
+      className="no-select grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white font-display text-[0.7rem] font-semibold leading-none text-brand shadow-[0_0_0_3px_rgb(255_255_255/0.15)] md:h-[54px] md:w-[54px] md:text-xs"
+    >
+      {text}
+    </motion.span>
+  );
+}
 
-          <div className="flex shrink-0 items-center gap-2">
-            <ul className="mr-1 hidden items-center gap-2 md:flex">
-              {SITE.social.slice(0, 2).map((s) => (
-                <li key={s.label}>
-                  <a href={s.href} rel="noopener noreferrer" className="inline-block rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-sm font-medium transition-colors hover:bg-white/20">
-                    {s.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-            <ThemeToggle />
-            <Link href="/login" className="hidden rounded-full bg-pink px-5 py-2 font-display text-[17px] font-semibold text-white transition-shadow hover:shadow-glow sm:inline-block">
-              เข้าสู่ระบบ
-            </Link>
-            <button
-              type="button"
-              className="grid h-10 w-10 place-items-center rounded-full hover:bg-white/15"
-              aria-label={open ? "ปิดเมนู" : "เปิดเมนู"}
-              aria-expanded={open}
-              aria-controls="mobile-menu"
-              onClick={() => setOpen((o) => !o)}
+const SOCIAL = [
+  { label: "Facebook", href: SITE.facebook, Icon: IconFacebook },
+  { label: "Instagram", href: SITE.instagram, Icon: IconInstagram },
+];
+
+export function Navbar() {
+  return (
+    <header className="relative z-30 overflow-hidden bg-gradient-to-r from-brand-deep via-[#0a1a40] to-[#0e2a66] text-on-brand shadow-[0_6px_24px_-8px_rgb(5_13_36/0.6)]">
+      <span aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-pink/20 blur-3xl" />
+      <nav aria-label="ส่วนหัว" className="relative mx-auto flex max-w-[1320px] items-center justify-between gap-3 px-4 py-3 md:py-4">
+        <Link href="/" className="flex min-w-0 items-center gap-2.5 md:gap-3" aria-label={`${SITE.name} หน้าแรก`}>
+          <LogoSlot label="[โลโก้โรงเรียน]" text="[ตรา]" delay={0.05} />
+          <LogoSlot label="[โลโก้สภานักเรียน]" text="[สภา]" delay={0.15} />
+          <span className="ml-1 min-w-0">
+            <span className="block truncate font-display text-[0.95rem] font-semibold leading-snug sm:text-[1.1rem] md:text-[1.35rem]">{SITE.name}</span>
+            <span className="block truncate text-[0.7rem] tracking-[0.06em] text-on-brand/60 md:text-sm">{SITE.nameEn}</span>
+          </span>
+        </Link>
+
+        <div className="flex shrink-0 items-center gap-2">
+          {SOCIAL.map(({ label, href, Icon }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={label}
+              className="inline-flex h-10 items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 text-sm font-medium transition duration-300 hover:-translate-y-0.5 hover:border-pink-400/70 hover:bg-white/10 hover:shadow-glow md:px-4"
             >
-              <span aria-hidden className="text-xl">{open ? "✕" : "☰"}</span>
-            </button>
-          </div>
-        </nav>
-      </header>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            id="mobile-menu"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-40 flex flex-col justify-center bg-brand-deep px-8 pt-24 text-on-brand"
-          >
-            <ul className="flex flex-col gap-2">
-              {NAV.map((n, i) => (
-                <motion.li key={n.href} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 + i * 0.05, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
-                  <Link href={n.href} onClick={() => setOpen(false)} className="block py-2 font-display text-3xl font-semibold hover:text-pink">{n.label}</Link>
-                </motion.li>
-              ))}
-            </ul>
-            <Link href="/login" onClick={() => setOpen(false)} className="mt-8 w-fit rounded-full bg-pink px-8 py-3.5 font-display text-lg font-semibold text-white">เข้าสู่ระบบ</Link>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+              <Icon width={17} height={17} />
+              <span className="hidden md:inline">{label}</span>
+            </a>
+          ))}
+          <ThemeToggle />
+        </div>
+      </nav>
+    </header>
   );
 }

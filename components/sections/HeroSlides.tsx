@@ -6,8 +6,10 @@ import type { Photo } from "@/lib/content";
 import { cn } from "@/lib/utils";
 
 const INTERVAL = 6000;
+// Ken Burns: each slide drifts toward a different corner
+const ORIGINS = ["20% 30%", "80% 25%", "70% 80%", "25% 75%"];
 
-/** Full-bleed hero slideshow: slow Ken Burns zoom, 1.2s crossfade, auto-advance 6s, pauses on hover/focus, swipe on touch. */
+/** Full-bleed hero slideshow: slow Ken Burns, 1.2 s crossfade, auto-advance 6 s, pauses on hover/focus, swipe on touch. */
 export function HeroSlides({ photos }: { photos: Photo[] }) {
   const reduce = useReducedMotion();
   const [i, setI] = useState(0);
@@ -52,16 +54,15 @@ export function HeroSlides({ photos }: { photos: Photo[] }) {
           draggable={false}
           fetchPriority={i === 0 ? "high" : "auto"}
           className="no-select absolute inset-0 h-full w-full object-cover"
+          style={{ transformOrigin: ORIGINS[i % ORIGINS.length], backgroundImage: p.blur ? `url(${p.blur})` : undefined, backgroundSize: "cover" }}
           initial={{ opacity: 0, scale: 1 }}
-          animate={{ opacity: 1, scale: reduce ? 1 : 1.08 }}
+          animate={{ opacity: 1, scale: reduce ? 1 : 1.1 }}
           exit={{ opacity: 0 }}
           transition={{ opacity: { duration: 1.2 }, scale: { duration: (INTERVAL + 1200) / 1000, ease: "linear" } }}
         />
       </AnimatePresence>
-      {/* navy gradient on the left keeps the headline readable */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand-deep/90 via-brand-deep/55 to-transparent" />
       {n > 1 && (
-        <div className="absolute bottom-3 right-4 z-10 flex gap-2" role="group" aria-label="เลือกสไลด์">
+        <div className="absolute inset-x-0 bottom-3 z-10 flex justify-center gap-2" role="group" aria-label="เลือกสไลด์">
           {photos.map((ph, k) => (
             <button
               key={ph.id}
@@ -69,7 +70,7 @@ export function HeroSlides({ photos }: { photos: Photo[] }) {
               aria-label={`สไลด์ที่ ${k + 1}`}
               aria-current={k === i}
               onClick={() => setI(k)}
-              className={cn("h-2.5 rounded-full transition-all", k === i ? "w-7 bg-pink" : "w-2.5 bg-white/60 hover:bg-white")}
+              className={cn("h-2.5 rounded-full transition-all duration-500", k === i ? "w-8 bg-pink shadow-glow" : "w-2.5 bg-white/60 hover:bg-white")}
             />
           ))}
         </div>

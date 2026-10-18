@@ -1,28 +1,38 @@
 "use client";
 
+import { AnimatePresence, motion, useReducedMotion, useScroll, useSpring } from "motion/react";
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
+import { IconArrowUp } from "@/components/ui/icons";
 
+const R = 22;
+
+/** Appears after scrolling down; the ring around it fills with the page scroll progress. */
 export function ScrollTop() {
+  const reduce = useReducedMotion();
   const [show, setShow] = useState(false);
-  useEffect(() => {
-    const on = () => setShow(window.scrollY > 400);
-    on();
-    window.addEventListener("scroll", on, { passive: true });
-    return () => window.removeEventListener("scroll", on);
-  }, []);
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 26 });
+  useEffect(() => scrollYProgress.on("change", () => setShow(window.scrollY > 500)), [scrollYProgress]);
   return (
-    <button
-      type="button"
-      aria-label="กลับขึ้นด้านบน"
-      tabIndex={show ? 0 : -1}
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className={cn(
-        "fixed bottom-6 right-5 z-40 grid h-12 w-12 place-items-center rounded-full border border-white/20 bg-brand text-on-brand shadow-soft transition-all duration-300 hover:bg-pink",
-        show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0",
+    <AnimatePresence>
+      {show && (
+        <motion.button
+          type="button"
+          aria-label="กลับขึ้นด้านบน"
+          onClick={() => window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" })}
+          initial={{ opacity: 0, y: 20, scale: 0.8 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.8 }}
+          whileHover={reduce ? undefined : { y: -3 }}
+          className="fixed bottom-5 right-4 z-40 grid h-[52px] w-[52px] place-items-center rounded-full bg-brand-deep text-on-brand shadow-[0_10px_30px_-8px_rgb(5_13_36/0.6)] sm:bottom-7 sm:right-7"
+        >
+          <svg aria-hidden width="52" height="52" viewBox="0 0 52 52" className="absolute inset-0 -rotate-90">
+            <circle cx="26" cy="26" r={R} fill="none" stroke="rgb(255 255 255 / 0.15)" strokeWidth="3" />
+            <motion.circle cx="26" cy="26" r={R} fill="none" stroke="var(--c-pink)" strokeWidth="3" strokeLinecap="round" style={{ pathLength: progress }} />
+          </svg>
+          <IconArrowUp width={20} height={20} className="relative" />
+        </motion.button>
       )}
-    >
-      <span aria-hidden>↑</span>
-    </button>
+    </AnimatePresence>
   );
 }

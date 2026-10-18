@@ -1,105 +1,191 @@
 import "server-only";
-import news from "@/content/news.json";
-import events from "@/content/events.json";
-import policies from "@/content/policies.json";
-import members from "@/content/members.json";
+import seed from "@/content/seed.json";
 import { supabaseConfigured } from "@/lib/env";
+import { adminClient } from "@/lib/supabase/admin";
 import { publicClient, publicImageUrl } from "@/lib/supabase/public";
 
-// Public content. With Supabase configured it comes from approved rows (RLS: anon sees status='approved' only);
-// without it (local dev) the JSON seeds in content/ are used so the site still renders.
-// Client components only receive the slice they render; public APIs paginate (lib/pagination.ts).
+// Public content, scoped to one academic year. With Supabase configured it comes from approved rows
+// (RLS: anon sees status='approved' only, and never the instagram/contact columns); without it (local dev)
+// content/seed.json is used so the site still renders. Everything here is public by design and small
+// (one year of one school council), so a year is sent to the page in one piece and tabs/search run client-side.
 
-export type NewsItem = { slug: string; title: string; tag: string; date: string; excerpt: string; body: string[] };
-export type EventItem = { slug: string; title: string; date: string; time: string; place: string; summary: string; body: string[] };
-export type Member = { id: string; name: string; role: string; dept: string; grade: string };
-export type PolicyStatus = "done" | "in-progress" | "planned";
-export type PolicyItem = Omit<(typeof policies)[number], "status"> & { status: PolicyStatus };
-export type Photo = { id: string; caption: string; album: string | null; w: number; h: number; src: { 480: string; 960: string; 1920: string } };
-
-export const STATUS_LABEL: Record<PolicyStatus, string> = {
-  done: "สำเร็จ",
-  "in-progress": "กำลังทำ",
-  planned: "วางแผน",
+export type Img = { id: string; w: number; h: number; blur: string | null; src: { 480: string; 960: string; 1920: string } };
+export type Announcement = { id: string; title: string; date: string; body: string[]; link: string | null; pinned: boolean; cover: Img | null };
+export type Activity = { id: string; title: string; date: string; body: string[]; photos: (Img | null)[] };
+export type PolicyStatus = "planned" | "in-progress" | "done";
+export type TimelineStep = { date: string; text: string };
+export type Policy = {
+  id: string; slug: string; title: string; summary: string; body: string[]; status: PolicyStatus; progress: number;
+  owner: string; timeline: TimelineStep[]; cover: Img | null; photos: (Img | null)[];
 };
+export type Contact = { instagram: string | null; contact: string | null };
+export type Member = {
+  id: string; name: string; nickname: string; role: string; termNo: string; execTitle: string; dept: string; party: string;
+  photo: Img | null; rank: number;
+} & Contact;
+export type Advisor = { id: string; name: string; nickname: string; role: string; subject: string; position: string; photo: Img | null } & Contact;
+export type YearContent = {
+  year: number; years: number[]; current: number;
+  announcements: Announcement[]; activities: Activity[]; policies: Policy[]; members: Member[]; advisors: Advisor[];
+};
+/** @deprecated name kept for the hero slideshow */
+export type Photo = Img & { caption: string };
 
 const paragraphs = (s: string) => s.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
 
-export async function getNews(): Promise<NewsItem[]> {
-  if (!supabaseConfigured()) return [...news].sort((a, b) => b.date.localeCompare(a.date));
-  const { data } = await publicClient().from("news").select("slug,title,tag,excerpt,body,published_on").order("published_on", { ascending: false });
-  return (data ?? []).map((r) => ({ slug: r.slug, title: r.title, tag: r.tag, date: r.published_on, excerpt: r.excerpt, body: paragraphs(r.body) }));
-}
-export async function getNewsBySlug(slug: string) {
-  return (await getNews()).find((n) => n.slug === slug);
-}
-
-export async function getEvents(): Promise<EventItem[]> {
-  if (!supabaseConfigured()) return [...events].sort((a, b) => a.date.localeCompare(b.date));
-  const { data } = await publicClient().from("events").select("slug,title,event_date,event_time,place,summary,body").order("event_date", { ascending: true });
-  return (data ?? []).map((r) => ({ slug: r.slug, title: r.title, date: r.event_date, time: r.event_time, place: r.place, summary: r.summary, body: paragraphs(r.body) }));
-}
-export async function getEventBySlug(slug: string) {
-  return (await getEvents()).find((e) => e.slug === slug);
-}
-
-export const getPolicies = () => policies as PolicyItem[];
-
-export async function getMembers(): Promise<Member[]> {
-  if (!supabaseConfigured()) return members;
-  const { data } = await publicClient().from("members").select("id,name,role_title,dept,grade").order("sort_order", { ascending: true });
-  return (data ?? []).map((r) => ({ id: r.id, name: r.name, role: r.role_title, dept: r.dept, grade: r.grade }));
-}
-
-// ── photos (only approved rows are visible to the anon client) ──
-type PhotoRow = { id: string; caption: string; width: number; height: number; albums: { title: string } | { title: string }[] | null };
-const toPhoto = (r: PhotoRow): Photo => {
-  const album = Array.isArray(r.albums) ? r.albums[0] : r.albums;
+type PhotoRow = { id: string; width: number; height: number; blur: string | null; sort_order?: number };
+const IMG_COLS = "id,width,height,blur,sort_order";
+const toImg = (r: PhotoRow | null): Img | null => {
+  if (!r) return null;
   const p = (w: number) => publicImageUrl(`photos/${r.id}/${w}.webp`);
-  return { id: r.id, caption: r.caption, album: album?.title ?? null, w: r.width, h: r.height, src: { 480: p(480), 960: p(960), 1920: p(1920) } };
+  return { id: r.id, w: r.width, h: r.height, blur: r.blur, src: { 480: p(480), 960: p(960), 1920: p(1920) } };
 };
-const PHOTO_COLS = "id,caption,width,height,albums(title)";
+const sortedImgs = (rows: PhotoRow[] | null) => [...(rows ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map(toImg);
 
-/** Hero slides: approved + ticked "is_hero", in admin-defined order. Empty -> Hero falls back to the gradient + mandapa. */
+/** Only consented contacts leave the server. `@handle` / URL / spaces are stripped to a bare IG handle. */
+const contactOf = (consent: boolean, instagram: string | null | undefined, contact: string | null | undefined): Contact =>
+  consent
+    ? { instagram: instagram?.trim().replace(/^@/, "") || null, contact: contact?.trim() || null }
+    : { instagram: null, contact: null };
+
+// ───────────────────────── years ─────────────────────────
+
+export async function getYears(): Promise<{ years: number[]; current: number }> {
+  if (!supabaseConfigured()) return { years: seed.years, current: seed.current };
+  const { data } = await publicClient().from("academic_years").select("year,is_current").order("year", { ascending: false });
+  const years = (data ?? []).map((r) => r.year as number);
+  const current = (data ?? []).find((r) => r.is_current)?.year ?? years[0] ?? new Date().getFullYear() + 543;
+  return { years: years.length ? years : [current], current };
+}
+
+// ───────────────────────── one year ─────────────────────────
+
+export async function getYearContent(requested?: number): Promise<YearContent> {
+  const { years, current } = await getYears();
+  const year = requested && years.includes(requested) ? requested : current;
+  const content = supabaseConfigured() ? await fromDb(year, years) : fromSeed(year, years);
+  return { ...content, current };
+}
+
+function fromSeed(year: number, years: number[]): Omit<YearContent, "current"> {
+  const ofYear = <T extends { year: number }>(xs: T[]) => xs.filter((x) => x.year === year);
+  const blanks = (n: number) => Array.from({ length: n }, () => null);
+  return {
+    year,
+    years,
+    announcements: ofYear(seed.announcements)
+      .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.date.localeCompare(a.date))
+      .map((a) => ({ id: a.id, title: a.title, date: a.date, body: paragraphs(a.body), link: a.link, pinned: a.pinned, cover: null })),
+    activities: ofYear(seed.activities)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .map((a) => ({ id: a.id, title: a.title, date: a.date, body: paragraphs(a.body), photos: blanks(a.photos) })),
+    policies: ofYear(seed.policies).map((p) => ({
+      id: p.id, slug: p.slug, title: p.title, summary: p.summary, body: paragraphs(p.body), status: p.status as PolicyStatus,
+      progress: p.progress, owner: p.owner, timeline: p.timeline, cover: null, photos: blanks(p.photos),
+    })),
+    members: ofYear(seed.members).map((m, i) => ({
+      id: m.id, name: m.name, nickname: m.nickname, role: m.role, termNo: m.termNo, execTitle: m.execTitle, dept: m.dept,
+      party: m.party, photo: null, rank: i, ...contactOf(m.consent, m.instagram, m.contact),
+    })),
+    advisors: ofYear(seed.advisors).map((a) => ({
+      id: a.id, name: a.name, nickname: a.nickname, role: a.role, subject: a.subject, position: a.position, photo: null,
+      ...contactOf(a.consent, a.instagram, a.contact),
+    })),
+  };
+}
+
+async function fromDb(year: number, years: number[]): Promise<Omit<YearContent, "current">> {
+  const db = publicClient();
+  const [ann, act, pol, mem, adv] = await Promise.all([
+    db.from("announcements").select(`id,title,body,published_on,link_url,pinned,cover:photos!cover_photo_id(${IMG_COLS})`)
+      .eq("year", year).order("pinned", { ascending: false }).order("published_on", { ascending: false }),
+    db.from("activities").select(`id,title,body,event_date,photos:photos!activity_id(${IMG_COLS})`)
+      .eq("year", year).order("event_date", { ascending: false }),
+    db.from("policies").select(`id,slug,title,summary,body,progress_status,progress,owner,timeline,cover:photos!cover_photo_id(${IMG_COLS}),photos:photos!policy_id(${IMG_COLS})`)
+      .eq("year", year).order("sort_order"),
+    db.from("members").select(`id,name,nickname,role_title,term_no,exec_title,dept,party,sort_order,consent_public,photo:photos!photo_id(${IMG_COLS})`)
+      .eq("year", year).order("sort_order"),
+    db.from("advisors").select(`id,name,nickname,role_label,subject_group,position,sort_order,consent_public,photo:photos!photo_id(${IMG_COLS})`)
+      .eq("year", year).order("sort_order"),
+  ]);
+  for (const r of [ann, act, pol, mem, adv]) if (r.error) console.error("[content]", r.error.message);
+
+  const contacts = await consentedContacts(year);
+  return {
+    year,
+    years,
+    announcements: (ann.data ?? []).map((r) => ({
+      id: r.id, title: r.title, date: r.published_on, body: paragraphs(r.body), link: r.link_url, pinned: r.pinned, cover: toImg(one(r.cover)),
+    })),
+    activities: (act.data ?? []).map((r) => ({ id: r.id, title: r.title, date: r.event_date, body: paragraphs(r.body), photos: sortedImgs(r.photos) })),
+    policies: (pol.data ?? []).map(toPolicy),
+    members: (mem.data ?? []).map((r) => ({
+      id: r.id, name: r.name, nickname: r.nickname, role: r.role_title, termNo: r.term_no, execTitle: r.exec_title, dept: r.dept,
+      party: r.party, photo: toImg(one(r.photo)), rank: r.sort_order, ...(contacts.get(r.id) ?? contactOf(false, null, null)),
+    })),
+    advisors: (adv.data ?? []).map((r) => ({
+      id: r.id, name: r.name, nickname: r.nickname, role: r.role_label, subject: r.subject_group, position: r.position,
+      photo: toImg(one(r.photo)), ...(contacts.get(r.id) ?? contactOf(false, null, null)),
+    })),
+  };
+}
+
+/** instagram/contact are not readable with the anon key; read them with the service role, consented + approved only. */
+async function consentedContacts(year: number) {
+  const out = new Map<string, Contact>();
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return out;
+  const db = adminClient();
+  const q = (t: "members" | "advisors") =>
+    db.from(t).select("id,instagram,contact").eq("year", year).eq("status", "approved").eq("consent_public", true);
+  const [m, a] = await Promise.all([q("members"), q("advisors")]);
+  for (const r of [...(m.data ?? []), ...(a.data ?? [])]) out.set(r.id, contactOf(true, r.instagram, r.contact));
+  return out;
+}
+
+type PolicyRow = {
+  id: string; slug: string; title: string; summary: string; body: string; progress_status: PolicyStatus; progress: number; owner: string;
+  timeline: unknown; cover: PhotoRow | PhotoRow[] | null; photos: PhotoRow[] | null;
+};
+function toPolicy(r: PolicyRow): Policy {
+  const timeline = Array.isArray(r.timeline)
+    ? r.timeline.filter((s): s is TimelineStep => typeof s?.date === "string" && typeof s?.text === "string")
+    : [];
+  return {
+    id: r.id, slug: r.slug, title: r.title, summary: r.summary, body: paragraphs(r.body), status: r.progress_status, progress: r.progress,
+    owner: r.owner, timeline, cover: toImg(one(r.cover)), photos: sortedImgs(r.photos),
+  };
+}
+
+// ───────────────────────── policy page ─────────────────────────
+
+export async function getPolicyBySlug(slug: string): Promise<(Policy & { year: number }) | null> {
+  if (!supabaseConfigured()) {
+    const p = seed.policies.find((x) => x.slug === slug);
+    if (!p) return null;
+    const c = fromSeed(p.year, seed.years);
+    const pol = c.policies.find((x) => x.slug === slug);
+    return pol ? { ...pol, year: p.year } : null;
+  }
+  const { data } = await publicClient()
+    .from("policies")
+    .select(`id,year,slug,title,summary,body,progress_status,progress,owner,timeline,cover:photos!cover_photo_id(${IMG_COLS}),photos:photos!policy_id(${IMG_COLS})`)
+    .eq("slug", slug)
+    .maybeSingle();
+  return data ? { ...toPolicy(data as PolicyRow), year: data.year } : null;
+}
+
+export async function getPolicySlugs(): Promise<string[]> {
+  if (!supabaseConfigured()) return seed.policies.map((p) => p.slug);
+  const { data } = await publicClient().from("policies").select("slug");
+  return (data ?? []).map((r) => r.slug);
+}
+
+// ───────────────────────── hero ─────────────────────────
+
+/** Hero slides: approved + ticked "is_hero", in admin-defined order. Empty -> gradient fallback. */
 export async function getHeroPhotos(): Promise<Photo[]> {
   if (!supabaseConfigured()) return [];
-  const { data } = await publicClient().from("photos").select(PHOTO_COLS).eq("is_hero", true).order("hero_order", { ascending: true });
-  return (data ?? []).map((r) => toPhoto(r as PhotoRow));
-}
-
-export async function getLatestPhotos(limit: number): Promise<Photo[]> {
-  if (!supabaseConfigured()) return [];
-  const { data } = await publicClient().from("photos").select(PHOTO_COLS).order("created_at", { ascending: false }).limit(limit);
-  return (data ?? []).map((r) => toPhoto(r as PhotoRow));
-}
-
-export type Album = { slug: string; title: string; description: string | null; photos: Photo[] };
-export async function getAlbums(): Promise<Album[]> {
-  if (!supabaseConfigured()) return [];
-  const db = publicClient();
-  const [{ data: albums }, { data: photos }] = await Promise.all([
-    db.from("albums").select("id,slug,title,description").order("created_at", { ascending: true }),
-    db.from("photos").select(`${PHOTO_COLS},album_id`).order("created_at", { ascending: false }),
-  ]);
-  return (albums ?? [])
-    .map((a) => ({
-      slug: a.slug,
-      title: a.title,
-      description: a.description,
-      photos: (photos ?? []).filter((p) => p.album_id === a.id).map((p) => toPhoto(p as unknown as PhotoRow)),
-    }))
-    .filter((a) => a.photos.length > 0);
-}
-
-export const DOCUMENTS = [
-  { id: "d1", title: "[รายงานการประชุมสภาครั้งที่ 1]", date: "2026-09-01", type: "PDF", href: "#" },
-  { id: "d2", title: "[ประกาศสภานักเรียน เรื่อง ...]", date: "2026-09-15", type: "PDF", href: "#" },
-  { id: "d3", title: "[รายงานผลการดำเนินงานไตรมาส 1]", date: "2026-10-01", type: "PDF", href: "#" },
-] as const;
-
-/** Whole days from today (Asia/Bangkok) until `iso`; never negative. */
-export function daysUntil(iso: string) {
-  const bkkNow = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
-  const diff = (Date.parse(iso) - Date.parse(bkkNow)) / 86_400_000;
-  return Math.max(0, Math.round(diff));
+  const { data } = await publicClient().from("photos").select(`${IMG_COLS},caption`).eq("is_hero", true).order("hero_order", { ascending: true });
+  return (data ?? []).map((r) => ({ ...(toImg(r as PhotoRow) as Img), caption: r.caption }));
 }

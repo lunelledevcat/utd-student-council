@@ -22,8 +22,17 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   async redirects() {
     return [
-      { source: "/about", destination: "/council", permanent: true },
-      { source: "/team", destination: "/members", permanent: true },
+      // v2 single page: old section routes -> matching tab
+      { source: "/news/:path*", destination: "/", permanent: true },
+      { source: "/events/:path*", destination: "/", permanent: true },
+      { source: "/members", destination: "/?tab=council", permanent: true },
+      { source: "/team", destination: "/?tab=council", permanent: true },
+      { source: "/council", destination: "/?tab=council", permanent: true },
+      { source: "/about", destination: "/?tab=council", permanent: true },
+      { source: "/policies", destination: "/?tab=policy", permanent: true },
+      { source: "/advisors", destination: "/?tab=advisor", permanent: true },
+      { source: "/contact", destination: "/", permanent: true },
+      { source: "/documents", destination: "/", permanent: true },
     ];
   },
   async headers() {

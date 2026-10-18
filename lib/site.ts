@@ -1,42 +1,19 @@
 export const SITE = {
-  name: "สภานักเรียนโรงเรียนอุตรดิตถ์",
+  name: "คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์",
+  short: "สภานักเรียนโรงเรียนอุตรดิตถ์",
   nameEn: "Uttaradit School Student Council",
   school: "โรงเรียนอุตรดิตถ์",
   schoolEn: "Uttaradit School",
   abbr: "อ.ต.",
   founded: 2452,
-  term: "[25xx]", // [placeholder] ปีวาระ
-  slogan: "[สโลแกนสภานักเรียน]", // [placeholder]
-  description:
-    "เว็บไซต์สภานักเรียนโรงเรียนอุตรดิตถ์ — นโยบาย ข่าว กิจกรรม และช่องทางส่งเสียงถึงสภา",
+  description: "คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์ — กิจกรรมและข่าวสาร นโยบาย ทำเนียบคณะกรรมการ และครูที่ปรึกษา",
   address: "15 ถ.อินใจมี-ประชานิมิตร ต.ท่าอิฐ อ.เมือง จ.อุตรดิตถ์",
-  social: [
-    { label: "Facebook", href: "#" }, // [placeholder]
-    { label: "Instagram", href: "#" }, // [placeholder]
-    { label: "เว็บไซต์โรงเรียน", href: "#" }, // [placeholder]
-  ],
+  facebook: "#", // [placeholder] URL เพจ Facebook
+  instagram: "#", // [placeholder] URL Instagram
+  dataNote: "[หมายเหตุข้อมูล — เช่น ข้อมูลอัปเดตล่าสุด / แจ้งแก้ไขข้อมูลได้ที่ ...]", // [placeholder]
 } as const;
 
-export const NAV = [
-  { label: "หน้าแรก", href: "/" },
-  { label: "สภานักเรียน", href: "/council" },
-  { label: "สมาชิก", href: "/members" },
-  { label: "ข่าว", href: "/news" },
-  { label: "กิจกรรม", href: "/events" },
-  { label: "ส่งเสียง", href: "/voice" },
-  { label: "ติดต่อ", href: "/contact" },
-] as const;
-
 export const VOICE_CATEGORIES = ["การเรียน", "กิจกรรม", "สิ่งแวดล้อม", "สวัสดิการ", "อื่นๆ"] as const;
-
-export const MILESTONES = [
-  { year: "2452", text: "ก่อตั้งที่บริเวณวัดท่าถนน" },
-  { year: "2471", text: "ย้ายไปบริเวณ ร.ร.อนุบาลอุตรดิตถ์" },
-  { year: "2484", text: "ย้ายมาที่ตั้งปัจจุบัน" },
-  { year: "2495", text: "เปลี่ยนชื่อเป็น “โรงเรียนอุตรดิตถ์”" },
-  { year: "2506", text: "เปิดสอน ม.ปลาย" },
-  { year: "ปัจจุบัน", text: "[รายละเอียดปัจจุบัน — ใส่ข้อมูลจริง]" },
-];
 
 /** Mandapa Phra Thaen Sila At silhouette (stylised, 400x300 box). Replace with the official artwork. */
 export const MANDAPA_PATH =
