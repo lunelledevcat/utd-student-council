@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TRAP_PATHS, isAiCrawler, isBlockedTool, verifySearchBot } from "@/lib/bots";
+import { SUPABASE_URL, supabaseConfigured } from "@/lib/env";
 import { ban, isBanned, limit } from "@/lib/ratelimit";
+import { refreshSession } from "@/lib/supabase/proxy";
 
 const isDev = process.env.NODE_ENV === "development";
+const SB_ORIGIN = SUPABASE_URL ? new URL(SUPABASE_URL).origin : "";
+
+// Back office + auth pages: never indexed, require a session (role is checked again server-side in every page/action).
+const PRIVATE = /^/(dashboard|admin|pending-access)(/|$)/;
+const NOINDEX = /^/(dashboard|admin|pending-access|login|auth)(/|$)/;
 
 function csp(nonce: string) {
   return [
@@ -10,9 +17,9 @@ function csp(nonce: string) {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
     `style-src 'self' 'nonce-${nonce}'`,
     "style-src-attr 'unsafe-inline'", // inline style="" from animation libs; scripts stay nonce-locked
-    "img-src 'self' blob: data:",
+    `img-src 'self' blob: data: ${SB_ORIGIN}`,
     "font-src 'self'",
-    `connect-src 'self' https://challenges.cloudflare.com${isDev ? " ws: wss:" : ""}`,
+    `connect-src 'self' ${SB_ORIGIN} https://challenges.cloudflare.com${isDev ? " ws: wss:" : ""}`,
     "frame-src https://challenges.cloudflare.com",
     "object-src 'none'",
     "base-uri 'self'",
@@ -56,7 +63,7 @@ export async function proxy(req: NextRequest) {
 
   // 3) rate limit (verified search bots are exempt)
   if (searchBot !== true) {
-    const bucket = pathname.startsWith("/api/") ? "api" : "page";
+    const bucket = pathname === "/login" || pathname.startsWith("/auth/google") ? "login" : pathname.startsWith("/api/") ? "api" : "page";
     const r = await limit(bucket, ip);
     if (!r.ok) {
       console.warn(`[security] 429 bucket=${bucket} ip=${ip}`);
@@ -72,6 +79,17 @@ export async function proxy(req: NextRequest) {
   headers.set("content-security-policy", policy);
   const res = NextResponse.next({ request: { headers } });
   res.headers.set("content-security-policy", policy);
+  if (NOINDEX.test(pathname)) res.headers.set("x-robots-tag", "noindex, nofollow, noai, noimageai");
+
+  if (PRIVATE.test(pathname)) {
+    const user = supabaseConfigured() ? await refreshSession(req, res) : null;
+    if (!user) {
+      const to = req.nextUrl.clone();
+      to.pathname = "/login";
+      to.search = "";
+      return NextResponse.redirect(to);
+    }
+  }
   return res;
 }
 

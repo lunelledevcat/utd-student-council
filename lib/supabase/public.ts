@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import type { Db } from "@/lib/supabase/types";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/env";
 
