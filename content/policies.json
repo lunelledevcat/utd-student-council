@@ -1,0 +1,10 @@
+[
+  { "slug": "policy-1", "title": "[ชื่อนโยบาย 1]", "status": "done", "progress": 100, "category": "การเรียน", "desc": "[คำอธิบายนโยบายโดยย่อ — ใส่ข้อมูลจริง]" },
+  { "slug": "policy-2", "title": "[ชื่อนโยบาย 2]", "status": "in-progress", "progress": 65, "category": "กิจกรรม", "desc": "[คำอธิบายนโยบายโดยย่อ — ใส่ข้อมูลจริง]" },
+  { "slug": "policy-3", "title": "[ชื่อนโยบาย 3]", "status": "in-progress", "progress": 40, "category": "สิ่งแวดล้อม", "desc": "[คำอธิบายนโยบายโดยย่อ — ใส่ข้อมูลจริง]" },
+  { "slug": "policy-4", "title": "[ชื่อนโยบาย 4]", "status": "planned", "progress": 10, "category": "สวัสดิการ", "desc": "[คำอธิบายนโยบายโดยย่อ — ใส่ข้อมูลจริง]" },
+  { "slug": "policy-5", "title": "[ชื่อนโยบาย 5]", "status": "done", "progress": 100, "category": "กิจกรรม", "desc": "[คำอธิบายนโยบายโดยย่อ — ใส่ข้อมูลจริง]" },
+  { "slug": "policy-6", "title": "[ชื่อนโยบาย 6]", "status": "planned", "progress": 0, "category": "การเรียน", "desc": "[คำอธิบายนโยบายโดยย่อ — ใส่ข้อมูลจริง]" },
+  { "slug": "policy-7", "title": "[ชื่อนโยบาย 7]", "status": "in-progress", "progress": 80, "category": "สวัสดิการ", "desc": "[คำอธิบายนโยบายโดยย่อ — ใส่ข้อมูลจริง]" },
+  { "slug": "policy-8", "title": "[ชื่อนโยบาย 8]", "status": "done", "progress": 100, "category": "สิ่งแวดล้อม", "desc": "[คำอธิบายนโยบายโดยย่อ — ใส่ข้อมูลจริง]" }
+]

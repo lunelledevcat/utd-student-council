@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+/* Design tokens — mirror the Figma file "UTD Student Council Website".
+   Light = default, Dark = [data-theme="dark"] or OS preference (unless data-theme="light"). */
+:root {
+  --c-page: #fbf7f2;
+  --c-surface: #ffffff;
+  --c-brand: #0b1f4d;
+  --c-brand-deep: #071431;
+  --c-brand-mid: #1e3a8a;
+  --c-text: #1a1a2e;
+  --c-muted: #5b6270;
+  --c-on-brand: #fbf7f2;
+  --c-pink: #e8508b;
+  --c-pink-soft: #f9d4e1;
+  --c-gold: #c9a227;
+  --c-border: #e7dfd3;
+  --c-done: #16a34a;
+  --c-progress: #f59e0b;
+  --c-planned: #94a3b8;
+  --shadow-soft: 0 8px 24px rgb(11 31 77 / 0.08);
+  --shadow-glow: 0 0 24px 2px rgb(232 80 139 / 0.45);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root[data-theme="dark"] {
+  --c-page: #071431;
+  --c-surface: #0b1f4d;
+  --c-brand: #1e3a8a;
+  --c-text: #fbf7f2;
+  --c-muted: #a3acbd;
+  --c-pink-soft: #4a1b33;
+  --c-border: #1e3a8a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --c-page: #071431;
+    --c-surface: #0b1f4d;
+    --c-brand: #1e3a8a;
+    --c-text: #fbf7f2;
+    --c-muted: #a3acbd;
+    --c-pink-soft: #4a1b33;
+    --c-border: #1e3a8a;
+  }
+}
+
+@theme inline {
+  --color-page: var(--c-page);
+  --color-surface: var(--c-surface);
+  --color-brand: var(--c-brand);
+  --color-brand-deep: var(--c-brand-deep);
+  --color-brand-mid: var(--c-brand-mid);
+  --color-ink: var(--c-text);
+  --color-muted: var(--c-muted);
+  --color-on-brand: var(--c-on-brand);
+  --color-pink: var(--c-pink);
+  --color-pink-soft: var(--c-pink-soft);
+  --color-gold: var(--c-gold);
+  --color-line: var(--c-border);
+  --color-done: var(--c-done);
+  --color-progress: var(--c-progress);
+  --color-planned: var(--c-planned);
+
+  --font-display: var(--font-kanit), sans-serif;
+  --font-sans: var(--font-plex), sans-serif;
+  --font-serif: var(--font-noto-serif), serif;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--c-page);
+  color: var(--c-text);
+  font-family: var(--font-plex), sans-serif;
+  line-height: 1.7; /* Thai text needs >= 1.6 */
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-kanit), sans-serif;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.shadow-soft { box-shadow: var(--shadow-soft); }
+.shadow-glow { box-shadow: var(--shadow-glow); }
+
+/* Logos / graphics only — text stays selectable (accessibility). */
+.no-select { user-select: none; -webkit-user-drag: none; }
+
+:focus-visible {
+  outline: 3px solid var(--c-pink);
+  outline-offset: 3px;
+}
+
+/* Falling Kae Farang petals (CSS only, GPU-friendly). */
+@keyframes petal-fall {
+  0% { transform: translate3d(0, -8vh, 0) rotate(0deg); opacity: 0; }
+  10% { opacity: var(--petal-o, 0.8); }
+  100% { transform: translate3d(var(--petal-dx, 60px), 108vh, 0) rotate(var(--petal-r, 360deg)); opacity: 0; }
+}
+.petal {
+  position: absolute;
+  top: 0;
+  width: 14px;
+  height: 22px;
+  border-radius: 100% 0 100% 0;
+  background: var(--c-pink);
+  animation: petal-fall var(--petal-t, 16s) linear var(--petal-d, 0s) infinite;
+  will-change: transform;
+}
+
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+.marquee-track { animation: marquee 40s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+
+@keyframes ripple {
+  from { transform: scale(0); opacity: 0.5; }
+  to { transform: scale(4); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .petal { display: none; }
+  .marquee-track { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
