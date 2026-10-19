@@ -40,8 +40,8 @@ if (!process.argv.includes("--no-e2e")) {
 }
 
 // ── 4. config ──
-const wr = readFileSync("wrangler.jsonc", "utf8").replace(/^\s*\/\/.*$/gm, "");
-const vars = Object.keys(JSON.parse(wr).vars ?? {});
+const { unstable_readConfig } = await import("wrangler"); // wrangler's own JSONC reader
+const vars = Object.keys(unstable_readConfig({ config: "wrangler.jsonc" }).vars ?? {});
 const PUBLIC = ["NEXT_PUBLIC_SITE_URL", "NEXT_PUBLIC_TURNSTILE_SITE_KEY", "ALLOWED_EMAIL_DOMAIN", "ADMIN_EMAILS"];
 check("wrangler.jsonc vars are public values only", vars.every((v) => PUBLIC.includes(v)), vars.filter((v) => !PUBLIC.includes(v)).join(", "));
 const ignored = (f) => spawnSync("git", ["check-ignore", "-q", f]).status === 0;
