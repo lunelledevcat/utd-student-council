@@ -20,7 +20,8 @@
     "preview": "node scripts/cf.mjs preview",
     "deploy": "node scripts/cf.mjs deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "cf:build": "node scripts/cf.mjs build"
+    "cf:build": "node scripts/cf.mjs build",
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
@@ -58,6 +59,7 @@
     "svgo": "^4.1.0",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "vitest": "^3.2.7",
     "wrangler": "^4.151.2"
   }
 }
