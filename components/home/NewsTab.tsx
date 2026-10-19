@@ -46,7 +46,7 @@ export function NewsTab({ announcements, activities, query, onClear }: {
       {announcements.length > 0 && (
         <section aria-labelledby="ann-h">
           <ZoneTitle icon={<IconMegaphone width={18} height={18} />} count={announcements.length}><span id="ann-h">{t("announcements")}</span></ZoneTitle>
-          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid auto-rows-fr items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence mode="popLayout">
               {announcements.map((a, i) => (
                 <CardItem key={a.id} index={i}>

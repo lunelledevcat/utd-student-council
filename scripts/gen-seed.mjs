@@ -1,5 +1,5 @@
 // Generates supabase/seed.sql from content/seed.json (all values are [placeholder] samples, status=approved).
-// Run after migrations 0001-0003: node scripts/gen-seed.mjs
+// Run after migrations 0001-0004: node scripts/gen-seed.mjs
 import { readFileSync, writeFileSync } from "node:fs";
 
 const seed = JSON.parse(readFileSync(new URL("../content/seed.json", import.meta.url), "utf8"));
@@ -21,6 +21,11 @@ insert("activities", ["year", "title", "title_en", "body", "body_en", "event_dat
 insert("policies", ["year", "slug", "title", "title_en", "summary", "summary_en", "body", "body_en", "progress_status", "progress", "owner", "owner_en", "timeline", "sort_order"], seed.policies, "\non conflict (slug) do nothing");
 insert("members", ["year", "name", "name_en", "nickname", "nickname_en", "role_title", "role_title_en", "term_no", "exec_title", "exec_title_en", "dept", "dept_en", "party", "party_en", "sort_order", "instagram", "contact", "consent_public"], seed.members);
 insert("advisors", ["year", "name", "name_en", "nickname", "nickname_en", "role_label", "role_label_en", "subject_group", "subject_group_en", "position", "position_en", "sort_order", "instagram", "contact", "consent_public"], seed.advisors);
+
+// banner photos shipped in public/banner (migration 0004): approved hero slides, credited to the school
+const banner = JSON.parse(readFileSync(new URL("../content/banner.json", import.meta.url), "utf8"));
+out.push("insert into public.photos (static_path, caption, width, height, blur, credit, status, is_hero, hero_order) values",
+  banner.map((b, i) => `  (${q(`/banner/${b.file}`)}, '', ${b.w}, ${b.h}, ${q(b.blur)}, 'school', 'approved', true, ${i})`).join(",\n") + ";", "");
 
 writeFileSync(new URL("../supabase/seed.sql", import.meta.url), out.join("\n"));
 console.log("seed.sql written");

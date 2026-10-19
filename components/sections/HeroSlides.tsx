@@ -78,8 +78,8 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
           <AnimatePresence initial={false}>
             <motion.img
               key={p.id}
-              src={p.src[1920]}
-              srcSet={`${p.src[480]} 480w, ${p.src[960]} 960w, ${p.src[1920]} 1920w`}
+              src={p.src}
+              srcSet={p.srcSet}
               sizes="(max-width: 1320px) 100vw, 1320px"
               alt={p.caption || t("alt")}
               width={p.w}
@@ -98,6 +98,12 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
       )}
 
       {children}
+
+      {p?.credit && (
+        <span className="pointer-events-none absolute right-3 top-3 z-20 rounded-full bg-black/35 px-2.5 py-0.5 text-[0.68rem] text-white/85 backdrop-blur-sm md:right-4 md:top-4">
+          {t("credit")}
+        </span>
+      )}
 
       {n > 1 && (
         <>

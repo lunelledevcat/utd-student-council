@@ -138,3 +138,31 @@ Behaviour only was studied; no code, images, text or logos were copied.
 - **Not exercised in a browser:** without Supabase env vars the dashboard redirects to sign-in, so only build/typecheck
   and the redirect were verified. Test with a real project before handing it to the council.
 - `supabase/seed.sql` regenerated for the new schema (`node scripts/gen-seed.mjs`).
+
+## Layout bug fixes + school banner (2026-10-19)
+Measured with `npm run check:layout [url] [outDir] [label]` (scripts/check-layout.mjs: real headless Chrome over CDP at
+1366/1440/1920/390; horizontal overflow incl. every frame of a tab switch, CLS while scrolling, card alignment, number
+of tab highlights, sticky-bar position). Before/after screenshots + JSON in `C:\dev\utd-shots\compare\bugfix`.
+- Before (prod build): 390 px page widened to 414 px during tab switches (panel slides ±40 px) -> horizontal scroll;
+  CLS 0.019 (1440) / 0.153 (390) because the sticky bar changed height when it stuck (labels -> sr-only, ⓘ note hidden).
+- Fixes: `overflow-x: clip` on html/body (clip keeps `position: sticky` working); the sticky bar never changes size;
+  the ⓘ note is always shown, below the sticky part; tab highlight = one `layoutId` element rendered inside the active
+  tab (server-rendered, nothing to measure, no flash) and the page jumps to the content *before* the tab changes so the
+  layout animation is not skewed by scrolling; announcement grid `auto-rows-fr` + fixed footer row height so "อ่านต่อ"
+  lines up on every card.
+- After: all four widths pass (no overflow, CLS ≤ 0.0002, 1 highlight, sticky top constant, cards aligned), /th and /en.
+- Port 3000 was taken by another process during this work (likely your own dev server), so measurements ran on
+  `next start -p 3100`. The video's dev server may run older code — restart it to see these fixes.
+
+### Banner photos
+- 8 photos from the school's website (https://utd.ac.th/main/, WordPress media; the site footer states CC BY-NC 4.0),
+  picked from 99 large landscape JPEGs: building, assemblies, ceremony, Open House 2020, Thai dance, group photo.
+  Excluded posters/announcements and the WordPress theme's stock demo images (`demo-*`, `*unsplash*`).
+- Stored in `public/banner/utd-NN-{1920,1280,768}.webp` (no hotlinking), sources in `public/banner/SOURCES.md`.
+  Each slide shows the credit "ภาพ: โรงเรียนอุตรดิตถ์ / Photo: Uttaradit School".
+- Migration 0004 + seed register them as approved `photos` rows (`static_path`, `credit = 'school'`, `is_hero`), so
+  `/dashboard/hero` hides / reorders / deletes them like uploads (delete removes the row; the file stays in the repo).
+  Local dev without Supabase uses `content/banner.json`. The generated sample slides were removed.
+- More recent activity photos are on the school's Facebook page (https://www.facebook.com/utd.ac.th) — not fetched
+  automatically (platform terms). Download any you want by hand and upload them in the back office.
+- The photos show students; they were already published publicly by the school, but check with the school before launch.

@@ -2,10 +2,10 @@
 
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
-import { setHero } from "@/app/[locale]/dashboard/actions";
+import { deletePhoto, setHero } from "@/app/[locale]/dashboard/actions";
 import { useRouter } from "@/i18n/navigation";
 
-type P = { id: string; caption: string; isHero: boolean; order: number; url: string };
+type P = { id: string; caption: string; isHero: boolean; order: number; url: string; school: boolean };
 
 export function HeroRow({ photo }: { photo: P }) {
   const t = useTranslations("dashboard");
@@ -16,8 +16,11 @@ export function HeroRow({ photo }: { photo: P }) {
   const [pending, start] = useTransition();
   return (
     <li className="overflow-hidden rounded-[20px] border border-line bg-surface shadow-soft">
-      {/* eslint-disable-next-line @next/next/no-img-element -- approved variant from the public bucket */}
-      <img src={photo.url} alt={photo.caption} className="aspect-[16/9] w-full object-cover" />
+      <div className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element -- approved variant (public bucket or public/banner) */}
+        <img src={photo.url} alt={photo.caption} className="aspect-[16/9] w-full object-cover" />
+        {photo.school && <span className="absolute left-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-[0.7rem] text-white">{t("hero.schoolCredit")}</span>}
+      </div>
       <div className="flex flex-wrap items-center gap-3 p-4 text-sm">
         <label className="flex items-center gap-2">
           <input type="checkbox" checked={on} onChange={(e) => setOn(e.target.checked)} className="h-5 w-5 accent-[var(--c-pink)]" />
@@ -38,6 +41,18 @@ export function HeroRow({ photo }: { photo: P }) {
           className="ml-auto rounded-full bg-brand px-4 py-1.5 font-semibold text-white disabled:opacity-50"
         >
           {t("hero.save")}
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => confirm(t("hero.confirmDelete")) && start(async () => {
+            const r = await deletePhoto(photo.id);
+            if (r.ok) router.refresh();
+            else setMsg({ ok: false, text: t(`errors.${r.error.key}`, r.error.values) });
+          })}
+          className="rounded-full px-3 py-1.5 text-xs font-semibold text-muted hover:text-danger disabled:opacity-50"
+        >
+          {t("hero.delete")}
         </button>
         {msg && <p role={msg.ok ? "status" : "alert"} className={msg.ok ? "w-full text-done" : "w-full text-danger"}>{msg.text}</p>}
       </div>

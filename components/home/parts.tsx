@@ -81,7 +81,7 @@ export function TextCard({
       </div>
       <h3 className="relative line-clamp-2 font-display text-[1.05rem] font-semibold leading-snug text-strong">{title}</h3>
       {excerpt && <p className="relative line-clamp-2 text-sm text-muted">{excerpt}</p>}
-      <div className="relative mt-auto flex items-center justify-between gap-3 pt-1">
+      <div className="relative mt-auto flex min-h-7 items-center justify-between gap-3 pt-1">
         {footer ?? <span />}
         <span className="inline-flex shrink-0 items-center text-sm font-medium text-pink transition-transform group-hover:translate-x-1">
           {action} <IconChevronRight width={16} height={16} />

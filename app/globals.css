@@ -74,6 +74,13 @@ html {
   scroll-padding-top: 88px;
 }
 
+/* Nothing may widen the page (tab slide-ins, petals, glows): clip, unlike hidden, creates no scroll container,
+   so position: sticky keeps working. */
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   background: var(--c-page);
   color: var(--c-text);

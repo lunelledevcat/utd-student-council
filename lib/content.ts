@@ -1,5 +1,5 @@
 import "server-only";
-import sampleHero from "@/content/sample-hero.json";
+import banner from "@/content/banner.json";
 import seed from "@/content/seed.json";
 import { supabaseConfigured } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/admin";
@@ -31,7 +31,8 @@ export type YearContent = {
   year: number; years: number[]; current: number;
   announcements: Announcement[]; activities: Activity[]; policies: Policy[]; members: Member[]; advisors: Advisor[];
 };
-export type Photo = Img & { caption: string };
+/** Hero slide: either an uploaded photo (storage variants) or a banner file shipped in public/banner. */
+export type Photo = { id: string; w: number; h: number; blur: string | null; src: string; srcSet: string; caption: string; credit: "school" | null };
 
 const paragraphs = (s: string | null | undefined) => (s ?? "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
 const l = (th: string | null | undefined, en: string | null | undefined): L => ({ th: th ?? "", en: en?.trim() ? en.trim() : null });
@@ -187,15 +188,19 @@ export async function getPolicySlugs(): Promise<string[]> {
 
 // ───────────────────────── hero ─────────────────────────
 
-/** Hero slides: approved + ticked "is_hero", in admin-defined order. Empty -> one gradient slide.
- *  Without Supabase (local dev) three generated sample images in public/sample are used. */
+/** Hero slides: approved photos ticked "is_hero", in admin-defined order (uploads and public/banner files alike).
+ *  Without Supabase (local dev) every file in content/banner.json is used. None -> one gradient slide. */
 export async function getHeroPhotos(): Promise<Photo[]> {
-  if (!supabaseConfigured()) {
-    return sampleHero.map((h, i) => {
-      const p = (w: number) => `/sample/hero-${i + 1}-${w}.webp`;
-      return { ...h, src: { 480: p(480), 960: p(960), 1920: p(1920) } };
-    });
-  }
-  const { data } = await publicClient().from("photos").select(`${IMG_COLS},caption`).eq("is_hero", true).order("hero_order", { ascending: true });
-  return (data ?? []).map((r) => ({ ...(toImg(r as PhotoRow) as Img), caption: r.caption }));
+  if (!supabaseConfigured()) return banner.map((b) => staticSlide(b.id, `/banner/${b.file}`, b.w, b.h, b.blur, "", "school"));
+  const { data } = await publicClient()
+    .from("photos").select(`${IMG_COLS},caption,static_path,credit`).eq("is_hero", true).order("hero_order", { ascending: true });
+  return (data ?? []).map((r) => {
+    if (r.static_path) return staticSlide(r.id, r.static_path, r.width, r.height, r.blur, r.caption, r.credit === "school" ? "school" : null);
+    const img = toImg(r as PhotoRow) as Img;
+    return { id: img.id, w: img.w, h: img.h, blur: img.blur, src: img.src[1920], srcSet: `${img.src[480]} 480w, ${img.src[960]} 960w, ${img.src[1920]} 1920w`, caption: r.caption, credit: r.credit === "school" ? "school" : null };
+  });
 }
+
+const staticSlide = (id: string, path: string, w: number, h: number, blur: string | null, caption: string, credit: "school" | null): Photo => ({
+  id, w, h, blur, caption, credit, src: `${path}-1920.webp`, srcSet: `${path}-768.webp 768w, ${path}-1280.webp 1280w, ${path}-1920.webp 1920w`,
+});

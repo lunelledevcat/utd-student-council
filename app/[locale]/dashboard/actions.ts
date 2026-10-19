@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { ENTITIES, isEntity, rowColumns, type Entity, type EntityKey, type Field } from "@/lib/admin/entities";
-import { previewUrls, processRaw, publishPhotos, signedRawUpload } from "@/lib/admin/photos";
+import { WIDTHS, previewUrls, processRaw, publishPhotos, signedRawUpload } from "@/lib/admin/photos";
 import { MEMBERS, STAFF, audit, getSession, type Role, type Session } from "@/lib/auth";
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
@@ -272,6 +272,25 @@ export async function setCurrentYear(year: number): Promise<Result> {
 }
 
 // ───────────────────────── hero slides (staff) ─────────────────────────
+
+/** Deletes a photo row (any photo, incl. banner files shipped in public/banner — the file itself stays) and its storage variants. */
+export async function deletePhoto(photoId: string): Promise<Result> {
+  if (!UUID.test(photoId)) return fail("badRequest");
+  const s = await role(STAFF);
+  if (!s) return fail("forbidden");
+  const db = adminClient();
+  const { data: p } = await db.from("photos").select("static_path").eq("id", photoId).maybeSingle();
+  if (!p) return fail("badRequest");
+  const { error } = await db.from("photos").delete().eq("id", photoId);
+  if (error) return fail("deleteFailed");
+  if (!p.static_path) {
+    const paths = WIDTHS.map((w) => `photos/${photoId}/${w}.webp`);
+    await Promise.all([db.storage.from("public").remove(paths), db.storage.from("pending").remove(paths)]);
+  }
+  await audit(s, "photo:delete", "photos", photoId);
+  revalidatePath("/[locale]/dashboard", "layout");
+  return { ok: true };
+}
 
 export async function setHero(photoId: string, on: boolean, order: number): Promise<Result> {
   if (!UUID.test(photoId) || !Number.isInteger(order) || order < 0 || order > 999) return fail("badRequest");

@@ -40,7 +40,8 @@
     "next": "Next slide",
     "pick": "Choose a slide",
     "slide": "Slide {n}",
-    "alt": "Student council activity photo"
+    "alt": "Student council activity photo",
+    "credit": "Photo: Uttaradit School"
   },
   "year": {
     "label": "Academic year",
@@ -450,7 +451,10 @@
       "show": "Show in banner",
       "order": "Order",
       "save": "Save",
-      "saved": "Saved"
+      "saved": "Saved",
+      "delete": "Delete photo",
+      "confirmDelete": "Delete this photo? This can't be undone.",
+      "schoolCredit": "From the school website"
     }
   }
 }

@@ -1,0 +1,66 @@
+[
+ {
+  "id": "banner-01",
+  "file": "utd-01",
+  "w": 1920,
+  "h": 1280,
+  "blur": "data:image/webp;base64,UklGRloAAABXRUJQVlA4IE4AAADQAQCdASoQAAsAA4BaJbACdAELG3LYAAD+sawk/rXbV8qTbSw4rdCzYGGu/IC0nYaxoRBUKqxnzBfevy+Fl/1J1W8c2Ux6kEFTaZAnQAA=",
+  "source": "https://utd.ac.th/main/wp-content/uploads/2023/01/IMG_0177.jpg"
+ },
+ {
+  "id": "banner-02",
+  "file": "utd-02",
+  "w": 1920,
+  "h": 1280,
+  "blur": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAABQAgCdASoQAAsAA4BaJZgCsAYwnyI+o6BpuwAA/uALj1UbCak66ymuY0xdhng3fLCejSy+P1qDCuFWwSMwVrYRm87xawYAiR0vRmDbVBZP0XkK+RZNQfrf2uesEsYOPKU9oAAA",
+  "source": "https://utd.ac.th/main/wp-content/uploads/2020/03/88131604_2595785224040353_8486538232215896064_o.jpg"
+ },
+ {
+  "id": "banner-03",
+  "file": "utd-03",
+  "w": 1920,
+  "h": 1280,
+  "blur": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAAAwAgCdASoQAAsAA4BaJbAC7AEPBokl9gW9AAD+9+SdnSN310VVFKZ2dcsqyKXmTEeTtzn2frGRZZmsTi4O9EMSLgKhVu73cAL3jkST3KqSXL0oaxiw4AAA",
+  "source": "https://utd.ac.th/main/wp-content/uploads/2020/07/0222.jpg"
+ },
+ {
+  "id": "banner-04",
+  "file": "utd-04",
+  "w": 1920,
+  "h": 1280,
+  "blur": "data:image/webp;base64,UklGRnIAAABXRUJQVlA4IGYAAABQAgCdASoQAAsAA4BaJagCdIExGCDsxh31uuAA/sjm1Uf4SB9dysm7SDoqRBIsZvZeWduFfFS9f5PGUnVXepAxlKhnVuyEBNbby6aoczStjx7VygfuA2V/+Agy9+TzUXcLSDDgAAA=",
+  "source": "https://utd.ac.th/main/wp-content/uploads/2020/06/100881264_2666101190342089_7437671527354466304_o.jpg"
+ },
+ {
+  "id": "banner-05",
+  "file": "utd-05",
+  "w": 1920,
+  "h": 1280,
+  "blur": "data:image/webp;base64,UklGRngAAABXRUJQVlA4IGwAAAAwAgCdASoQAAsAA4BaJbACdAD1ch+dB3D8QAD+0mXOOlgOvtTGrDk93024+N2O5XoQDtu4wYtSwjh/fJW2FxZurrFb87LGrgOnupsyLUrq3khom4BagfzHYZOvAxLkzkn/ELgcFvlWvxR9KAA=",
+  "source": "https://utd.ac.th/main/wp-content/uploads/2020/02/85149749_2577814819170727_8277111001183158272_o.jpg"
+ },
+ {
+  "id": "banner-06",
+  "file": "utd-06",
+  "w": 1920,
+  "h": 1280,
+  "blur": "data:image/webp;base64,UklGRnwAAABXRUJQVlA4IHAAAABQAgCdASoQAAsAA4BaJbACdH8AgqCCBLYYlAAA/mFbw3JPh+OjjKQtdZhd1RXs6cZ3kp9FS2bS/rieihOfPmSE7TaAf9N10pfL0WMEf3l4LoequV+re3piLpcpclR61CuP8tNBN0LfyukaC9uqAAAA",
+  "source": "https://utd.ac.th/main/wp-content/uploads/2020/02/82839612_2564871880465021_1451653960560541696_o.jpg"
+ },
+ {
+  "id": "banner-07",
+  "file": "utd-07",
+  "w": 1920,
+  "h": 1280,
+  "blur": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAADQAQCdASoQAAsAA4BaJYwAAuXr+/VmAAD+4apGdXHCIeahTWVgVCygR+4vAQzLKu63EaBolTsjvjZ7BpsrbrzRoFYD/C874MfFOcy774TYAA==",
+  "source": "https://utd.ac.th/main/wp-content/uploads/2020/02/83784811_2564857200466489_3112706135354769408_o.jpg"
+ },
+ {
+  "id": "banner-08",
+  "file": "utd-08",
+  "w": 1920,
+  "h": 1280,
+  "blur": "data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAABwAgCdASoQAAsAA4BaJYgCdH8AglCc6cUaKPEAAOJ+yOAomLCo0rEV/Z8MeG+pZ7Wh7d6AL0Tnpo/VsbJO8xq9AG0PF0Lts9pR2ZVmXo5/PhKKjv3/Y7mO9t/lHEmjc/NmBAAA",
+  "source": "https://utd.ac.th/main/wp-content/uploads/2020/03/88103810_2594978164121059_8486757090864398336_o.jpg"
+ }
+]

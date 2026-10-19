@@ -1,8 +1,8 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { YearContent } from "@/lib/content";
 import { NewsTab } from "@/components/home/NewsTab";
 import { PeopleTab } from "@/components/home/PeopleTab";
@@ -33,7 +33,6 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
   const sentinel = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const tabsEl = useRef<HTMLDivElement>(null);
-  const [pill, setPill] = useState<{ x: number; w: number } | null>(null);
 
   const view = useMemo(() => filterContent(content, q), [content, q]);
 
@@ -45,21 +44,11 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
     return () => io.disconnect();
   }, []);
 
-  // Active-tab highlight: measured inside the tab list and animated with x/width. (A layoutId pill measures page
-  // coordinates, so inside a sticky bar that is scrolling it drifted out of the frame.)
-  useLayoutEffect(() => {
+  // phones: keep the active tab visible in the horizontally scrolling tab list (scrolls the list only)
+  useEffect(() => {
     const list = tabsEl.current;
-    const measure = () => {
-      const b = list?.querySelector<HTMLElement>(`#tab-${tab}`);
-      if (!b || !list) return;
-      setPill({ x: b.offsetLeft, w: b.offsetWidth });
-      // phones: keep the active tab visible in the horizontally scrolling list
-      list.scrollTo({ left: b.offsetLeft - (list.clientWidth - b.offsetWidth) / 2, behavior: reduce ? "auto" : "smooth" });
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    if (list) ro.observe(list);
-    return () => ro.disconnect();
+    const b = list?.querySelector<HTMLElement>(`#tab-${tab}`);
+    if (list && b) list.scrollTo({ left: b.offsetLeft - (list.clientWidth - b.offsetWidth) / 2, behavior: reduce ? "auto" : "smooth" });
   }, [tab, reduce, locale]);
 
   // Hold the panel's height while one tab/year leaves and the next enters, so the page below never jumps.
@@ -71,17 +60,19 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
     if (panel.current) panel.current.style.minHeight = "";
   };
 
+  // When the bar is stuck, jump (no smooth scroll) to the top of the content BEFORE switching: the highlight's layout
+  // animation then measures a page that is not moving, so it stays inside the tab frame.
   const scrollToContent = () => {
-    if (stuck) sentinel.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    if (stuck) sentinel.current?.scrollIntoView({ behavior: "auto", block: "start" });
   };
 
   const selectTab = (t: TabKey) => {
     if (t === tab) return;
     setDir(TAB_KEYS.indexOf(t) > TAB_KEYS.indexOf(tab) ? 1 : -1);
+    scrollToContent();
     lockHeight();
     setTab(t);
     window.history.replaceState(null, "", homeHref(locale, t, content.year, content.current));
-    scrollToContent();
   };
 
   const selectYear = (y: number) => {
@@ -105,7 +96,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
             <div className="flex gap-2.5 lg:w-[480px] lg:shrink-0">
               <label className="block w-[136px] shrink-0 sm:w-[176px]">
-                <span data-swap className={cn("mb-1 flex items-center gap-1.5 text-xs font-semibold text-muted", stuck && "max-lg:sr-only")}>
+                <span data-swap className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-muted">
                   <IconCalendar width={14} height={14} /> {tr("year.label")}
                 </span>
                 <span className="relative block">
@@ -121,7 +112,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
                 </span>
               </label>
               <label className="block min-w-0 flex-1">
-                <span data-swap className={cn("mb-1 flex items-center gap-1.5 text-xs font-semibold text-muted", stuck && "max-lg:sr-only")}>
+                <span data-swap className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-muted">
                   <IconSearch width={14} height={14} /> {tr("search.label")}
                 </span>
                 <span className="relative block">
@@ -159,15 +150,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
               aria-label={tr("tabs.aria")}
               className="no-scrollbar relative flex min-w-0 flex-1 gap-1 overflow-x-auto rounded-2xl bg-surface-2 p-1"
             >
-              {pill && (
-                <motion.span
-                  aria-hidden
-                  className="absolute bottom-1 left-0 top-1 rounded-xl bg-gradient-to-r from-brand to-brand-mid shadow-[0_6px_16px_-8px_var(--c-brand)]"
-                  initial={false}
-                  animate={{ x: pill.x, width: pill.w }}
-                  transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 36 }}
-                />
-              )}
+              <LayoutGroup id="home-tabs">
               {TAB_KEYS.map((t) => {
                 const Icon = TAB_ICON[t];
                 const label = tr(`tabs.${t}`);
@@ -187,6 +170,15 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
                       active ? "text-on-brand" : "text-muted hover:text-strong",
                     )}
                   >
+                    {/* one highlight, rendered (also on the server) inside the active tab; layoutId slides it to the next tab */}
+                    {active && (
+                      <motion.span
+                        layoutId="tab-highlight"
+                        aria-hidden
+                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand to-brand-mid shadow-[0_6px_16px_-8px_var(--c-brand)]"
+                        transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 36 }}
+                      />
+                    )}
                     <Icon width={17} height={17} className="relative" />
                     <span data-swap className="relative">{label}</span>
                     {n !== null && (
@@ -195,13 +187,15 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
                   </button>
                 );
               })}
+              </LayoutGroup>
             </div>
           </div>
-          <p data-swap className={cn("mt-2.5 flex items-start gap-1.5 text-[0.75rem] text-muted", stuck && "hidden")}>
-            <IconInfo width={14} height={14} className="mt-0.5 shrink-0" /> {tr("site.dataNote")}
-          </p>
         </div>
       </div>
+      {/* always shown, outside the sticky part: nothing appears/disappears while scrolling (no layout shift) */}
+      <p data-swap className="mt-2.5 flex items-start gap-1.5 px-1 text-[0.75rem] text-muted">
+        <IconInfo width={14} height={14} className="mt-0.5 shrink-0" /> {tr("site.dataNote")}
+      </p>
 
       <div
         ref={panel}
@@ -209,7 +203,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
         role="tabpanel"
         aria-labelledby={`tab-${tab}`}
         aria-busy={pending}
-        className={cn("relative mt-8 transition-opacity duration-300", pending && "pointer-events-none opacity-50")}
+        className={cn("relative mt-6 transition-opacity duration-300", pending && "pointer-events-none opacity-50")}
       >
         <AnimatePresence mode="wait" initial={false} custom={dir}>
           <motion.div
