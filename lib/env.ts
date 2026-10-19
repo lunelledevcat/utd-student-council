@@ -1,8 +1,15 @@
-// Env access in one place. Only the Supabase URL / anon key are NEXT_PUBLIC_ (public by design).
-export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "";
-export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+// Env access in one place. On Cloudflare, vars + secrets (wrangler.jsonc / wrangler secret put / .dev.vars) are on
+// process.env (nodejs_compat).
 
-export const supabaseConfigured = () => !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+/**
+ * Public values (wrangler.jsonc "vars") read at RUNTIME. Next.js replaces a literal `process.env.NEXT_PUBLIC_X` with
+ * its build-time value, so these are read by computed name: changing a var in Cloudflare needs no rebuild.
+ */
+export const publicEnv = (name: "NEXT_PUBLIC_SITE_URL" | "NEXT_PUBLIC_TURNSTILE_SITE_KEY") => process.env[name] ?? "";
+export const siteUrl = () => publicEnv("NEXT_PUBLIC_SITE_URL") || "http://localhost:3000";
+
+/** Google sign-in is usable: Auth.js secret + Google OAuth client set. */
+export const authConfigured = () => !!(process.env.AUTH_SECRET && process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
 
 const list = (v: string | undefined) =>
   (v ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
@@ -28,7 +35,7 @@ export function canSignIn(email: string | null | undefined, googleVerified: bool
   return isAllowedEmail(e) || adminEmails().includes(e);
 }
 
-/** Role from ADMIN_EMAILS (re-evaluated every request) or the role stored in profiles; null = signed in, no access yet. */
+/** Role from ADMIN_EMAILS (re-evaluated every request) or the role stored on the user; null = signed in, no access yet. */
 export function roleFor(email: string, storedRole: string | null | undefined): "admin" | "council" | "teacher" | null {
   if (adminEmails().includes(email.trim().toLowerCase())) return "admin";
   return storedRole === "council" || storedRole === "teacher" ? storedRole : null;

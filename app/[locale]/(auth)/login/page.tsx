@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Illustration } from "@/components/icons/Illustration";
 import { getSession } from "@/lib/auth";
-import { allowedDomain, supabaseConfigured } from "@/lib/env";
+import { allowedDomain, authConfigured } from "@/lib/env";
 import { redirect } from "@/i18n/navigation";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -25,8 +25,9 @@ export default async function LoginPage({ params, searchParams }: { params: Prom
   const t = await getTranslations({ locale, namespace: "auth" });
   const s = await getSession();
   if (s) redirect({ href: s.role ? "/dashboard" : "/pending-access", locale });
-  const ok = supabaseConfigured();
-  const key = !ok ? "config" : error === "domain" || error === "oauth" || error === "config" ? error : error ? "oauth" : null;
+  const ok = authConfigured();
+  // Auth.js sends ?error=AccessDenied when the signIn callback refused the address (domain / not verified)
+  const key = !ok ? "config" : error === "AccessDenied" || error === "domain" ? "domain" : error ? "oauth" : null;
   const msg = key ? t(`errors.${key}`, { domain: allowedDomain() }) : null;
 
   return (
