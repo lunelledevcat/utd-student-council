@@ -15,9 +15,19 @@ export type Session = { id: string; email: string; role: Role | null };
  *  - others = profiles.role, set by an admin in /admin/users
  */
 async function resolveRole(id: string, email: string): Promise<Role | null> {
-  if (roleFor(email, null) === "admin") return "admin"; // no DB round-trip for admins
-  const { data } = await adminClient().from("profiles").select("role").eq("id", id).maybeSingle();
-  return roleFor(email, data?.role);
+  const db = adminClient();
+  const { data } = await db.from("profiles").select("role").eq("id", id).maybeSingle();
+  const stored = data?.role ?? null;
+  const role = roleFor(email, stored);
+  // Keep the database in step with ADMIN_EMAILS: RLS (public.is_staff) reads profiles.role, so an admin must be stored
+  // as 'admin' to see/review others' rows through their own session, and someone removed from ADMIN_EMAILS must lose
+  // that at the database level too (not only in the app), or their token would keep staff rights against the REST API.
+  const want = role === "admin" ? "admin" : stored === "admin" ? null : stored;
+  if (want !== stored) {
+    const { error } = await db.from("profiles").upsert({ id, email, role: want });
+    if (error) console.error("[auth] role sync failed", error.message);
+  }
+  return role;
 }
 
 /** Google's own "email verified" claim (Supabase keeps it in user_metadata and in the identity data). */

@@ -205,3 +205,26 @@ of tab highlights, sticky-bar position). Before/after screenshots + JSON in `C:\
 - `npm run test:auth` checks these rules (10 cases: admin gmail -> /admin, other gmail -> bounced, school address without
   role -> /pending-access, unverified, look-alike domains…). The real Google round trip was not exercised here:
   it needs the anon key and the Google provider configured in Supabase.
+
+## Back office on the real database (2026-10-19)
+`npm run test:e2e` — Playwright against the real Supabase project with two throw-away accounts
+(e2e-admin@ / e2e-council@utd.ac.th, created confirmed by the service role in global setup, signed in with a real
+session cookie produced by @supabase/ssr, deleted with everything they created in teardown). The test server is a
+local `next start` with test-only overrides: the e2e admin is added to ADMIN_EMAILS and Cloudflare's always-pass
+Turnstile test keys are used. No auth code path is special-cased for tests.
+Covered: announcements (create, edit while pending, approve -> on site, reject with reason, delete), activity with
+2 uploaded photos (pending files private, approve copies 480/960/1920 to the public bucket, site shows them, hero
+toggle, delete removes row + files), policy TH/EN (approve, /th + /en page, staff edit, delete -> 404), members with
+and without IG consent, advisors, academic year with copy, /admin/setup (admin only, no secret values in the HTML),
+voice form + status lookup.
+Bugs found and fixed:
+- **No review ever stuck.** `lock_review_columns()` trusted only `is_staff()` (auth.uid()), but reviews, photo
+  publishing and hero changes run with the service role (after the app's role check), whose auth.uid() is null —
+  the trigger silently reset them to pending. Migration 0005 trusts the service role / direct DB sessions.
+- **ADMIN_EMAILS admins were nobody in the database.** RLS reads profiles.role; admins from the env list had none,
+  so they could not see others' pending rows. `resolveRole` now keeps profiles.role in step with ADMIN_EMAILS
+  (promote when listed, demote a stored admin when removed — also at DB level, so a removed admin's token loses staff
+  rights against the REST API).
+- Deleted photos: removed from the buckets (verified), but Supabase's CDN can keep serving a cached public copy for up
+  to the object's cache time (1 h default).
+Timing before speed work (local, 10 × 2400×1500 JPEG): upload 10 photos 56.7 s, save form 5.6 s.

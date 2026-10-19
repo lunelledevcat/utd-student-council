@@ -43,3 +43,11 @@ yarn-error.log*
 next-env.d.ts
 .data/
 .shots/
+
+.vercel
+.env*
+
+# playwright
+/e2e/.auth/
+/test-results/
+/playwright-report/
