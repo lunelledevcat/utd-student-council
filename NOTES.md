@@ -122,3 +122,19 @@ Behaviour only was studied; no code, images, text or logos were copied.
   Sans and Kanit has its own Latin set, so the pair already matches and switching language never swaps fonts (no
   reflow from font loading, no extra download).
 - `npm run i18n:check` (scripts/check-i18n.mjs) fails on keys missing in either file, empty values, or placeholder typos.
+
+## Back office (2026-10-19)
+- `/[locale]/dashboard`: overview (counts / pending per type for a year), one list + form per content type
+  (announcements, activities, policies, members, advisors), `/dashboard/hero` (staff: approved photos -> banner + order),
+  `/dashboard/years` (admin: add a year, optionally copy last year's structure as *pending* rows; set current year).
+- Forms are generated from `lib/admin/entities.ts`; translatable fields have a ไทย / English tab (both inputs stay in
+  the form, the tab only toggles visibility). English is optional everywhere. Timeline English = one line per Thai step.
+- Writes use the signed-in user's session client, so RLS + `lock_review_columns` keep council rows `pending`;
+  approve/reject/hide, photo publishing, years and hero use the service role only after a role check in the action.
+  Approving a row also publishes its photos (copied pending -> public bucket).
+- Photo upload: signed upload URL to the private bucket -> server re-encodes with sharp (EXIF stripped, 480/960/1920 webp
+  + blur) -> `photos` row `pending`. Limit 60 uploads / 10 min per user.
+- Back-office pages are server-rendered; their language switch is a normal navigation.
+- **Not exercised in a browser:** without Supabase env vars the dashboard redirects to sign-in, so only build/typecheck
+  and the redirect were verified. Test with a real project before handing it to the council.
+- `supabase/seed.sql` regenerated for the new schema (`node scripts/gen-seed.mjs`).

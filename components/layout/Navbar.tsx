@@ -8,7 +8,7 @@ import { Link } from "@/i18n/navigation";
 import { SITE } from "@/lib/site";
 
 /** Round logo slot. [placeholder] until the real crest / council logo files are added to /public. */
-function LogoSlot({ label, text, delay }: { label: string; text: string; delay: number }) {
+function LogoSlot({ label, text, delay, className }: { label: string; text: string; delay: number; className?: string }) {
   const reduce = useReducedMotion();
   return (
     <motion.span
@@ -17,7 +17,7 @@ function LogoSlot({ label, text, delay }: { label: string; text: string; delay: 
       initial={reduce ? false : { scale: 0.3, opacity: 0, rotate: -20 }}
       animate={{ scale: 1, opacity: 1, rotate: 0 }}
       transition={{ type: "spring", stiffness: 380, damping: 16, delay }}
-      className="no-select grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white font-display text-[0.62rem] font-semibold leading-none text-brand shadow-[0_0_0_3px_rgb(255_255_255/0.15)] sm:h-11 sm:w-11 md:h-[54px] md:w-[54px] md:text-xs"
+      className={`no-select grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white font-display text-[0.62rem] font-semibold leading-none text-brand shadow-[0_0_0_3px_rgb(255_255_255/0.15)] sm:h-11 sm:w-11 md:h-[54px] md:w-[54px] md:text-xs ${className ?? ""}`}
     >
       {text}
     </motion.span>
@@ -38,7 +38,7 @@ export function Navbar() {
       <nav aria-label={t("header.nav")} className="relative mx-auto flex max-w-[1320px] items-center justify-between gap-3 px-4 py-3 md:py-4">
         <Link href="/" className="flex min-w-0 items-center gap-2.5 md:gap-3" aria-label={t("header.home", { name: t("site.name") })}>
           <LogoSlot label={t("header.schoolLogoLabel")} text={t("header.schoolLogo")} delay={0.05} />
-          <LogoSlot label={t("header.councilLogoLabel")} text={t("header.councilLogo")} delay={0.15} />
+          <LogoSlot label={t("header.councilLogoLabel")} text={t("header.councilLogo")} delay={0.15} className="max-sm:hidden" />
           <span data-swap className="ml-1 min-w-0">
             <span className="line-clamp-2 block font-display text-[0.85rem] font-semibold leading-tight sm:truncate sm:text-[1.1rem] sm:leading-snug md:text-[1.35rem]">
               {t("site.name")}

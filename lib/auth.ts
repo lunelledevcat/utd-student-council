@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/server";
 export type Role = "council" | "teacher" | "admin";
 export type Session = { id: string; email: string; role: Role | null };
 
-export const ROLE_LABEL: Record<Role, string> = { council: "สภานักเรียน", teacher: "ครู", admin: "ผู้ดูแลระบบ" };
 
 /**
  * Role is NOT derived from the email domain (students have @utd.ac.th too):

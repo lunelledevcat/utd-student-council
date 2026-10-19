@@ -1,13 +1,14 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-export type Bucket = "page" | "api" | "form" | "login";
+export type Bucket = "page" | "api" | "form" | "login" | "upload";
 
 const RULES: Record<Bucket, { max: number; windowSec: number }> = {
   page: { max: 60, windowSec: 60 }, // 60 req/min
   api: { max: 20, windowSec: 60 }, // 20 req/min
   form: { max: 3, windowSec: 600 }, // 3 per 10 min (/voice)
   login: { max: 5, windowSec: 900 }, // 5 per 15 min (/login, OAuth start)
+  upload: { max: 60, windowSec: 600 }, // 60 photos / 10 min per signed-in user (back office)
 };
 
 const hasUpstash = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);

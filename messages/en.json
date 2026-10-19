@@ -20,7 +20,7 @@
     "nav": "Header",
     "home": "{name} home",
     "schoolLogo": "[Crest]",
-    "councilLogo": "[Council]",
+    "councilLogo": "[Logo]",
     "schoolLogoLabel": "[School logo]",
     "councilLogoLabel": "[Student council logo]",
     "language": "Language",
@@ -85,8 +85,16 @@
     "ownerMissing": "[Responsible team — to be added]",
     "timeline": "Progress timeline",
     "timelineMissing": "[No timeline yet — to be added]",
-    "status": { "planned": "Planned", "in-progress": "In progress", "done": "Done" },
-    "state": { "planned": "In the plan", "in-progress": "Under way", "done": "Completed" }
+    "status": {
+      "planned": "Planned",
+      "in-progress": "In progress",
+      "done": "Done"
+    },
+    "state": {
+      "planned": "In the plan",
+      "in-progress": "Under way",
+      "done": "Completed"
+    }
   },
   "people": {
     "council": "Student Council Committee",
@@ -158,7 +166,13 @@
     "formSub": "Tell us about a problem or an idea — the council reads every message.",
     "category": "Category",
     "choose": "Choose a category",
-    "categories": { "learning": "Learning", "activities": "Activities", "environment": "Environment", "welfare": "Welfare", "other": "Other" },
+    "categories": {
+      "learning": "Learning",
+      "activities": "Activities",
+      "environment": "Environment",
+      "welfare": "Welfare",
+      "other": "Other"
+    },
     "message": "Message",
     "placeholder": "Type your message here…",
     "anonymous": "Stay anonymous",
@@ -174,7 +188,11 @@
     "checking": "Checking…",
     "status": "Status:",
     "reply": "Council reply:",
-    "statuses": { "received": "Received", "reviewing": "Under review", "answered": "Answered" },
+    "statuses": {
+      "received": "Received",
+      "reviewing": "Under review",
+      "answered": "Answered"
+    },
     "errors": {
       "notFound": "Code not found",
       "tooMany": "Too many lookups, please wait a moment",
@@ -203,5 +221,236 @@
     "pendingTitle": "Waiting for an administrator",
     "pendingBody": "You are signed in as {email}, but you don't have back-office access yet. Ask a teacher advisor or the administrator to grant it, then sign in again.",
     "signOut": "Sign out"
+  },
+  "dashboard": {
+    "title": "Back office",
+    "nav": {
+      "label": "Back-office menu",
+      "overview": "Overview",
+      "years": "Academic years",
+      "hero": "Banner photos",
+      "viewSite": "View site",
+      "signOut": "Sign out",
+      "signedInAs": "Signed in as"
+    },
+    "roles": {
+      "council": "Student council",
+      "teacher": "Teacher",
+      "admin": "Administrator"
+    },
+    "entities": {
+      "announcements": "Announcements",
+      "activities": "Activities & highlights",
+      "policies": "Policies",
+      "members": "Council members",
+      "advisors": "Teacher advisors"
+    },
+    "overview": {
+      "heading": "Overview",
+      "sub": "Academic Year {ce} ({be})",
+      "pending": "{n} pending",
+      "total": "{n} total",
+      "manage": "Manage",
+      "denied": "You don't have access to that page"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Published",
+      "rejected": "Rejected",
+      "hidden": "Hidden"
+    },
+    "list": {
+      "new": "Add item",
+      "edit": "Edit",
+      "empty": "No items for this academic year yet",
+      "saved": "Saved",
+      "savedPending": "Saved — waiting for a teacher or administrator to approve it",
+      "year": "Academic year",
+      "columns": {
+        "title": "Item",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "reason": "Reason: {reason}",
+      "noEnglish": "No English yet"
+    },
+    "review": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "hide": "Hide",
+      "reasonLabel": "Reason for rejecting",
+      "confirmReject": "Reject",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "confirmDelete": "Delete this item? This can't be undone.",
+      "done": "Status updated"
+    },
+    "form": {
+      "newTitle": "New: {entity}",
+      "editTitle": "Edit: {entity}",
+      "langTabs": "Language",
+      "th": "ไทย",
+      "en": "English",
+      "enNote": "English is optional — empty fields show the Thai text with a TH label on the site",
+      "enOf": "{label} (English)",
+      "required": "Required",
+      "save": "Save",
+      "saving": "Saving…",
+      "back": "Back to list",
+      "reviewNote": "After saving, the item stays “Pending” until a teacher or administrator approves it",
+      "media": "Photos",
+      "details": "Details",
+      "timelineEn": "Timeline (English)",
+      "timelineEnHint": "One line per step, in the same order as the Thai timeline (no dates)"
+    },
+    "fields": {
+      "announcements": {
+        "title": "Title",
+        "published_on": "Date",
+        "body": "Text",
+        "link_url": "Related link",
+        "pinned": "Pin to the top",
+        "cover_photo_id": "Cover photo"
+      },
+      "activities": {
+        "title": "Activity name",
+        "event_date": "Date",
+        "body": "Text",
+        "photos": "Activity photos"
+      },
+      "policies": {
+        "title": "Policy name",
+        "slug": "URL name (slug)",
+        "summary": "Summary",
+        "body": "Details",
+        "progress_status": "Status",
+        "progress": "Progress (%)",
+        "owner": "Responsible",
+        "timeline": "Progress timeline",
+        "sort_order": "Display order",
+        "cover_photo_id": "Cover photo",
+        "photos": "Photo gallery"
+      },
+      "members": {
+        "photo_id": "Portrait (3:4)",
+        "name": "Full name",
+        "nickname": "Nickname",
+        "role_title": "Position",
+        "term_no": "Term",
+        "exec_title": "Executive position",
+        "dept": "Department",
+        "party": "Party",
+        "sort_order": "Display order",
+        "instagram": "Instagram",
+        "contact": "Other contact",
+        "consent_public": "The person agreed to show their contact details"
+      },
+      "advisors": {
+        "photo_id": "Portrait (3:4)",
+        "name": "Full name",
+        "nickname": "Nickname",
+        "role_label": "Role (card badge)",
+        "subject_group": "Subject group",
+        "position": "Position",
+        "sort_order": "Display order",
+        "instagram": "Instagram",
+        "contact": "Other contact",
+        "consent_public": "The person agreed to show their contact details"
+      }
+    },
+    "hints": {
+      "announcements": {
+        "body": "Leave an empty line between paragraphs · the first 2 lines show on the card",
+        "link_url": "e.g. a Google Form — must start with https://"
+      },
+      "activities": {
+        "body": "Leave an empty line between paragraphs"
+      },
+      "policies": {
+        "slug": "Lowercase letters, digits and -, e.g. clean-school",
+        "timeline": "One step per line: YYYY-MM-DD | text   e.g. 2026-08-15 | Work started",
+        "sort_order": "Lower numbers come first"
+      },
+      "members": {
+        "role_title": "A Thai position containing “ประธาน” gets a crown, “รองประธาน” a medal",
+        "sort_order": "Lower numbers come first (president = 0)",
+        "instagram": "Username only, e.g. utd_council",
+        "consent_public": "Unticked = IG / contact never shown on the site"
+      },
+      "advisors": {
+        "role_label": "e.g. Teacher advisor / Head teacher advisor",
+        "instagram": "Username only",
+        "consent_public": "Unticked = IG / contact never shown on the site"
+      }
+    },
+    "options": {
+      "progress_status": {
+        "planned": "Planned",
+        "in-progress": "In progress",
+        "done": "Done"
+      }
+    },
+    "image": {
+      "upload": "Upload photo",
+      "add": "Add photos",
+      "uploading": "Uploading…",
+      "remove": "Remove",
+      "left": "Move earlier",
+      "right": "Move later",
+      "none": "No photo yet",
+      "pending": "Pending",
+      "formats": "JPG / PNG / WebP up to 10 MB · location data (EXIF) is removed automatically"
+    },
+    "errors": {
+      "required": "Required",
+      "tooLong": "Longer than {max} characters",
+      "badDate": "Invalid date",
+      "badUrl": "Must be a link starting with https://",
+      "badNumber": "Enter a number {min}-{max}",
+      "badChoice": "Choose one of the options",
+      "badTimeline": "Line {line}: use YYYY-MM-DD | text",
+      "tooManyTimeline": "At most 50 steps",
+      "timelineEnCount": "The English timeline has more lines than the Thai one",
+      "badImage": "Invalid photo",
+      "badImages": "Invalid photos (max 60)",
+      "badInstagram": "Invalid Instagram username (no link)",
+      "badSlug": "Use a-z, 0-9 and - only (2-80 characters)",
+      "slugTaken": "This URL name (slug) is already used",
+      "fix": "Please check the highlighted fields",
+      "photoNotAllowed": "Some photos are not yours to use",
+      "saveFailed": "Could not save",
+      "editLocked": "Can't save — the item may already be reviewed, or you can't edit it",
+      "badRequest": "Invalid request",
+      "rate": "Too many uploads, wait {min} minutes",
+      "upload": "Upload failed",
+      "deleteFailed": "Can't delete — you can only delete your own pending items",
+      "reviewFailed": "Could not update the status",
+      "reasonRequired": "Please give a reason",
+      "yearInvalid": "Invalid academic year (Buddhist era)",
+      "yearExists": "This year already exists",
+      "yearFailed": "Could not add the year",
+      "forbidden": "You are not allowed to do this"
+    },
+    "years": {
+      "heading": "Academic years",
+      "sub": "Add a new year and choose the year the site shows by default",
+      "add": "Add academic year",
+      "year": "Academic year (B.E.)",
+      "copyFrom": "Copy structure from",
+      "noCopy": "Don't copy",
+      "copyHint": "Copies council positions/order (names left blank) and the advisor list — every copy starts as “Pending”",
+      "current": "Current year",
+      "setCurrent": "Make current",
+      "added": "Year added"
+    },
+    "hero": {
+      "heading": "Banner photos",
+      "sub": "Choose approved photos for the home page slider and their order",
+      "empty": "No approved photos yet",
+      "show": "Show in banner",
+      "order": "Order",
+      "save": "Save",
+      "saved": "Saved"
+    }
   }
 }
