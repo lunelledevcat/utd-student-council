@@ -11,7 +11,8 @@
     "check:layout": "node scripts/check-layout.mjs",
     "svg:optimize": "svgo -f public/illustrations -o public/illustrations --multipass",
     "test:auth": "node --no-warnings scripts/test-auth-rules.mts",
-    "env:docs": "node --no-warnings scripts/gen-env-docs.mts"
+    "env:docs": "node --no-warnings scripts/gen-env-docs.mts",
+    "db:migrate": "node scripts/db-migrate.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
