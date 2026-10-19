@@ -1,17 +1,17 @@
+// Fixed, non-translatable site settings. Every visible text lives in messages/<locale>.json.
 export const SITE = {
-  name: "คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์",
-  short: "สภานักเรียนโรงเรียนอุตรดิตถ์",
-  nameEn: "Uttaradit School Student Council",
-  school: "โรงเรียนอุตรดิตถ์",
-  schoolEn: "Uttaradit School",
-  abbr: "อ.ต.",
   founded: 2452,
-  description: "คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์ — กิจกรรมและข่าวสาร นโยบาย ทำเนียบคณะกรรมการ และครูที่ปรึกษา",
-  address: "15 ถ.อินใจมี-ประชานิมิตร ต.ท่าอิฐ อ.เมือง จ.อุตรดิตถ์",
   facebook: "#", // [placeholder] URL เพจ Facebook
   instagram: "#", // [placeholder] URL Instagram
-  dataNote: "[หมายเหตุข้อมูล — เช่น ข้อมูลอัปเดตล่าสุด / แจ้งแก้ไขข้อมูลได้ที่ ...]", // [placeholder]
 } as const;
 
-export const VOICE_CATEGORIES = ["การเรียน", "กิจกรรม", "สิ่งแวดล้อม", "สวัสดิการ", "อื่นๆ"] as const;
-
+/** Voice categories: stored value (Thai, kept for existing rows) -> message key under voice.categories. */
+export const VOICE_CATEGORIES = {
+  การเรียน: "learning",
+  กิจกรรม: "activities",
+  สิ่งแวดล้อม: "environment",
+  สวัสดิการ: "welfare",
+  อื่นๆ: "other",
+} as const;
+export type VoiceCategory = keyof typeof VOICE_CATEGORIES;
+export const VOICE_CATEGORY_VALUES = Object.keys(VOICE_CATEGORIES) as [VoiceCategory, ...VoiceCategory[]];

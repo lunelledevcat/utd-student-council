@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion, type PanInfo } from "motion/react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import type { Photo } from "@/lib/content";
 import { IconChevronLeft, IconChevronRight } from "@/components/ui/icons";
@@ -14,10 +15,11 @@ const ORIGINS = ["20% 30%", "80% 25%", "70% 80%", "25% 75%"];
 /**
  * Full-frame hero slider: Ken Burns + 1.2 s crossfade, auto-advance 6 s (paused on hover, focus and drag),
  * mouse drag / touch swipe, ←/→ keys, glass arrows (hover on desktop, always on phones), pill dots bottom-centre.
- * `children` (navy overlay + headline) sit between the photos and the controls.
+ * Renders the rounded banner frame; `children` (navy overlay + headline) sit between the photos and the controls.
  * No photos -> one navy gradient slide, no controls.
  */
 export function HeroSlides({ photos, children }: { photos: Photo[]; children: React.ReactNode }) {
+  const t = useTranslations("hero");
   const reduce = useReducedMotion();
   const [i, setI] = useState(0);
   const [hover, setHover] = useState(false);
@@ -28,8 +30,8 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
 
   useEffect(() => {
     if (paused || n < 2) return;
-    const t = setTimeout(() => setI((x) => (x + 1) % n), INTERVAL);
-    return () => clearTimeout(t);
+    const id = setTimeout(() => setI((x) => (x + 1) % n), INTERVAL);
+    return () => clearTimeout(id);
   }, [i, paused, n]);
 
   const go = (d: number) => setI((x) => (x + d + n) % n);
@@ -41,11 +43,15 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
   const p = photos[i];
 
   return (
+    <section
+      aria-label={t("label")}
+      className="relative isolate aspect-[4/3] overflow-hidden rounded-[20px] bg-gradient-to-br from-brand-deep via-[#0b1f4d] to-brand-mid text-on-brand shadow-soft sm:aspect-[16/7] lg:aspect-[16/5]"
+    >
     <div
       className="group absolute inset-0 outline-none"
       role={n > 1 ? "region" : undefined}
-      aria-roledescription={n > 1 ? "สไลด์ภาพ" : undefined}
-      aria-label={n > 1 ? `แบนเนอร์ ภาพที่ ${i + 1} จาก ${n}` : undefined}
+      aria-roledescription={n > 1 ? t("roledesc") : undefined}
+      aria-label={n > 1 ? t("region", { i: i + 1, n }) : undefined}
       tabIndex={n > 1 ? 0 : undefined}
       onPointerEnter={(e) => e.pointerType === "mouse" && setHover(true)}
       onPointerLeave={(e) => e.pointerType === "mouse" && setHover(false)}
@@ -75,7 +81,7 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
               src={p.src[1920]}
               srcSet={`${p.src[480]} 480w, ${p.src[960]} 960w, ${p.src[1920]} 1920w`}
               sizes="(max-width: 1320px) 100vw, 1320px"
-              alt={p.caption || "ภาพกิจกรรมสภานักเรียน"}
+              alt={p.caption || t("alt")}
               width={p.w}
               height={p.h}
               draggable={false}
@@ -102,7 +108,7 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
                 key={side}
                 type="button"
                 tabIndex={-1}
-                aria-label={side === "left" ? "สไลด์ก่อนหน้า" : "สไลด์ถัดไป"}
+                aria-label={t(side === "left" ? "prev" : "next")}
                 onClick={() => go(side === "left" ? -1 : 1)}
                 className={cn(
                   "absolute bottom-2 z-20 grid h-8 w-8 place-items-center md:bottom-auto md:top-1/2 md:-translate-y-1/2 rounded-full border border-white/30 bg-white/15 text-white shadow-lg backdrop-blur-md transition duration-300 hover:scale-110 hover:bg-white/30 md:h-12 md:w-12 md:opacity-0 md:group-hover:opacity-100 md:group-focus-visible:opacity-100",
@@ -113,13 +119,13 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
               </button>
             );
           })}
-          <div className="absolute inset-x-0 bottom-3 z-20 flex justify-center gap-2 md:bottom-4" role="group" aria-label="เลือกสไลด์">
+          <div className="absolute inset-x-0 bottom-3 z-20 flex justify-center gap-2 md:bottom-4" role="group" aria-label={t("pick")}>
             {photos.map((ph, k) => (
               <button
                 key={ph.id}
                 type="button"
                 tabIndex={-1}
-                aria-label={`สไลด์ที่ ${k + 1}`}
+                aria-label={t("slide", { n: k + 1 })}
                 aria-current={k === i}
                 onClick={() => setI(k)}
                 className={cn("h-2 rounded-full transition-all duration-500", k === i ? "w-8 bg-pink shadow-glow" : "w-2 bg-white/60 hover:bg-white")}
@@ -129,5 +135,6 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
         </>
       )}
     </div>
+    </section>
   );
 }

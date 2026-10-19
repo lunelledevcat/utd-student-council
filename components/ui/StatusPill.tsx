@@ -1,7 +1,8 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import type { PolicyStatus } from "@/lib/content";
 import { cn } from "@/lib/utils";
-
-export const STATUS_LABEL: Record<PolicyStatus, string> = { done: "สำเร็จ", "in-progress": "กำลังดำเนินการ", planned: "วางแผน" };
 
 const TONE: Record<PolicyStatus, string> = {
   done: "bg-done/12 text-done ring-done/30",
@@ -10,10 +11,11 @@ const TONE: Record<PolicyStatus, string> = {
 };
 
 export function StatusPill({ status, className }: { status: PolicyStatus; className?: string }) {
+  const t = useTranslations("policy.status");
   return (
     <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1", TONE[status], className)}>
       <span aria-hidden className={cn("h-1.5 w-1.5 rounded-full bg-current", status === "in-progress" && "animate-pulse")} />
-      {STATUS_LABEL[status]}
+      {t(status)}
     </span>
   );
 }

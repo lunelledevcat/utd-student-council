@@ -2,6 +2,7 @@
 
 import Script from "next/script";
 import { motion, useReducedMotion } from "motion/react";
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { submitVoice, type VoiceState } from "@/app/actions/voice";
 import { Button } from "@/components/ui/Button";
@@ -36,58 +37,61 @@ function Bloom() {
 }
 
 export function VoiceForm() {
+  const t = useTranslations("voice");
+  const te = useTranslations("voice.errors");
+  const err = (k?: string, v?: Record<string, number>) => (k ? te(k, v) : undefined);
   const [state, action, pending] = useActionState(submitVoice, INITIAL);
 
   if (state.ok) {
     return (
       <div className="space-y-4 rounded-lg border border-line bg-page p-10 text-center" role="status">
         <Bloom />
-        <h3 className="text-2xl font-semibold">ส่งความคิดเห็นเรียบร้อย</h3>
-        <p className="text-muted">เก็บรหัสนี้ไว้ติดตามสถานะ</p>
-        <p className="font-display text-3xl font-semibold tracking-wider text-pink" aria-label={`รหัสอ้างอิง ${state.code}`}>{state.code}</p>
+        <h3 className="text-2xl font-semibold">{t("done")}</h3>
+        <p className="text-muted">{t("keep")}</p>
+        <p className="font-display text-3xl font-semibold tracking-wider text-pink" aria-label={t("refAria", { code: state.code ?? "" })}>{state.code}</p>
       </div>
     );
   }
 
   const input = "w-full rounded-md border-[1.5px] border-line bg-surface px-4 py-3 text-ink placeholder:text-muted focus:border-pink";
   return (
-    <form action={action} className="space-y-5 rounded-lg border border-line bg-page p-6 shadow-soft md:p-10" noValidate>
+    <form data-swap action={action} className="space-y-5 rounded-lg border border-line bg-page p-6 shadow-soft md:p-10" noValidate>
       {SITE_KEY && <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />}
       <div>
-        <h2 className="text-3xl font-semibold">ส่งเสียงถึงสภา</h2>
-        <p className="mt-1 text-muted">เล่าปัญหาหรือไอเดียของคุณ สภาอ่านทุกเรื่อง</p>
+        <h2 className="text-3xl font-semibold">{t("formTitle")}</h2>
+        <p className="mt-1 text-muted">{t("formSub")}</p>
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="category" className="text-sm font-medium">หมวดหมู่</label>
+        <label htmlFor="category" className="text-sm font-medium">{t("category")}</label>
         <select id="category" name="category" defaultValue="" className={input} aria-invalid={!!state.fieldErrors?.category} aria-describedby="category-err">
-          <option value="" disabled>เลือกหมวด</option>
-          {VOICE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          <option value="" disabled>{t("choose")}</option>
+          {Object.entries(VOICE_CATEGORIES).map(([value, key]) => <option key={value} value={value}>{t(`categories.${key}`)}</option>)}
         </select>
-        <p id="category-err" className="text-sm text-danger">{state.fieldErrors?.category}</p>
+        <p id="category-err" className="text-sm text-danger">{err(state.fieldErrors?.category)}</p>
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="message" className="text-sm font-medium">ข้อความ</label>
-        <textarea id="message" name="message" rows={6} maxLength={1000} placeholder="พิมพ์ข้อความของคุณที่นี่…" className={input} aria-invalid={!!state.fieldErrors?.message} aria-describedby="message-err" />
-        <p id="message-err" className="text-sm text-danger">{state.fieldErrors?.message}</p>
+        <label htmlFor="message" className="text-sm font-medium">{t("message")}</label>
+        <textarea id="message" name="message" rows={6} maxLength={1000} placeholder={t("placeholder")} className={input} aria-invalid={!!state.fieldErrors?.message} aria-describedby="message-err" />
+        <p id="message-err" className="text-sm text-danger">{err(state.fieldErrors?.message)}</p>
       </div>
 
       <label className="flex items-center gap-3">
         <input type="checkbox" name="anonymous" defaultChecked className="h-5 w-5 accent-[var(--c-pink)]" />
-        <span>ไม่ระบุตัวตน</span>
+        <span>{t("anonymous")}</span>
       </label>
 
       {/* honeypot — hidden from people, bots fill it */}
       <div aria-hidden className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
-        <label>เว็บไซต์ <input type="text" name="website" tabIndex={-1} autoComplete="off" /></label>
+        <label>{t("honeypot")} <input type="text" name="website" tabIndex={-1} autoComplete="off" /></label>
       </div>
 
-      {SITE_KEY && <div className="cf-turnstile" data-sitekey={SITE_KEY} data-theme="auto" />}
+      {SITE_KEY && <div className="cf-turnstile" data-sitekey={SITE_KEY} data-theme="light" />}
 
-      {state.error && <p role="alert" className="rounded-md bg-pink-soft px-4 py-3 text-ink">{state.error}</p>}
+      {state.error && <p role="alert" className="rounded-md bg-pink-soft px-4 py-3 text-ink">{err(state.error, state.errorValues)}</p>}
 
-      <Button type="submit" disabled={pending} className="w-full">{pending ? "กำลังส่ง…" : "ส่งความคิดเห็น"}</Button>
+      <Button type="submit" disabled={pending} className="w-full">{pending ? t("sending") : t("submit")}</Button>
     </form>
   );
 }

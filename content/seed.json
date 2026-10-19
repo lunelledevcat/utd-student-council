@@ -9,36 +9,44 @@
    "id": "a1",
    "year": 2569,
    "title": "[หัวข้อประชาสัมพันธ์ 1 — เช่น แบบฟอร์มรับฟังความคิดเห็น]",
+   "title_en": "[Announcement 1 — e.g. feedback form]",
    "body": "[รายละเอียดประกาศ — ใส่ข้อความจริง]\n\n[ย่อหน้าที่ 2]",
-   "date": "2026-10-16",
-   "link": "https://forms.gle/placeholder",
+   "body_en": "[Announcement details — add real text]\n\n[Paragraph 2]",
+   "published_on": "2026-10-16",
+   "link_url": "https://forms.gle/placeholder",
    "pinned": true
   },
   {
    "id": "a2",
    "year": 2569,
    "title": "[หัวข้อประชาสัมพันธ์ 2]",
+   "title_en": "[Announcement 2]",
    "body": "[รายละเอียดประกาศ — ใส่ข้อความจริง ข้อความย่อจะแสดง 2 บรรทัดบนการ์ด แล้วแสดงเต็มใน popup]",
-   "date": "2026-10-04",
-   "link": null,
+   "body_en": "[Announcement details — the first 2 lines show on the card, the full text in the popup]",
+   "published_on": "2026-10-04",
+   "link_url": null,
    "pinned": false
   },
   {
    "id": "a3",
    "year": 2569,
    "title": "[หัวข้อประชาสัมพันธ์ 3]",
+   "title_en": "",
    "body": "[รายละเอียดประกาศ]",
-   "date": "2026-09-21",
-   "link": "https://example.com",
+   "body_en": "",
+   "published_on": "2026-09-21",
+   "link_url": "https://example.com",
    "pinned": false
   },
   {
    "id": "a4",
    "year": 2568,
    "title": "[ประกาศปีการศึกษา 2568]",
+   "title_en": "",
    "body": "[รายละเอียด]",
-   "date": "2025-12-01",
-   "link": null,
+   "body_en": "",
+   "published_on": "2025-12-01",
+   "link_url": null,
    "pinned": false
   }
  ],
@@ -47,29 +55,37 @@
    "id": "e1",
    "year": 2569,
    "title": "[ชื่อกิจกรรม 1]",
-   "date": "2026-09-18",
-   "body": "[รายละเอียดกิจกรรม ย่อหน้าที่ 1 — ใส่ข้อความจริง]\n\n[ย่อหน้าที่ 2]\n\n[ย่อหน้าที่ 3]"
+   "title_en": "[Activity 1]",
+   "body": "[รายละเอียดกิจกรรม ย่อหน้าที่ 1 — ใส่ข้อความจริง]\n\n[ย่อหน้าที่ 2]\n\n[ย่อหน้าที่ 3]",
+   "body_en": "[Activity details, paragraph 1 — add real text]\n\n[Paragraph 2]\n\n[Paragraph 3]",
+   "event_date": "2026-09-18"
   },
   {
    "id": "e2",
    "year": 2569,
    "title": "[ชื่อกิจกรรม 2]",
-   "date": "2026-09-04",
-   "body": "[รายละเอียดกิจกรรม]"
+   "title_en": "",
+   "body": "[รายละเอียดกิจกรรม]",
+   "body_en": "",
+   "event_date": "2026-09-04"
   },
   {
    "id": "e3",
    "year": 2569,
    "title": "[ชื่อกิจกรรม 3]",
-   "date": "2026-08-19",
-   "body": "[รายละเอียดกิจกรรม]"
+   "title_en": "[Activity 3]",
+   "body": "[รายละเอียดกิจกรรม]",
+   "body_en": "",
+   "event_date": "2026-08-19"
   },
   {
    "id": "e4",
    "year": 2568,
    "title": "[กิจกรรมปี 2568]",
-   "date": "2025-11-10",
-   "body": "[รายละเอียด]"
+   "title_en": "",
+   "body": "[รายละเอียด]",
+   "body_en": "",
+   "event_date": "2025-11-10"
   }
  ],
  "policies": [
@@ -78,105 +94,140 @@
    "year": 2569,
    "slug": "policy-1",
    "title": "[ชื่อนโยบาย 1]",
+   "title_en": "[Policy 1]",
    "summary": "[สรุปนโยบายโดยย่อ — ใส่ข้อมูลจริง]",
+   "summary_en": "[Short policy summary — add real data]",
    "body": "[รายละเอียดนโยบาย ย่อหน้าที่ 1 — ใส่ข้อมูลจริง]\n\n[ย่อหน้าที่ 2]",
-   "status": "done",
+   "body_en": "[Policy details, paragraph 1 — add real data]\n\n[Paragraph 2]",
+   "progress_status": "done",
    "progress": 100,
    "owner": "[ฝ่ายที่รับผิดชอบ]",
+   "owner_en": "[Responsible team]",
    "timeline": [
     {
      "date": "2026-06-01",
-     "text": "[เริ่มวางแผน]"
+     "text": "[เริ่มวางแผน]",
+     "text_en": "[Planning started]"
     },
     {
      "date": "2026-08-15",
-     "text": "[ดำเนินการระยะที่ 1]"
+     "text": "[ดำเนินการระยะที่ 1]",
+     "text_en": "[Phase 1 under way]"
     },
     {
      "date": "2026-10-01",
-     "text": "[ความคืบหน้าล่าสุด]"
+     "text": "[ความคืบหน้าล่าสุด]",
+     "text_en": "[Latest progress]"
     }
-   ]
+   ],
+   "sort_order": 0
   },
   {
    "id": "p2",
    "year": 2569,
    "slug": "policy-2",
    "title": "[ชื่อนโยบาย 2]",
+   "title_en": "[Policy 2]",
    "summary": "[สรุปนโยบายโดยย่อ — ใส่ข้อมูลจริง]",
+   "summary_en": "[Short policy summary — add real data]",
    "body": "[รายละเอียดนโยบาย ย่อหน้าที่ 1 — ใส่ข้อมูลจริง]\n\n[ย่อหน้าที่ 2]",
-   "status": "in-progress",
+   "body_en": "[Policy details, paragraph 1 — add real data]\n\n[Paragraph 2]",
+   "progress_status": "in-progress",
    "progress": 65,
    "owner": "[ฝ่ายที่รับผิดชอบ]",
+   "owner_en": "[Responsible team]",
    "timeline": [
     {
      "date": "2026-06-01",
-     "text": "[เริ่มวางแผน]"
+     "text": "[เริ่มวางแผน]",
+     "text_en": "[Planning started]"
     },
     {
      "date": "2026-08-15",
-     "text": "[ดำเนินการระยะที่ 1]"
+     "text": "[ดำเนินการระยะที่ 1]",
+     "text_en": "[Phase 1 under way]"
     },
     {
      "date": "2026-10-01",
-     "text": "[ความคืบหน้าล่าสุด]"
+     "text": "[ความคืบหน้าล่าสุด]",
+     "text_en": "[Latest progress]"
     }
-   ]
+   ],
+   "sort_order": 1
   },
   {
    "id": "p3",
    "year": 2569,
    "slug": "policy-3",
    "title": "[ชื่อนโยบาย 3]",
+   "title_en": "[Policy 3]",
    "summary": "[สรุปนโยบายโดยย่อ — ใส่ข้อมูลจริง]",
+   "summary_en": "[Short policy summary — add real data]",
    "body": "[รายละเอียดนโยบาย ย่อหน้าที่ 1 — ใส่ข้อมูลจริง]\n\n[ย่อหน้าที่ 2]",
-   "status": "in-progress",
+   "body_en": "",
+   "progress_status": "in-progress",
    "progress": 40,
    "owner": "[ฝ่ายที่รับผิดชอบ]",
+   "owner_en": "",
    "timeline": [
     {
      "date": "2026-06-01",
-     "text": "[เริ่มวางแผน]"
+     "text": "[เริ่มวางแผน]",
+     "text_en": ""
     },
     {
      "date": "2026-08-15",
-     "text": "[ดำเนินการระยะที่ 1]"
+     "text": "[ดำเนินการระยะที่ 1]",
+     "text_en": ""
     }
-   ]
+   ],
+   "sort_order": 2
   },
   {
    "id": "p4",
    "year": 2569,
    "slug": "policy-4",
    "title": "[ชื่อนโยบาย 4]",
+   "title_en": "",
    "summary": "[สรุปนโยบายโดยย่อ — ใส่ข้อมูลจริง]",
+   "summary_en": "",
    "body": "[รายละเอียดนโยบาย ย่อหน้าที่ 1 — ใส่ข้อมูลจริง]\n\n[ย่อหน้าที่ 2]",
-   "status": "planned",
+   "body_en": "",
+   "progress_status": "planned",
    "progress": 10,
    "owner": "[ฝ่ายที่รับผิดชอบ]",
+   "owner_en": "",
    "timeline": [
     {
      "date": "2026-06-01",
-     "text": "[เริ่มวางแผน]"
+     "text": "[เริ่มวางแผน]",
+     "text_en": ""
     }
-   ]
+   ],
+   "sort_order": 3
   },
   {
    "id": "p5",
    "year": 2569,
    "slug": "policy-5",
    "title": "[ชื่อนโยบาย 5]",
+   "title_en": "",
    "summary": "[สรุปนโยบายโดยย่อ — ใส่ข้อมูลจริง]",
+   "summary_en": "",
    "body": "[รายละเอียดนโยบาย ย่อหน้าที่ 1 — ใส่ข้อมูลจริง]\n\n[ย่อหน้าที่ 2]",
-   "status": "planned",
+   "body_en": "",
+   "progress_status": "planned",
    "progress": 0,
    "owner": "[ฝ่ายที่รับผิดชอบ]",
+   "owner_en": "",
    "timeline": [
     {
      "date": "2026-06-01",
-     "text": "[เริ่มวางแผน]"
+     "text": "[เริ่มวางแผน]",
+     "text_en": ""
     }
-   ]
+   ],
+   "sort_order": 4
   }
  ],
  "members": [
@@ -184,113 +235,169 @@
    "id": "m1",
    "year": 2569,
    "name": "[ชื่อ-สกุล 1]",
+   "name_en": "[Full name 1]",
    "nickname": "[ชื่อเล่น]",
-   "role": "ประธานสภานักเรียน",
-   "termNo": "[วาระที่ x]",
-   "execTitle": "ประธานสภานักเรียน",
+   "nickname_en": "[Nickname]",
+   "role_title": "ประธานสภานักเรียน",
+   "role_title_en": "Student Council President",
+   "term_no": "[วาระที่ x]",
+   "exec_title": "ประธานสภานักเรียน",
+   "exec_title_en": "Student Council President",
    "dept": "บริหารสูงสุด",
+   "dept_en": "Executive Board",
    "party": "[พรรค]",
+   "party_en": "[Party]",
+   "sort_order": 0,
    "instagram": "placeholder_ig",
    "contact": "",
-   "consent": true
+   "consent_public": true
   },
   {
    "id": "m2",
    "year": 2569,
    "name": "[ชื่อ-สกุล 2]",
+   "name_en": "[Full name 2]",
    "nickname": "[ชื่อเล่น]",
-   "role": "รองประธานสภานักเรียน คนที่ 1",
-   "termNo": "[วาระที่ x]",
-   "execTitle": "รองประธานฝ่ายบริหาร",
+   "nickname_en": "[Nickname]",
+   "role_title": "รองประธานสภานักเรียน คนที่ 1",
+   "role_title_en": "First Vice President",
+   "term_no": "[วาระที่ x]",
+   "exec_title": "รองประธานฝ่ายบริหาร",
+   "exec_title_en": "First Vice President",
    "dept": "บริหารสูงสุด",
+   "dept_en": "Executive Board",
    "party": "[พรรค]",
+   "party_en": "[Party]",
+   "sort_order": 1,
    "instagram": "",
    "contact": "",
-   "consent": false
+   "consent_public": false
   },
   {
    "id": "m3",
    "year": 2569,
    "name": "[ชื่อ-สกุล 3]",
+   "name_en": "[Full name 3]",
    "nickname": "[ชื่อเล่น]",
-   "role": "รองประธานสภานักเรียน คนที่ 2",
-   "termNo": "[วาระที่ x]",
-   "execTitle": "รองประธานฝ่ายกิจการ",
+   "nickname_en": "[Nickname]",
+   "role_title": "รองประธานสภานักเรียน คนที่ 2",
+   "role_title_en": "Second Vice President",
+   "term_no": "[วาระที่ x]",
+   "exec_title": "รองประธานฝ่ายกิจการ",
+   "exec_title_en": "Second Vice President",
    "dept": "บริหารสูงสุด",
+   "dept_en": "Executive Board",
    "party": "[พรรค]",
+   "party_en": "[Party]",
+   "sort_order": 2,
    "instagram": "placeholder_ig",
    "contact": "",
-   "consent": true
+   "consent_public": true
   },
   {
    "id": "m4",
    "year": 2569,
    "name": "[ชื่อ-สกุล 4]",
+   "name_en": "[Full name 4]",
    "nickname": "[ชื่อเล่น]",
-   "role": "เลขานุการ",
-   "termNo": "[วาระที่ x]",
-   "execTitle": "เลขานุการ",
+   "nickname_en": "[Nickname]",
+   "role_title": "เลขานุการ",
+   "role_title_en": "Secretary",
+   "term_no": "[วาระที่ x]",
+   "exec_title": "เลขานุการ",
+   "exec_title_en": "",
    "dept": "บริหาร",
+   "dept_en": "Administration",
    "party": "[พรรค]",
+   "party_en": "[Party]",
+   "sort_order": 3,
    "instagram": "",
    "contact": "",
-   "consent": false
+   "consent_public": false
   },
   {
    "id": "m5",
    "year": 2569,
    "name": "[ชื่อ-สกุล 5]",
+   "name_en": "",
    "nickname": "[ชื่อเล่น]",
-   "role": "เหรัญญิก",
-   "termNo": "[วาระที่ x]",
-   "execTitle": "เหรัญญิก",
+   "nickname_en": "",
+   "role_title": "เหรัญญิก",
+   "role_title_en": "Treasurer",
+   "term_no": "[วาระที่ x]",
+   "exec_title": "เหรัญญิก",
+   "exec_title_en": "",
    "dept": "บริหาร",
+   "dept_en": "Administration",
    "party": "[พรรค]",
+   "party_en": "",
+   "sort_order": 4,
    "instagram": "placeholder_ig",
    "contact": "",
-   "consent": true
+   "consent_public": true
   },
   {
    "id": "m6",
    "year": 2569,
    "name": "[ชื่อ-สกุล 6]",
+   "name_en": "",
    "nickname": "[ชื่อเล่น]",
-   "role": "ประชาสัมพันธ์",
-   "termNo": "[วาระที่ x]",
-   "execTitle": "หัวหน้าฝ่ายประชาสัมพันธ์",
+   "nickname_en": "",
+   "role_title": "ประชาสัมพันธ์",
+   "role_title_en": "Public Relations",
+   "term_no": "[วาระที่ x]",
+   "exec_title": "หัวหน้าฝ่ายประชาสัมพันธ์",
+   "exec_title_en": "",
    "dept": "บริหาร",
+   "dept_en": "Administration",
    "party": "[พรรค]",
+   "party_en": "",
+   "sort_order": 5,
    "instagram": "",
    "contact": "",
-   "consent": false
+   "consent_public": false
   },
   {
    "id": "m7",
    "year": 2569,
    "name": "[ชื่อ-สกุล 7]",
+   "name_en": "",
    "nickname": "[ชื่อเล่น]",
-   "role": "กรรมการ",
-   "termNo": "[วาระที่ x]",
-   "execTitle": "หัวหน้าฝ่ายกิจกรรม",
+   "nickname_en": "",
+   "role_title": "กรรมการ",
+   "role_title_en": "Committee Member",
+   "term_no": "[วาระที่ x]",
+   "exec_title": "หัวหน้าฝ่ายกิจกรรม",
+   "exec_title_en": "",
    "dept": "บริหาร",
+   "dept_en": "Administration",
    "party": "[พรรค]",
+   "party_en": "",
+   "sort_order": 6,
    "instagram": "placeholder_ig",
    "contact": "",
-   "consent": true
+   "consent_public": true
   },
   {
    "id": "m8",
    "year": 2569,
    "name": "[ชื่อ-สกุล 8]",
+   "name_en": "",
    "nickname": "[ชื่อเล่น]",
-   "role": "กรรมการ",
-   "termNo": "[วาระที่ x]",
-   "execTitle": "หัวหน้าฝ่ายวิชาการ",
+   "nickname_en": "",
+   "role_title": "กรรมการ",
+   "role_title_en": "Committee Member",
+   "term_no": "[วาระที่ x]",
+   "exec_title": "หัวหน้าฝ่ายวิชาการ",
+   "exec_title_en": "",
    "dept": "บริหาร",
+   "dept_en": "Administration",
    "party": "[พรรค]",
+   "party_en": "",
+   "sort_order": 7,
    "instagram": "",
    "contact": "",
-   "consent": false
+   "consent_public": false
   }
  ],
  "advisors": [
@@ -298,37 +405,55 @@
    "id": "t1",
    "year": 2569,
    "name": "[ชื่อครูที่ปรึกษา 1]",
+   "name_en": "[Teacher advisor 1]",
    "nickname": "[ชื่อเล่น]",
-   "role": "หัวหน้าครูที่ปรึกษา",
-   "subject": "[กลุ่มสาระฯ สังคมศึกษา]",
+   "nickname_en": "[Nickname]",
+   "role_label": "หัวหน้าครูที่ปรึกษา",
+   "role_label_en": "Head Teacher Advisor",
+   "subject_group": "[กลุ่มสาระฯ สังคมศึกษา]",
+   "subject_group_en": "[Social Studies]",
    "position": "[ตำแหน่ง/วิทยฐานะ]",
+   "position_en": "",
+   "sort_order": 0,
    "instagram": "",
    "contact": "[ช่องทางติดต่อ]",
-   "consent": true
+   "consent_public": true
   },
   {
    "id": "t2",
    "year": 2569,
    "name": "[ชื่อครูที่ปรึกษา 2]",
+   "name_en": "",
    "nickname": "[ชื่อเล่น]",
-   "role": "ครูที่ปรึกษา",
-   "subject": "[กลุ่มสาระฯ]",
+   "nickname_en": "",
+   "role_label": "ครูที่ปรึกษา",
+   "role_label_en": "Teacher Advisor",
+   "subject_group": "[กลุ่มสาระฯ]",
+   "subject_group_en": "",
    "position": "[ตำแหน่ง]",
+   "position_en": "",
+   "sort_order": 1,
    "instagram": "",
    "contact": "",
-   "consent": false
+   "consent_public": false
   },
   {
    "id": "t3",
    "year": 2569,
    "name": "[ชื่อครูที่ปรึกษา 3]",
+   "name_en": "",
    "nickname": "[ชื่อเล่น]",
-   "role": "ครูที่ปรึกษา",
-   "subject": "[กลุ่มสาระฯ]",
+   "nickname_en": "",
+   "role_label": "ครูที่ปรึกษา",
+   "role_label_en": "Teacher Advisor",
+   "subject_group": "[กลุ่มสาระฯ]",
+   "subject_group_en": "",
    "position": "[ตำแหน่ง]",
+   "position_en": "",
+   "sort_order": 2,
    "instagram": "",
    "contact": "",
-   "consent": false
+   "consent_public": false
   }
  ]
 }

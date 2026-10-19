@@ -5,19 +5,21 @@ import { z } from "zod";
 import { limit } from "@/lib/ratelimit";
 import { clientIp, hashIp } from "@/lib/security";
 import { newCode, saveVoice, storeConfigured } from "@/lib/voice-store";
-import { VOICE_CATEGORIES as CATEGORIES } from "@/lib/site";
+import { VOICE_CATEGORY_VALUES } from "@/lib/site";
 
 const schema = z.object({
-  category: z.enum(CATEGORIES, { message: "กรุณาเลือกหมวดหมู่" }),
-  message: z.string().trim().min(10, "ข้อความสั้นเกินไป (อย่างน้อย 10 ตัวอักษร)").max(1000, "ข้อความยาวเกินไป (ไม่เกิน 1,000 ตัวอักษร)"),
+  category: z.enum(VOICE_CATEGORY_VALUES, { message: "pickCategory" }),
+  message: z.string().trim().min(10, "short").max(1000, "long"),
   anonymous: z.boolean(),
   website: z.string().max(0), // honeypot: real users leave it empty
 });
 
+// error / fieldErrors are message keys under voice.errors (the form translates them)
 export type VoiceState = {
   ok: boolean;
   code?: string;
   error?: string;
+  errorValues?: Record<string, number>;
   fieldErrors?: Partial<Record<"category" | "message", string>>;
 };
 
@@ -35,7 +37,7 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
   const ip = clientIp(await headers());
 
   const rl = await limit("form", ip);
-  if (!rl.ok) return { ok: false, error: `ส่งบ่อยเกินไป กรุณารอ ${Math.ceil(rl.retryAfter / 60)} นาทีแล้วลองใหม่` };
+  if (!rl.ok) return { ok: false, error: "rate", errorValues: { min: Math.ceil(rl.retryAfter / 60) } };
 
   const parsed = schema.safeParse({
     category: fd.get("category"),
@@ -55,9 +57,9 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
   }
 
   if (!(await verifyTurnstile(fd.get("cf-turnstile-response") as string | null, ip))) {
-    return { ok: false, error: "ยืนยันตัวตนไม่สำเร็จ กรุณาลองใหม่" };
+    return { ok: false, error: "captcha" };
   }
-  if (!storeConfigured()) return { ok: false, error: "ระบบยังไม่พร้อมรับข้อความ กรุณาติดต่อผู้ดูแล" };
+  if (!storeConfigured()) return { ok: false, error: "notReady" };
 
   const code = newCode();
   try {
@@ -74,7 +76,7 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
     });
   } catch (e) {
     console.error("[voice] save failed", e);
-    return { ok: false, error: "บันทึกไม่สำเร็จ กรุณาลองใหม่ภายหลัง" };
+    return { ok: false, error: "save" };
   }
   return { ok: true, code };
 }

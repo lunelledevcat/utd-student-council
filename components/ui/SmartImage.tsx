@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import type { Img } from "@/lib/content";
 import { IconImages, IconUser } from "@/components/ui/icons";
@@ -29,6 +30,7 @@ export function SmartImage({
   priority?: boolean;
   label?: string;
 }) {
+  const t = useTranslations("common");
   const [loaded, setLoaded] = useState(false);
 
   if (!img) {
@@ -47,7 +49,7 @@ export function SmartImage({
       >
         <div className="flex flex-col items-center gap-1.5">
           <Icon width={kind === "portrait" ? 64 : 40} height={kind === "portrait" ? 64 : 40} strokeWidth={1.4} />
-          <span className="text-xs font-medium text-muted">{label ?? (kind === "portrait" ? "[รูปพอร์ตเทรต]" : "[รูปภาพ]")}</span>
+          <span className="text-xs font-medium text-muted">{label ?? t(kind === "portrait" ? "portrait" : "photo")}</span>
         </div>
       </div>
     );

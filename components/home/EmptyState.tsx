@@ -1,10 +1,12 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
+import { useTranslations } from "next-intl";
 import { IconReset } from "@/components/ui/icons";
 
 /** Friendly "nothing here" box: a Kae Farang blossom holding a magnifier, bobbing gently. */
-export function EmptyState({ query, onClear, what = "ข้อมูล" }: { query?: string; onClear?: () => void; what?: string }) {
+export function EmptyState({ query, onClear, kind }: { query?: string; onClear?: () => void; kind: "news" | "policy" | "council" | "advisor" }) {
+  const t = useTranslations("empty");
   const reduce = useReducedMotion();
   const searching = !!query;
   return (
@@ -12,6 +14,7 @@ export function EmptyState({ query, onClear, what = "ข้อมูล" }: { qu
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
+      data-swap
       className="col-span-full mx-auto flex max-w-md flex-col items-center rounded-[20px] border border-dashed border-line bg-surface/70 px-6 py-10 text-center"
     >
       <motion.svg
@@ -32,9 +35,9 @@ export function EmptyState({ query, onClear, what = "ข้อมูล" }: { qu
         <circle cx="90" cy="74" r="13" fill="none" stroke="var(--c-brand-mid)" strokeWidth="5" />
         <path d="m99 84 13 13" stroke="var(--c-brand-mid)" strokeWidth="7" strokeLinecap="round" />
       </motion.svg>
-      <p className="mt-3 font-display text-lg font-semibold text-strong">{searching ? "ไม่พบข้อมูลที่ค้นหา" : `ยังไม่มี${what}`}</p>
+      <p className="mt-3 font-display text-lg font-semibold text-strong">{searching ? t("notFound") : t(kind)}</p>
       <p className="mt-1 text-sm text-muted">
-        {searching ? <>ไม่มีผลลัพธ์สำหรับ “{query}” ลองพิมพ์ชื่อ ตำแหน่ง หรือคำค้นอื่น</> : "สำหรับปีการศึกษาที่เลือกในขณะนี้"}
+        {searching ? t("noResults", { q: query }) : t("forYear")}
       </p>
       {searching && onClear && (
         <button
@@ -42,7 +45,7 @@ export function EmptyState({ query, onClear, what = "ข้อมูล" }: { qu
           onClick={onClear}
           className="mt-5 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 font-display font-medium text-on-brand transition hover:-translate-y-0.5 hover:shadow-lift"
         >
-          <IconReset width={18} height={18} /> ล้างการค้นหา
+          <IconReset width={18} height={18} /> {t("clear")}
         </button>
       )}
     </motion.div>

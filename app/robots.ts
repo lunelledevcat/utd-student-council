@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       { userAgent: [...AI_CRAWLERS], disallow: "/" },
-      { userAgent: "*", allow: "/", disallow: ["/api/", "/dashboard/", "/admin/", "/login", "/auth/", "/pending-access", "/_hp/"] },
+      { userAgent: "*", allow: "/", disallow: ["/api/", "/auth/", "/_hp/", ...["", "/th", "/en"].flatMap((l) => [`${l}/dashboard`, `${l}/admin`, `${l}/login`, `${l}/pending-access`])] },
     ],
     sitemap: `${base}/sitemap.xml`,
   };

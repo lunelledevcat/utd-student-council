@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion, type PanInfo } from "motion/react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Img } from "@/lib/content";
@@ -13,6 +14,7 @@ const SWIPE = 60;
 
 /** Swipe/drag, arrows, dots and a thumbnail strip that follows; "expand" opens a full-screen viewer. */
 export function Gallery({ photos, alt, aspect = "aspect-[16/10]" }: { photos: (Img | null)[]; alt: string; aspect?: string }) {
+  const t = useTranslations("gallery");
   const [i, setI] = useState(0);
   const [dir, setDir] = useState(1);
   const [full, setFull] = useState(false);
@@ -28,7 +30,7 @@ export function Gallery({ photos, alt, aspect = "aspect-[16/10]" }: { photos: (I
         <button
           type="button"
           onClick={() => setFull(true)}
-          aria-label="ดูภาพเต็มจอ"
+          aria-label={t("full")}
           className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-brand-deep/55 text-white backdrop-blur transition hover:scale-105 hover:bg-brand-deep/75"
         >
           <IconExpand />
@@ -46,6 +48,7 @@ function Stage({
   photos: (Img | null)[]; alt: string; i: number; dir: number; go: (to: number) => void; className?: string;
   children?: React.ReactNode; sizes?: string; fit?: boolean;
 }) {
+  const t = useTranslations("gallery");
   const reduce = useReducedMotion();
   const n = photos.length;
   const onDragEnd = (_: unknown, info: PanInfo) => {
@@ -56,8 +59,8 @@ function Stage({
     <div
       className={cn("group relative overflow-hidden bg-surface-2", className)}
       role="region"
-      aria-roledescription="แกลเลอรี"
-      aria-label={`${alt} — ภาพที่ ${i + 1} จาก ${n}`}
+      aria-roledescription={t("roledesc")}
+      aria-label={t("region", { alt, i: i + 1, n })}
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === "ArrowRight") go(i + 1);
@@ -80,7 +83,7 @@ function Stage({
         >
           <SmartImage
             img={photos[i]}
-            alt={`${alt} ภาพที่ ${i + 1}`}
+            alt={t("image", { alt, i: i + 1 })}
             sizes={sizes}
             className="h-full w-full"
             imgClassName={fit ? "!object-contain" : undefined}
@@ -97,7 +100,7 @@ function Stage({
               <button
                 key={k}
                 type="button"
-                aria-label={`ภาพที่ ${k + 1}`}
+                aria-label={t("pick", { i: k + 1 })}
                 aria-current={k === i}
                 onClick={() => go(k)}
                 className={cn("h-2 rounded-full shadow transition-all duration-300", k === i ? "w-6 bg-pink" : "w-2 bg-white/70 hover:bg-white")}
@@ -111,12 +114,13 @@ function Stage({
 }
 
 function Arrow({ side, onClick }: { side: "left" | "right"; onClick: () => void }) {
+  const t = useTranslations("gallery");
   const Icon = side === "left" ? IconChevronLeft : IconChevronRight;
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={side === "left" ? "ภาพก่อนหน้า" : "ภาพถัดไป"}
+      aria-label={t(side === "left" ? "prev" : "next")}
       className={cn(
         "absolute top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/85 text-brand shadow-soft backdrop-blur transition hover:scale-110 hover:bg-white sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100",
         side === "left" ? "left-3" : "right-3",
@@ -128,6 +132,7 @@ function Arrow({ side, onClick }: { side: "left" | "right"; onClick: () => void 
 }
 
 function Thumbs({ photos, alt, i, go, dark }: { photos: (Img | null)[]; alt: string; i: number; go: (to: number) => void; dark?: boolean }) {
+  const t = useTranslations("gallery");
   const strip = useRef<HTMLDivElement>(null);
   useEffect(() => {
     // scroll the strip only (scrollIntoView would also scroll the page)
@@ -142,7 +147,7 @@ function Thumbs({ photos, alt, i, go, dark }: { photos: (Img | null)[]; alt: str
           key={k}
           type="button"
           onClick={() => go(k)}
-          aria-label={`ภาพที่ ${k + 1}`}
+          aria-label={t("pick", { i: k + 1 })}
           aria-current={k === i}
           className={cn(
             "relative h-16 w-24 shrink-0 overflow-hidden rounded-xl ring-2 ring-offset-2 transition-all duration-300",
@@ -150,7 +155,7 @@ function Thumbs({ photos, alt, i, go, dark }: { photos: (Img | null)[]; alt: str
             k === i ? "ring-pink" : "opacity-60 ring-transparent hover:opacity-100",
           )}
         >
-          <SmartImage img={p} alt={`${alt} ภาพย่อ ${k + 1}`} sizes="96px" className="h-full w-full" label=" " />
+          <SmartImage img={p} alt={t("thumb", { alt, i: k + 1 })} sizes="96px" className="h-full w-full" label=" " />
         </button>
       ))}
     </div>
@@ -160,6 +165,7 @@ function Thumbs({ photos, alt, i, go, dark }: { photos: (Img | null)[]; alt: str
 function FullScreen({
   photos, alt, i, dir, go, onClose,
 }: { photos: (Img | null)[]; alt: string; i: number; dir: number; go: (to: number) => void; onClose: () => void }) {
+  const t = useTranslations("gallery");
   useScrollLock();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -174,7 +180,7 @@ function FullScreen({
     <motion.div
       role="dialog"
       aria-modal="true"
-      aria-label={`${alt} — เต็มจอ`}
+      aria-label={t("fullDialog", { alt })}
       className="fixed inset-0 z-[120] flex flex-col bg-black/95 p-3 sm:p-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -182,7 +188,7 @@ function FullScreen({
     >
       <div className="flex items-center justify-between pb-3 text-white">
         <span className="text-sm text-white/70">{i + 1} / {photos.length}</span>
-        <button type="button" onClick={onClose} aria-label="ปิดภาพเต็มจอ" autoFocus className="grid h-11 w-11 place-items-center rounded-full bg-white/10 hover:bg-white/20">
+        <button type="button" onClick={onClose} aria-label={t("closeFull")} autoFocus className="grid h-11 w-11 place-items-center rounded-full bg-white/10 hover:bg-white/20">
           <IconClose />
         </button>
       </div>

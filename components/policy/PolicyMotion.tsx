@@ -1,14 +1,17 @@
 "use client";
 
 import { animate, motion, useInView, useReducedMotion, useScroll, useSpring } from "motion/react";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
+import { Tx } from "@/components/i18n/LocaleProvider";
 import type { PolicyStatus, TimelineStep } from "@/lib/content";
-import { thaiDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /** Bar runs from 0 to the value with a counting percentage when it scrolls into view. */
 export function PolicyProgress({ value, status }: { value: number; status: PolicyStatus }) {
+  const t = useTranslations("policy");
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true });
   const reduce = useReducedMotion();
@@ -23,13 +26,13 @@ export function PolicyProgress({ value, status }: { value: number; status: Polic
     return () => c.stop();
   }, [inView, value, reduce]);
   return (
-    <div ref={ref} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={value} aria-label="ความคืบหน้านโยบาย">
+    <div ref={ref} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={value} aria-label={t("progressAria")}>
       <div className="mb-2 flex items-end justify-between">
         <span className="font-display text-4xl font-bold tabular-nums text-strong">
           {n}
           <span className="text-xl text-muted">%</span>
         </span>
-        <span className="text-sm text-muted">{status === "done" ? "ดำเนินการเสร็จสิ้น" : status === "in-progress" ? "อยู่ระหว่างดำเนินการ" : "อยู่ในแผน"}</span>
+        <span className="text-sm text-muted">{t(`state.${status}`)}</span>
       </div>
       <div className="h-3 overflow-hidden rounded-full bg-surface-2">
         <motion.div
@@ -45,6 +48,7 @@ export function PolicyProgress({ value, status }: { value: number; status: Polic
 
 /** Vertical timeline; the line draws itself as the reader scrolls through it. */
 export function PolicyTimeline({ steps }: { steps: TimelineStep[] }) {
+  const locale = useLocale();
   const ref = useRef<HTMLOListElement>(null);
   const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 85%", "end 55%"] });
@@ -67,8 +71,8 @@ export function PolicyTimeline({ steps }: { steps: TimelineStep[] }) {
           transition={{ duration: 0.45, delay: i * 0.06 }}
         >
           <span aria-hidden className="absolute -left-7 top-1.5 h-4 w-4 rounded-full border-[3px] border-surface bg-pink shadow-[0_0_0_3px_var(--c-pink-soft)]" />
-          <time dateTime={s.date} className="text-xs font-semibold text-pink">{thaiDate(s.date)}</time>
-          <p className="text-sm text-ink">{s.text}</p>
+          <time dateTime={s.date} className="text-xs font-semibold text-pink">{formatDate(s.date, locale)}</time>
+          <p className="text-sm text-ink"><Tx v={s.text} /></p>
         </motion.li>
       ))}
     </ol>

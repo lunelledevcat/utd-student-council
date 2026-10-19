@@ -1,0 +1,207 @@
+{
+  "meta": {
+    "title": "Uttaradit School Student Council",
+    "description": "Uttaradit School Student Council — activities and news, policies, council members and teacher advisors",
+    "voiceTitle": "Voice to the Council",
+    "voiceDescription": "Send an idea or a complaint to the student council, anonymously if you like, and track it with a reference code",
+    "loginTitle": "Sign in",
+    "pendingTitle": "Waiting for access",
+    "policyNotFound": "Policy not found"
+  },
+  "site": {
+    "name": "Uttaradit School Student Council",
+    "nameEn": "Uttaradit School Student Council",
+    "school": "Uttaradit School",
+    "address": "15 Inchaimi-Prachanimit Rd, Tha It, Mueang, Uttaradit, Thailand",
+    "dataNote": "[Data note — e.g. last updated / report a correction at ...]",
+    "skip": "Skip to content"
+  },
+  "header": {
+    "nav": "Header",
+    "home": "{name} home",
+    "schoolLogo": "[Crest]",
+    "councilLogo": "[Council]",
+    "schoolLogoLabel": "[School logo]",
+    "councilLogoLabel": "[Student council logo]",
+    "language": "Language",
+    "th": "TH",
+    "en": "EN",
+    "thName": "ภาษาไทย",
+    "enName": "English"
+  },
+  "hero": {
+    "label": "Banner",
+    "line1": "Student Council",
+    "line2": "Uttaradit School",
+    "sub": "คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์",
+    "roledesc": "carousel",
+    "region": "Banner, image {i} of {n}",
+    "prev": "Previous slide",
+    "next": "Next slide",
+    "pick": "Choose a slide",
+    "slide": "Slide {n}",
+    "alt": "Student council activity photo"
+  },
+  "year": {
+    "label": "Academic year",
+    "badge": "Academic Year {ce} ({be})",
+    "option": "{ce} ({be})"
+  },
+  "search": {
+    "label": "Search",
+    "placeholder": "Search...",
+    "aria": "Search news, activities, names or positions",
+    "clear": "Clear search"
+  },
+  "tabs": {
+    "aria": "Sections",
+    "news": "Activities & News",
+    "policy": "Policies",
+    "council": "Student Council",
+    "advisor": "Teacher Advisors"
+  },
+  "news": {
+    "announcements": "Announcements",
+    "activities": "Council Activities & Highlights",
+    "readMore": "Read more",
+    "details": "View details",
+    "pinned": "Pinned",
+    "hasLink": "Has a related link",
+    "openLink": "Open related link",
+    "photos": "{n, plural, one {# photo} other {# photos}}"
+  },
+  "policy": {
+    "heading": "Student Council Policies",
+    "details": "View details",
+    "cardAria": "{title} — view policy details",
+    "back": "Back to policies",
+    "detailsAria": "Policy details",
+    "bodyMissing": "[Policy details — to be added]",
+    "gallery": "Photo gallery",
+    "galleryMissing": "[No photos yet — to be added]",
+    "progress": "Progress",
+    "progressAria": "Policy progress",
+    "owner": "Responsible",
+    "ownerMissing": "[Responsible team — to be added]",
+    "timeline": "Progress timeline",
+    "timelineMissing": "[No timeline yet — to be added]",
+    "status": { "planned": "Planned", "in-progress": "In progress", "done": "Done" },
+    "state": { "planned": "In the plan", "in-progress": "Under way", "done": "Completed" }
+  },
+  "people": {
+    "council": "Student Council Committee",
+    "advisors": "Student Council Teacher Advisors",
+    "president": "President",
+    "vice": "Vice President",
+    "advisorRole": "Teacher advisor",
+    "popupTitle": "Profile",
+    "nickname": "Nickname",
+    "roleTerm": "Position (term)",
+    "exec": "Executive position",
+    "dept": "Department",
+    "party": "Party",
+    "role": "Role",
+    "subject": "Subject group",
+    "position": "Position",
+    "year": "Academic year",
+    "contact": "Contact",
+    "noContact": "Contact details are not public",
+    "partyChip": "{party} Party",
+    "teacherChip": "Kru {nickname}"
+  },
+  "empty": {
+    "notFound": "Nothing found",
+    "noResults": "No results for “{q}”. Try a name, a position or another word.",
+    "news": "No activities or news yet",
+    "policy": "No policies yet",
+    "council": "No council members yet",
+    "advisor": "No teacher advisors yet",
+    "forYear": "for the selected academic year",
+    "clear": "Clear search"
+  },
+  "common": {
+    "close": "Close",
+    "thOnly": "TH",
+    "thOnlyTitle": "Shown in Thai (no English version yet)",
+    "photo": "[Photo]",
+    "portrait": "[Portrait]",
+    "scrollTop": "Back to top"
+  },
+  "gallery": {
+    "roledesc": "gallery",
+    "region": "{alt} — image {i} of {n}",
+    "image": "{alt}, image {i}",
+    "thumb": "{alt}, thumbnail {i}",
+    "pick": "Image {i}",
+    "prev": "Previous image",
+    "next": "Next image",
+    "full": "View full screen",
+    "fullDialog": "{alt} — full screen",
+    "closeFull": "Close full screen"
+  },
+  "footer": {
+    "copyright": "© Student Council, {school}",
+    "voice": "Voice to the Council",
+    "login": "Staff sign-in",
+    "honeypot": "Member directory"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "sub": "This page may have moved or no longer exists.",
+    "home": "Back to home"
+  },
+  "voice": {
+    "title": "Voice to the Council",
+    "sub": "Anonymous if you like · messages are never published automatically",
+    "privacy": "We keep only your message and reference code. Your IP address is stored as a hash, only to stop repeat submissions.",
+    "formTitle": "Voice to the Council",
+    "formSub": "Tell us about a problem or an idea — the council reads every message.",
+    "category": "Category",
+    "choose": "Choose a category",
+    "categories": { "learning": "Learning", "activities": "Activities", "environment": "Environment", "welfare": "Welfare", "other": "Other" },
+    "message": "Message",
+    "placeholder": "Type your message here…",
+    "anonymous": "Stay anonymous",
+    "honeypot": "Website",
+    "submit": "Send",
+    "sending": "Sending…",
+    "done": "Message sent",
+    "keep": "Keep this code to track the status",
+    "refAria": "Reference code {code}",
+    "trackTitle": "Track with your reference code",
+    "refLabel": "Reference code",
+    "check": "Check",
+    "checking": "Checking…",
+    "status": "Status:",
+    "reply": "Council reply:",
+    "statuses": { "received": "Received", "reviewing": "Under review", "answered": "Answered" },
+    "errors": {
+      "notFound": "Code not found",
+      "tooMany": "Too many lookups, please wait a moment",
+      "badCode": "Invalid code (format UTD-XXXXXX)",
+      "generic": "Something went wrong, please try again",
+      "rate": "Too many messages — please wait {min} minutes and try again",
+      "pickCategory": "Please choose a category",
+      "short": "Message is too short (at least 10 characters)",
+      "long": "Message is too long (max 1,000 characters)",
+      "captcha": "Verification failed, please try again",
+      "notReady": "Messages can't be received yet — please contact the administrator",
+      "save": "Could not save, please try again later"
+    }
+  },
+  "auth": {
+    "back": "Back to home",
+    "loginTitle": "Staff sign-in",
+    "loginSub": "For council members, teachers and administrators. School Google accounts only.",
+    "google": "Sign in with school email",
+    "noSignup": "No sign-up or passwords — access is granted by an administrator",
+    "errors": {
+      "domain": "School email only (@{domain})",
+      "oauth": "Sign-in failed, please try again",
+      "config": "The system is not configured yet (Supabase) — contact the administrator"
+    },
+    "pendingTitle": "Waiting for an administrator",
+    "pendingBody": "You are signed in as {email}, but you don't have back-office access yet. Ask a teacher advisor or the administrator to grant it, then sign in again.",
+    "signOut": "Sign out"
+  }
+}

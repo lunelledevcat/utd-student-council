@@ -1,4 +1,6 @@
+import createIntlMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
+import { routing } from "@/i18n/routing";
 import { TRAP_PATHS, isAiCrawler, isBlockedTool, verifySearchBot } from "@/lib/bots";
 import { SUPABASE_URL, supabaseConfigured } from "@/lib/env";
 import { ban, isBanned, limit } from "@/lib/ratelimit";
@@ -8,8 +10,13 @@ const isDev = process.env.NODE_ENV === "development";
 const SB_ORIGIN = SUPABASE_URL ? new URL(SUPABASE_URL).origin : "";
 
 // Back office + auth pages: never indexed, require a session (role is checked again server-side in every page/action).
-const PRIVATE = /^\/(dashboard|admin|pending-access)(\/|$)/;
-const NOINDEX = /^\/(dashboard|admin|pending-access|login|auth)(\/|$)/;
+// Page paths may carry a locale prefix (/th, /en); next-intl adds it when missing.
+const PRIVATE = /^(?:\/(?:th|en))?\/(dashboard|admin|pending-access)(\/|$)/;
+const NOINDEX = /^(?:\/(?:th|en))?\/(dashboard|admin|pending-access|login|auth)(\/|$)/;
+const LOGIN = /^(?:\/(?:th|en))?\/login$/;
+// Not pages: route handlers and files keep their unprefixed paths.
+const NOT_PAGE = /^\/(api|auth|_hp)(\/|$)|\.[a-z0-9]+$/i;
+const intl = createIntlMiddleware(routing);
 
 function csp(nonce: string) {
   return [
@@ -63,7 +70,7 @@ export async function proxy(req: NextRequest) {
 
   // 3) rate limit (verified search bots are exempt)
   if (searchBot !== true) {
-    const bucket = pathname === "/login" || pathname.startsWith("/auth/google") ? "login" : pathname.startsWith("/api/") ? "api" : "page";
+    const bucket = LOGIN.test(pathname) || pathname.startsWith("/auth/google") ? "login" : pathname.startsWith("/api/") ? "api" : "page";
     const r = await limit(bucket, ip);
     if (!r.ok) {
       console.warn(`[security] 429 bucket=${bucket} ip=${ip}`);
@@ -77,7 +84,9 @@ export async function proxy(req: NextRequest) {
   const headers = new Headers(req.headers);
   headers.set("x-nonce", nonce);
   headers.set("content-security-policy", policy);
-  const res = NextResponse.next({ request: { headers } });
+  // locale routing ("/" -> "/th", NEXT_LOCALE cookie); the request headers above (nonce) are passed through
+  const res = NOT_PAGE.test(pathname) ? NextResponse.next({ request: { headers } }) : intl(new NextRequest(req, { headers }));
+  if (res.headers.has("location")) return res;
   res.headers.set("content-security-policy", policy);
   if (NOINDEX.test(pathname)) res.headers.set("x-robots-tag", "noindex, nofollow, noai, noimageai");
 
@@ -85,7 +94,7 @@ export async function proxy(req: NextRequest) {
     const user = supabaseConfigured() ? await refreshSession(req, res) : null;
     if (!user) {
       const to = req.nextUrl.clone();
-      to.pathname = "/login";
+      to.pathname = `/${pathname.split("/")[1] === "en" ? "en" : "th"}/login`;
       to.search = "";
       return NextResponse.redirect(to);
     }

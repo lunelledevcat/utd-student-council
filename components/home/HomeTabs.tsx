@@ -8,16 +8,11 @@ import { NewsTab } from "@/components/home/NewsTab";
 import { PeopleTab } from "@/components/home/PeopleTab";
 import { PolicyTab } from "@/components/home/PolicyTab";
 import { IconCalendar, IconChevronDown, IconClose, IconFlag, IconInfo, IconMegaphone, IconSearch, IconTeacher, IconUsers } from "@/components/ui/icons";
-import { SITE } from "@/lib/site";
+import { useLocale, useTranslations } from "next-intl";
 import { TAB_KEYS, filterContent, homeHref, tabCount, type TabKey } from "@/lib/search";
-import { cn } from "@/lib/utils";
+import { ceYear, cn } from "@/lib/utils";
 
-const TABS: Record<TabKey, { label: string; Icon: typeof IconUsers }> = {
-  news: { label: "กิจกรรมและข่าวสาร", Icon: IconMegaphone },
-  policy: { label: "นโยบาย", Icon: IconFlag },
-  council: { label: "คณะกรรมการสภานักเรียน", Icon: IconUsers },
-  advisor: { label: "ครูที่ปรึกษา", Icon: IconTeacher },
-};
+const TAB_ICON: Record<TabKey, typeof IconUsers> = { news: IconMegaphone, policy: IconFlag, council: IconUsers, advisor: IconTeacher };
 
 /**
  * Year select + search + tabs (sticky) and the tab content.
@@ -26,6 +21,8 @@ const TABS: Record<TabKey, { label: string; Icon: typeof IconUsers }> = {
  */
 export function HomeTabs({ content, initialTab }: { content: YearContent; initialTab: TabKey }) {
   const router = useRouter();
+  const tr = useTranslations();
+  const locale = useLocale();
   const reduce = useReducedMotion();
   const [tab, setTab] = useState<TabKey>(initialTab);
   const [dir, setDir] = useState(1);
@@ -63,7 +60,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
     const ro = new ResizeObserver(measure);
     if (list) ro.observe(list);
     return () => ro.disconnect();
-  }, [tab, reduce]);
+  }, [tab, reduce, locale]);
 
   // Hold the panel's height while one tab/year leaves and the next enters, so the page below never jumps.
   const lockHeight = () => {
@@ -83,13 +80,13 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
     setDir(TAB_KEYS.indexOf(t) > TAB_KEYS.indexOf(tab) ? 1 : -1);
     lockHeight();
     setTab(t);
-    window.history.replaceState(null, "", homeHref(t, content.year, content.current));
+    window.history.replaceState(null, "", homeHref(locale, t, content.year, content.current));
     scrollToContent();
   };
 
   const selectYear = (y: number) => {
     lockHeight();
-    startTransition(() => router.push(homeHref(tab, y, content.current), { scroll: false }));
+    startTransition(() => router.push(homeHref(locale, tab, y, content.current), { scroll: false }));
   };
 
   const clear = () => setQuery("");
@@ -107,9 +104,9 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
           <span aria-hidden className="absolute inset-x-6 top-0 h-[3px] rounded-b-full bg-gradient-to-r from-brand-mid via-pink to-gold" />
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
             <div className="flex gap-2.5 lg:w-[480px] lg:shrink-0">
-              <label className="block w-[112px] shrink-0 sm:w-[160px]">
-                <span className={cn("mb-1 flex items-center gap-1.5 text-xs font-semibold text-muted", stuck && "max-lg:sr-only")}>
-                  <IconCalendar width={14} height={14} /> ปีการศึกษา
+              <label className="block w-[136px] shrink-0 sm:w-[176px]">
+                <span data-swap className={cn("mb-1 flex items-center gap-1.5 text-xs font-semibold text-muted", stuck && "max-lg:sr-only")}>
+                  <IconCalendar width={14} height={14} /> {tr("year.label")}
                 </span>
                 <span className="relative block">
                   <select
@@ -118,14 +115,14 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
                     className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-line bg-surface pl-3 pr-9 text-[0.95rem] font-medium text-ink outline-none transition focus:border-pink"
                     aria-busy={pending}
                   >
-                    {content.years.map((y) => <option key={y} value={y}>{y}</option>)}
+                    {content.years.map((y) => <option key={y} value={y}>{tr("year.option", { be: y, ce: ceYear(y) })}</option>)}
                   </select>
                   <IconChevronDown width={16} height={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted" />
                 </span>
               </label>
               <label className="block min-w-0 flex-1">
-                <span className={cn("mb-1 flex items-center gap-1.5 text-xs font-semibold text-muted", stuck && "max-lg:sr-only")}>
-                  <IconSearch width={14} height={14} /> ค้นหา
+                <span data-swap className={cn("mb-1 flex items-center gap-1.5 text-xs font-semibold text-muted", stuck && "max-lg:sr-only")}>
+                  <IconSearch width={14} height={14} /> {tr("search.label")}
                 </span>
                 <span className="relative block">
                   <IconSearch width={17} height={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
@@ -133,8 +130,8 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
                     type="search"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="ค้นหา..."
-                    aria-label="ค้นหาข่าวและกิจกรรม ชื่อคน หรือตำแหน่ง"
+                    placeholder={tr("search.placeholder")}
+                    aria-label={tr("search.aria")}
                     className="h-11 w-full rounded-xl border border-line bg-surface pl-10 pr-10 text-[0.95rem] text-ink outline-none transition placeholder:text-muted/80 focus:border-pink [&::-webkit-search-cancel-button]:hidden"
                   />
                   <AnimatePresence>
@@ -142,7 +139,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
                       <motion.button
                         type="button"
                         onClick={clear}
-                        aria-label="ล้างคำค้นหา"
+                        aria-label={tr("search.clear")}
                         initial={{ opacity: 0, scale: 0.6 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.6 }}
@@ -159,7 +156,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
             <div
               ref={tabsEl}
               role="tablist"
-              aria-label="หมวดเนื้อหา"
+              aria-label={tr("tabs.aria")}
               className="no-scrollbar relative flex min-w-0 flex-1 gap-1 overflow-x-auto rounded-2xl bg-surface-2 p-1"
             >
               {pill && (
@@ -172,7 +169,8 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
                 />
               )}
               {TAB_KEYS.map((t) => {
-                const { label, Icon } = TABS[t];
+                const Icon = TAB_ICON[t];
+                const label = tr(`tabs.${t}`);
                 const active = t === tab;
                 const n = view.q ? tabCount(view, t) : null;
                 return (
@@ -190,7 +188,7 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
                     )}
                   >
                     <Icon width={17} height={17} className="relative" />
-                    <span className="relative">{label}</span>
+                    <span data-swap className="relative">{label}</span>
                     {n !== null && (
                       <span className={cn("relative rounded-full px-1.5 text-[0.7rem] font-semibold", active ? "bg-white/20" : n ? "bg-pink text-white" : "bg-line text-muted")}>{n}</span>
                     )}
@@ -199,8 +197,8 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
               })}
             </div>
           </div>
-          <p className={cn("mt-2.5 flex items-start gap-1.5 text-[0.75rem] text-muted", stuck && "hidden")}>
-            <IconInfo width={14} height={14} className="mt-0.5 shrink-0" /> {SITE.dataNote}
+          <p data-swap className={cn("mt-2.5 flex items-start gap-1.5 text-[0.75rem] text-muted", stuck && "hidden")}>
+            <IconInfo width={14} height={14} className="mt-0.5 shrink-0" /> {tr("site.dataNote")}
           </p>
         </div>
       </div>

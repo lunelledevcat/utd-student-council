@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion, useScroll, useSpring } from "motion/react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { IconArrowUp } from "@/components/ui/icons";
 
@@ -8,6 +9,7 @@ const R = 22;
 
 /** Appears after scrolling down; the ring around it fills with the page scroll progress. */
 export function ScrollTop() {
+  const t = useTranslations("common");
   const reduce = useReducedMotion();
   const [show, setShow] = useState(false);
   const { scrollYProgress } = useScroll();
@@ -18,7 +20,7 @@ export function ScrollTop() {
       {show && (
         <motion.button
           type="button"
-          aria-label="กลับขึ้นด้านบน"
+          aria-label={t("scrollTop")}
           onClick={() => window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" })}
           initial={{ opacity: 0, y: 20, scale: 0.8 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}

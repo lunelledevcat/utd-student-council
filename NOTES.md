@@ -96,3 +96,29 @@ Behaviour only was studied; no code, images, text or logos were copied.
 - REA screenshots appear to freeze CSS keyframe animations (petals sit at the top in every capture while JS-driven
   animations run) — petal fall was not verified in a capture.
 - `gsap` removed (no longer used).
+
+## Theme removed, Thai / English (2026-10-19)
+- Dark mode and the theme toggle are gone: one light theme (`color-scheme: light`), no `dark:` classes, no stored theme.
+- next-intl 4, `localePrefix: "always"`: `/` -> `/th` (default) or the `NEXT_LOCALE` cookie's language; `/th/...`, `/en/...`.
+  Route handlers (`/api`, `/auth`) and the honeypot stay unprefixed. `proxy.ts` runs the next-intl middleware after the
+  existing trap / UA / rate-limit checks and passes the nonce request headers through; PRIVATE / NOINDEX / login rate-limit
+  regexes accept the locale prefix. Old section URLs redirect with or without a prefix.
+- **Live switch on public pages.** Both message bundles and both languages of the content are sent to the browser;
+  the switch swaps the client provider's locale, updates the URL with `history.replaceState` (keeps `?tab=&year=`), sets
+  the cookie and `<html lang>`. A real navigation would remount everything under `[locale]` and lose the open tab, popup
+  and scroll position. Visible text on public pages therefore lives in client components (`useTranslations`).
+  Back office / sign-in pages are server-rendered and switch with a normal navigation.
+- Switch animation: visible `[data-swap]` blocks blur + fade + rise out and back in, staggered top to bottom (~400 ms total,
+  Web Animations API, opacity only with reduced motion). Hero headline swaps word by word through a mask
+  (Intl.Segmenter for Thai). Popups switch in place; since the backdrop covers the header, the popup header has its own
+  TH | EN switch. There is no separate mobile menu in this design — the header switch shows on phones too.
+- Content: optional English columns (migration 0003: `title_en`, `body_en`, `role_title_en`, … ; timeline steps may carry
+  `text_en`). Missing English -> Thai text + small "TH" label (`<Tx>` / `useL()`); search matches both languages.
+- Dates via Intl: th `16 ต.ค. 2569` (Buddhist calendar), en `16 Oct 2026`. Year: th "ปีการศึกษา 2569",
+  en "Academic Year 2026 (2569)"; the year select shows `2569` / `2026 (2569)`.
+- SEO: per-locale `generateMetadata`, `alternates.languages` (hreflang) on pages, `Link` hreflang headers from the
+  middleware, sitemap lists both languages with alternates.
+- Fonts: kept Kanit (headings) + IBM Plex Sans Thai (body) for English too. Plex Sans Thai's Latin glyphs are IBM Plex
+  Sans and Kanit has its own Latin set, so the pair already matches and switching language never swaps fonts (no
+  reflow from font loading, no extra download).
+- `npm run i18n:check` (scripts/check-i18n.mjs) fails on keys missing in either file, empty values, or placeholder typos.

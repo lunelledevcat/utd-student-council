@@ -1,8 +1,9 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
+import { useLocale } from "next-intl";
 import { IconCalendar, IconChevronRight } from "@/components/ui/icons";
-import { cn, thaiDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -35,13 +36,13 @@ export function CardItem({ index, children, className }: { index: number; childr
 
 /** Hover lift lives on this plain wrapper: motion writes inline transforms on layoutId elements, which would cancel it. */
 export function Lift({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("group h-full transition-transform duration-300 ease-out hover:-translate-y-1.5", className)}>{children}</div>;
+  return <div data-swap className={cn("group h-full transition-transform duration-300 ease-out hover:-translate-y-1.5", className)}>{children}</div>;
 }
 
 export function ZoneTitle({ icon, children, count }: { icon: React.ReactNode; children: React.ReactNode; count?: number }) {
   return (
     <div className="mb-5 flex items-center gap-3">
-      <h2 className="flex items-center gap-2.5 text-[1.15rem] font-semibold text-strong md:text-[1.35rem]">
+      <h2 data-swap className="flex items-center gap-2.5 text-[1.15rem] font-semibold text-strong md:text-[1.35rem]">
         <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-pink to-pink-400 text-white shadow-[0_6px_16px_-6px_var(--c-pink)]">{icon}</span>
         {children}
       </h2>
@@ -52,10 +53,11 @@ export function ZoneTitle({ icon, children, count }: { icon: React.ReactNode; ch
 }
 
 export function DateChip({ iso, className }: { iso: string; className?: string }) {
+  const locale = useLocale();
   return (
     <span className={cn("inline-flex items-center gap-1.5 text-[0.8rem] font-medium text-pink", className)}>
       <IconCalendar width={14} height={14} />
-      <time dateTime={iso}>{thaiDate(iso)}</time>
+      <time dateTime={iso}>{formatDate(iso, locale)}</time>
     </span>
   );
 }
@@ -65,9 +67,9 @@ export function DateChip({ iso, className }: { iso: string; className?: string }
  * text cards has one height.
  */
 export function TextCard({
-  icon, meta, title, excerpt, footer, action = "ดูรายละเอียด", badge,
+  icon, meta, title, excerpt, footer, action, badge,
 }: {
-  icon: React.ReactNode; meta: React.ReactNode; title: string; excerpt?: string; footer?: React.ReactNode; action?: string; badge?: React.ReactNode;
+  icon: React.ReactNode; meta: React.ReactNode; title: React.ReactNode; excerpt?: string; footer?: React.ReactNode; action: string; badge?: React.ReactNode;
 }) {
   return (
     <div className="relative flex h-full flex-col gap-2.5 overflow-hidden p-5">

@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 // Static security headers. CSP (with per-request nonce) is set in proxy.ts.
 const securityHeaders = [
@@ -21,19 +24,16 @@ const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false,
   reactStrictMode: true,
   async redirects() {
-    return [
-      // v2 single page: old section routes -> matching tab
-      { source: "/news/:path*", destination: "/", permanent: true },
-      { source: "/events/:path*", destination: "/", permanent: true },
-      { source: "/members", destination: "/?tab=council", permanent: true },
-      { source: "/team", destination: "/?tab=council", permanent: true },
-      { source: "/council", destination: "/?tab=council", permanent: true },
-      { source: "/about", destination: "/?tab=council", permanent: true },
-      { source: "/policies", destination: "/?tab=policy", permanent: true },
-      { source: "/advisors", destination: "/?tab=advisor", permanent: true },
-      { source: "/contact", destination: "/", permanent: true },
-      { source: "/documents", destination: "/", permanent: true },
+    // v2 single page: old section routes -> matching tab (with or without a locale prefix; proxy.ts adds the prefix)
+    const old: [string, string][] = [
+      ["/news/:path*", ""], ["/events/:path*", ""], ["/contact", ""], ["/documents", ""],
+      ["/members", "?tab=council"], ["/team", "?tab=council"], ["/council", "?tab=council"], ["/about", "?tab=council"],
+      ["/policies", "?tab=policy"], ["/advisors", "?tab=advisor"],
     ];
+    return old.flatMap(([from, q]) => [
+      { source: from, destination: `/${q}`, permanent: true },
+      { source: `/:locale(th|en)${from}`, destination: `/:locale${q}`, permanent: true },
+    ]);
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
@@ -48,4 +48,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

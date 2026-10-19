@@ -1,8 +1,10 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
+import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
+import { LocaleSwitch } from "@/components/i18n/LocaleSwitch";
 import { IconClose } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +50,7 @@ export function Modal({
   children: React.ReactNode;
   size?: "md" | "lg" | "xl";
 }) {
+  const t = useTranslations("common");
   const reduce = useReducedMotion();
   const panel = useRef<HTMLDivElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
@@ -110,12 +113,14 @@ export function Modal({
           className="flex shrink-0 items-center gap-3 bg-gradient-to-r from-brand-deep via-brand to-brand-mid px-5 py-4 text-on-brand sm:px-6"
         >
           {icon && <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/12 text-pink-400">{icon}</span>}
-          <h2 id={titleId} className="min-w-0 flex-1 truncate text-[1.05rem] font-semibold sm:text-lg">{title}</h2>
+          <h2 data-swap id={titleId} className="min-w-0 flex-1 truncate text-[1.05rem] font-semibold sm:text-lg">{title}</h2>
+          {/* the page header is behind the backdrop: switch language from here; the popup re-renders in place */}
+          <LocaleSwitch className="h-8 shrink-0 sm:h-9" />
           <button
             ref={closeBtn}
             type="button"
             onClick={onClose}
-            aria-label="ปิด"
+            aria-label={t("close")}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 transition hover:rotate-90 hover:bg-white/20"
           >
             <IconClose />
