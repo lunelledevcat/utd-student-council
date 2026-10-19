@@ -9,7 +9,9 @@
     "lint": "eslint",
     "i18n:check": "node scripts/check-i18n.mjs",
     "check:layout": "node scripts/check-layout.mjs",
-    "svg:optimize": "svgo -f public/illustrations -o public/illustrations --multipass"
+    "svg:optimize": "svgo -f public/illustrations -o public/illustrations --multipass",
+    "test:auth": "node --no-warnings scripts/test-auth-rules.mts",
+    "env:docs": "node --no-warnings scripts/gen-env-docs.mts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

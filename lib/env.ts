@@ -16,3 +16,20 @@ export function isAllowedEmail(email: string | null | undefined) {
   const e = email.trim().toLowerCase();
   return e.endsWith(`@${allowedDomain()}`) && e.split("@").length === 2;
 }
+
+/**
+ * Who may hold a session at all (checked on the server for every request and at the OAuth callback):
+ * a Google-verified address that is either on ALLOWED_EMAIL_DOMAIN or listed in ADMIN_EMAILS. The admin list is the
+ * only exception to the domain rule. Comparison is trimmed + lower-case.
+ */
+export function canSignIn(email: string | null | undefined, googleVerified: boolean) {
+  if (!email || !googleVerified) return false;
+  const e = email.trim().toLowerCase();
+  return isAllowedEmail(e) || adminEmails().includes(e);
+}
+
+/** Role from ADMIN_EMAILS (re-evaluated every request) or the role stored in profiles; null = signed in, no access yet. */
+export function roleFor(email: string, storedRole: string | null | undefined): "admin" | "council" | "teacher" | null {
+  if (adminEmails().includes(email.trim().toLowerCase())) return "admin";
+  return storedRole === "council" || storedRole === "teacher" ? storedRole : null;
+}

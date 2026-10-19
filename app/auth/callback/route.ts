@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { audit, getSession, syncProfile } from "@/lib/auth";
-import { isAllowedEmail } from "@/lib/env";
+import { audit, getSession, googleVerified, syncProfile } from "@/lib/auth";
+import { canSignIn } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(req: NextRequest) {
@@ -16,8 +16,9 @@ export async function GET(req: NextRequest) {
   const user = data.user;
   const email = user?.email?.toLowerCase();
 
-  // Domain is enforced HERE on the server, never by the `hd` hint alone. Unverified or foreign addresses are logged out at once.
-  if (!user || !email || !isAllowedEmail(email) || user.email_confirmed_at == null) {
+  // Enforced HERE on the server: Google-verified address on the school domain, or listed in ADMIN_EMAILS.
+  // Anything else is logged out at once.
+  if (!user || !email || !canSignIn(email, googleVerified(user)) || user.email_confirmed_at == null) {
     await sb.auth.signOut();
     return NextResponse.redirect(`${origin}/login?error=domain`);
   }

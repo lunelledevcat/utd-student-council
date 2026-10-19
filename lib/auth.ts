@@ -1,6 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
-import { adminEmails, isAllowedEmail, supabaseConfigured } from "@/lib/env";
+import type { User } from "@supabase/supabase-js";
+import { canSignIn, roleFor, supabaseConfigured } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,18 +15,23 @@ export type Session = { id: string; email: string; role: Role | null };
  *  - others = profiles.role, set by an admin in /admin/users
  */
 async function resolveRole(id: string, email: string): Promise<Role | null> {
-  if (adminEmails().includes(email)) return "admin";
+  if (roleFor(email, null) === "admin") return "admin"; // no DB round-trip for admins
   const { data } = await adminClient().from("profiles").select("role").eq("id", id).maybeSingle();
-  return data?.role === "council" || data?.role === "teacher" ? data.role : null;
+  return roleFor(email, data?.role);
 }
 
-/** Verified session (token validated by the Auth server) + domain re-check + role. null = not logged in / wrong domain. */
+/** Google's own "email verified" claim (Supabase keeps it in user_metadata and in the identity data). */
+export function googleVerified(u: User) {
+  return u.user_metadata?.email_verified === true || !!u.identities?.some((i) => i.provider === "google" && i.identity_data?.email_verified === true);
+}
+
+/** Verified session (token validated by the Auth server) + sign-in rule re-check + role. null = not logged in / not allowed. */
 export async function getSession(): Promise<Session | null> {
   if (!supabaseConfigured()) return null;
   const { data } = await (await createClient()).auth.getUser();
   const u = data.user;
   const email = u?.email?.toLowerCase();
-  if (!u || !email || !isAllowedEmail(email)) return null;
+  if (!u || !email || !canSignIn(email, googleVerified(u))) return null;
   return { id: u.id, email, role: await resolveRole(u.id, email) };
 }
 

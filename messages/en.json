@@ -453,5 +453,109 @@
       "confirmDelete": "Delete this photo? This can't be undone.",
       "schoolCredit": "From the school website"
     }
+  },
+  "setup": {
+    "title": "System setup",
+    "sub": "Server environment variables — status only, values are never shown",
+    "nav": "System setup",
+    "env": "Environment variables",
+    "mode": "Running in: {mode}",
+    "status": {
+      "set": "Set",
+      "test": "Test value",
+      "missing": "Not set",
+      "unknown": "Can't check"
+    },
+    "need": {
+      "required": "Required in production",
+      "optional": "Optional"
+    },
+    "exposure": {
+      "public": "Public (sent to the browser)",
+      "secret": "Secret"
+    },
+    "labels": {
+      "purpose": "What it does",
+      "where": "Where to get it",
+      "missingDev": "If missing (dev)",
+      "missingProd": "If missing (production)",
+      "open": "Open settings"
+    },
+    "restart": "Change it in .env.local (your machine) or in the host's Environment Variables page, then restart the server",
+    "devWarning": "[setup] These values are missing or test values (details at /admin/setup or in .env.example):",
+    "vars": {
+      "APP_SECRET": {
+        "purpose": "The app's secret: signs short-lived API tokens and salts IP hashes",
+        "where": "Generate it: node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\" and paste the output (at least 32 characters)",
+        "missingDev": "Uses a temporary dev-only key",
+        "missingProd": "API tokens and voice submissions fail (error)"
+      },
+      "NEXT_PUBLIC_SITE_URL": {
+        "purpose": "The site's public address, used for the sitemap, hreflang links and Open Graph",
+        "where": "Your deployed domain, e.g. https://council.utd.ac.th (Vercel → Project → Settings → Domains), no trailing /",
+        "missingDev": "Uses http://localhost:3000",
+        "missingProd": "Sitemap / share links point to localhost"
+      },
+      "NEXT_PUBLIC_SUPABASE_URL": {
+        "purpose": "The Supabase project (database, sign-in, photo storage)",
+        "where": "supabase.com → your project → Project Settings → Data API → Project URL (https://xxxx.supabase.co, no /rest/v1)",
+        "missingDev": "Site uses sample data from content/seed.json; no back office",
+        "missingProd": "No real content, nobody can sign in"
+      },
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY": {
+        "purpose": "Supabase public key, reads approved content (limited by RLS)",
+        "where": "supabase.com → Project Settings → API Keys → Publishable key (or the Legacy tab → anon public)",
+        "missingDev": "Same as missing SUPABASE_URL",
+        "missingProd": "No real content, nobody can sign in"
+      },
+      "SUPABASE_SERVICE_ROLE_KEY": {
+        "purpose": "Supabase admin key (bypasses RLS), server-side only after a role check: approvals, photo uploads, voice messages",
+        "where": "supabase.com → Project Settings → API Keys → Secret key (or Legacy → service_role) — never in browser code",
+        "missingDev": "Voice messages go to .data/voice.jsonl; approve/upload don't work",
+        "missingProd": "Voice form rejects submissions; back office doesn't work"
+      },
+      "UPSTASH_REDIS_REST_URL": {
+        "purpose": "Redis for rate limits and the IP ban list, shared by every server instance",
+        "where": "upstash.com → Redis → Create Database → database page → REST API tab → UPSTASH_REDIS_REST_URL (starts with https://, not rediss://)",
+        "missingDev": "In-memory limiter (fine on one machine)",
+        "missingProd": "Each instance limits on its own — weaker bot protection"
+      },
+      "UPSTASH_REDIS_REST_TOKEN": {
+        "purpose": "Read/write token for the Redis above",
+        "where": "upstash.com → database page → REST API tab → UPSTASH_REDIS_REST_TOKEN (the normal token, not the Readonly token)",
+        "missingDev": "In-memory limiter",
+        "missingProd": "Same as missing URL"
+      },
+      "NEXT_PUBLIC_TURNSTILE_SITE_KEY": {
+        "purpose": "Cloudflare Turnstile public key (the \"not a bot\" check) on the voice form",
+        "where": "dash.cloudflare.com → Turnstile → Add widget → add the site's domain → Site Key — test key 1x00000000000000000000AA (always passes)",
+        "missingDev": "No check widget",
+        "missingProd": "No widget and the form never passes"
+      },
+      "TURNSTILE_SECRET_KEY": {
+        "purpose": "Turnstile secret, verifies the check on the server",
+        "where": "dash.cloudflare.com → Turnstile → your widget → Secret Key — test key 1x0000000000000000000000000000000AA (always passes)",
+        "missingDev": "Check skipped",
+        "missingProd": "Every submission rejected (fails closed)"
+      },
+      "ALLOWED_EMAIL_DOMAIN": {
+        "purpose": "Email domain allowed into the back office (school Google accounts)",
+        "where": "The school's email domain, default utd.ac.th — set only to change it",
+        "missingDev": "Uses utd.ac.th",
+        "missingProd": "Uses utd.ac.th"
+      },
+      "ADMIN_EMAILS": {
+        "purpose": "Administrator emails (comma-separated): instant admin role and the only exception to the domain rule (must be Google-verified)",
+        "where": "The admins' Google addresses, e.g. admin1@utd.ac.th,someone@gmail.com — removing one revokes access at once",
+        "missingDev": "Nobody is admin",
+        "missingProd": "Nobody is admin — no one can grant roles or add years"
+      },
+      "GOOGLE_OAUTH": {
+        "purpose": "Google sign-in (not an .env value — configured in Supabase)",
+        "where": "1) console.cloud.google.com → APIs & Services → Credentials → Create credentials → OAuth client ID → Web application → Authorized redirect URI: https://<project>.supabase.co/auth/v1/callback  2) supabase.com → Authentication → Sign In / Providers → Google → enable, paste Client ID + Client Secret  3) Authentication → URL Configuration → Site URL = NEXT_PUBLIC_SITE_URL, add <SITE_URL>/auth/callback to Redirect URLs",
+        "missingDev": "Sign-in button doesn't work",
+        "missingProd": "Sign-in button doesn't work"
+      }
+    }
   }
 }

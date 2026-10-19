@@ -453,5 +453,109 @@
       "confirmDelete": "ลบรูปนี้ออกจากระบบ? กู้คืนไม่ได้",
       "schoolCredit": "รูปจากเว็บโรงเรียน"
     }
+  },
+  "setup": {
+    "title": "ตั้งค่าระบบ",
+    "sub": "สถานะค่าตั้งค่า (environment variables) ของเซิร์ฟเวอร์ — แสดงเฉพาะสถานะ ไม่แสดงค่าจริง",
+    "nav": "ตั้งค่าระบบ",
+    "env": "ค่าสภาพแวดล้อม",
+    "mode": "โหมดที่รันอยู่: {mode}",
+    "status": {
+      "set": "ตั้งแล้ว",
+      "test": "ใช้ค่าทดสอบ",
+      "missing": "ยังไม่ตั้ง",
+      "unknown": "ตรวจไม่ได้"
+    },
+    "need": {
+      "required": "จำเป็นตอนใช้งานจริง",
+      "optional": "ไม่บังคับ"
+    },
+    "exposure": {
+      "public": "เปิดเผยได้ (ส่งไปถึงเบราว์เซอร์)",
+      "secret": "ห้ามเปิดเผย"
+    },
+    "labels": {
+      "purpose": "ใช้ทำอะไร",
+      "where": "หาจากไหน",
+      "missingDev": "ถ้าไม่ใส่ (ตอน dev)",
+      "missingProd": "ถ้าไม่ใส่ (ตอนใช้งานจริง)",
+      "open": "เปิดหน้าตั้งค่า"
+    },
+    "restart": "แก้ค่าใน .env.local (เครื่องตัวเอง) หรือในหน้า Environment Variables ของโฮสต์ แล้วรีสตาร์ตเซิร์ฟเวอร์",
+    "devWarning": "[ตั้งค่า] ค่าเหล่านี้ยังไม่ได้ตั้งหรือเป็นค่าทดสอบ (ดูรายละเอียดที่ /admin/setup หรือ .env.example):",
+    "vars": {
+      "APP_SECRET": {
+        "purpose": "กุญแจลับของแอป ใช้เซ็นโทเคน API อายุสั้น และเป็นเกลือ (salt) ตอนแปลง IP เป็นค่าแฮช",
+        "where": "สร้างเอง: รันคำสั่ง node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\" แล้วคัดลอกผลลัพธ์มาใส่ (อย่างน้อย 32 ตัวอักษร)",
+        "missingDev": "ใช้คีย์ชั่วคราวสำหรับ dev",
+        "missingProd": "สร้างโทเคน API และบันทึกข้อความส่งเสียงถึงสภาไม่ได้ (error)"
+      },
+      "NEXT_PUBLIC_SITE_URL": {
+        "purpose": "ที่อยู่เว็บจริง ใช้ทำ sitemap, ลิงก์ hreflang และ Open Graph",
+        "where": "โดเมนของเว็บที่ deploy แล้ว เช่น https://council.utd.ac.th (Vercel → Project → Settings → Domains) ไม่ต้องมี / ท้าย",
+        "missingDev": "ใช้ http://localhost:3000",
+        "missingProd": "ลิงก์ใน sitemap/แชร์ชี้ไป localhost — ผิด"
+      },
+      "NEXT_PUBLIC_SUPABASE_URL": {
+        "purpose": "ที่อยู่โปรเจกต์ Supabase (ฐานข้อมูล + ระบบล็อกอิน + เก็บรูป)",
+        "where": "supabase.com → เลือกโปรเจกต์ → Project Settings → Data API → Project URL (รูปแบบ https://xxxx.supabase.co ไม่มี /rest/v1)",
+        "missingDev": "เว็บใช้ข้อมูลตัวอย่างจาก content/seed.json, หลังบ้านเข้าไม่ได้",
+        "missingProd": "ไม่มีข้อมูลจริง, ล็อกอินไม่ได้"
+      },
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY": {
+        "purpose": "คีย์สาธารณะของ Supabase ใช้อ่านข้อมูลที่อนุมัติแล้ว (ถูกจำกัดด้วย RLS)",
+        "where": "supabase.com → Project Settings → API Keys → Publishable key (หรือแท็บ Legacy → anon public)",
+        "missingDev": "เหมือนกรณีไม่มี SUPABASE_URL",
+        "missingProd": "ไม่มีข้อมูลจริง, ล็อกอินไม่ได้"
+      },
+      "SUPABASE_SERVICE_ROLE_KEY": {
+        "purpose": "คีย์สิทธิ์สูงสุดของ Supabase (ข้าม RLS) ใช้เฉพาะฝั่งเซิร์ฟเวอร์หลังตรวจสิทธิ์แล้ว: อนุมัติ, อัปโหลดรูป, บันทึกข้อความส่งเสียง",
+        "where": "supabase.com → Project Settings → API Keys → Secret key (หรือแท็บ Legacy → service_role) — ห้ามใส่ในโค้ดฝั่งหน้าเว็บเด็ดขาด",
+        "missingDev": "ข้อความ /voice เก็บลงไฟล์ .data/voice.jsonl, หลังบ้านอนุมัติ/อัปโหลดไม่ได้",
+        "missingProd": "ส่งเสียงถึงสภาไม่ได้ (ปฏิเสธ), หลังบ้านใช้ไม่ได้"
+      },
+      "UPSTASH_REDIS_REST_URL": {
+        "purpose": "ที่อยู่ Redis สำหรับจำกัดจำนวนคำขอ (rate limit) และรายการ IP ที่ถูกแบน ให้ใช้ร่วมกันทุกเซิร์ฟเวอร์",
+        "where": "upstash.com → Redis → Create Database → หน้า Database → แท็บ REST API → UPSTASH_REDIS_REST_URL (ขึ้นต้น https:// ไม่ใช่ rediss://)",
+        "missingDev": "ใช้ตัวจำกัดในหน่วยความจำ (พอสำหรับเครื่องเดียว)",
+        "missingProd": "จำกัดคำขอแยกกันแต่ละเซิร์ฟเวอร์ — กันบอทได้น้อยลง"
+      },
+      "UPSTASH_REDIS_REST_TOKEN": {
+        "purpose": "โทเคนเขียน/อ่าน Redis ข้างบน",
+        "where": "upstash.com → หน้า Database → แท็บ REST API → UPSTASH_REDIS_REST_TOKEN (ใช้ Token ปกติ ไม่ใช่ Readonly Token)",
+        "missingDev": "ใช้ตัวจำกัดในหน่วยความจำ",
+        "missingProd": "เหมือนกรณีไม่มี URL"
+      },
+      "NEXT_PUBLIC_TURNSTILE_SITE_KEY": {
+        "purpose": "คีย์สาธารณะของ Cloudflare Turnstile (กล่องยืนยันว่าไม่ใช่บอท) บนฟอร์มส่งเสียงถึงสภา",
+        "where": "dash.cloudflare.com → Turnstile → Add widget → ใส่โดเมนเว็บ → Site Key — ทดสอบได้ด้วยคีย์ 1x00000000000000000000AA (ผ่านเสมอ)",
+        "missingDev": "ไม่แสดงกล่องยืนยัน",
+        "missingProd": "ไม่แสดงกล่องยืนยัน และฟอร์มส่งไม่ผ่าน"
+      },
+      "TURNSTILE_SECRET_KEY": {
+        "purpose": "คีย์ลับของ Turnstile ใช้ตรวจผลยืนยันฝั่งเซิร์ฟเวอร์",
+        "where": "dash.cloudflare.com → Turnstile → widget ที่สร้าง → Secret Key — คีย์ทดสอบ 1x0000000000000000000000000000000AA (ผ่านเสมอ)",
+        "missingDev": "ข้ามการตรวจ",
+        "missingProd": "ปฏิเสธทุกการส่ง (fail closed)"
+      },
+      "ALLOWED_EMAIL_DOMAIN": {
+        "purpose": "โดเมนอีเมลที่ล็อกอินหลังบ้านได้ (บัญชี Google ของโรงเรียน)",
+        "where": "โดเมนอีเมลโรงเรียน ค่าเริ่มต้น utd.ac.th — ใส่เฉพาะเมื่อต้องการเปลี่ยน",
+        "missingDev": "ใช้ utd.ac.th",
+        "missingProd": "ใช้ utd.ac.th"
+      },
+      "ADMIN_EMAILS": {
+        "purpose": "อีเมลผู้ดูแลระบบ (คั่นด้วย ,) — ได้สิทธิ์ admin ทันที และเป็นข้อยกเว้นเดียวที่ล็อกอินได้แม้ไม่ใช่โดเมนโรงเรียน (ต้องเป็นอีเมลที่ Google ยืนยันแล้ว)",
+        "where": "ใส่อีเมล Google ของผู้ดูแลเอง เช่น admin1@utd.ac.th,someone@gmail.com — เอาออกจากรายการ = ถอนสิทธิ์ทันที",
+        "missingDev": "ไม่มีใครเป็น admin",
+        "missingProd": "ไม่มีใครเป็น admin — ตั้งสิทธิ์คนอื่น/ปีการศึกษาไม่ได้"
+      },
+      "GOOGLE_OAUTH": {
+        "purpose": "ล็อกอินด้วย Google (ไม่ใช่ค่าใน .env — ตั้งที่ Supabase)",
+        "where": "1) console.cloud.google.com → APIs & Services → Credentials → Create credentials → OAuth client ID → Web application → Authorized redirect URI: https://<project>.supabase.co/auth/v1/callback  2) supabase.com → Authentication → Sign In / Providers → Google → เปิด แล้วใส่ Client ID + Client Secret  3) Authentication → URL Configuration → Site URL = NEXT_PUBLIC_SITE_URL และเพิ่ม <SITE_URL>/auth/callback ใน Redirect URLs",
+        "missingDev": "ปุ่มเข้าสู่ระบบใช้ไม่ได้",
+        "missingProd": "ปุ่มเข้าสู่ระบบใช้ไม่ได้"
+      }
+    }
   }
 }

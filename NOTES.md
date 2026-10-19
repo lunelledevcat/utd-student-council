@@ -186,3 +186,22 @@ of tab highlights, sticky-bar position). Before/after screenshots + JSON in `C:\
   `public/illustrations/LICENSES.md`.
 - Checked with `npm run check:layout` at 1366/1440/1920/390: no horizontal overflow (also during tab switches),
   CLS ≤ 0.004. Screenshots in `C:\dev\utd-shots\compare\bg-svg`.
+
+## Env setup page, admin outside the school domain (2026-10-19)
+- One source for env help: `lib/env-spec.ts` (names, public/secret, test-value rules, links) + `messages/*.json`
+  `setup.vars.*` (purpose / where / missing in dev vs production). It drives `/admin/setup`, the `next dev` warning
+  (`instrumentation.ts`, names only) and `npm run env:docs`, which writes `.env.example` and the README section.
+  `.env.example` is now committed (`!.env.example` in .gitignore) and contains example values only.
+- The old `.env.example` held real keys (never committed — `.env*` was ignored). They were moved into `.env.local`
+  with backups `.env.example.old` / `.env.local.bak` (both ignored; delete them when you're sure). Corrected on the way:
+  `SUPABASE_URL=…/rest/v1/` -> `NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co`, and the Upstash `rediss://` TCP URL
+  -> the `https://` REST URL. `NEXT_PUBLIC_SUPABASE_ANON_KEY` was not in the old file and is still missing.
+- `/admin/setup` (admin only, inside the back-office shell; `/admin` redirects there): ✅ set / ⚠️ test value / ❌ missing
+  per variable, never the value. Google sign-in status comes from Supabase's public `/auth/v1/settings`.
+- Sign-in rule (`canSignIn` / `roleFor` in lib/env.ts, used by `getSession` and `/auth/callback`): Google-verified
+  address (`email_verified` claim) on ALLOWED_EMAIL_DOMAIN, **or** listed in ADMIN_EMAILS (trimmed, lower-case) — the
+  only exception. A role stored as "admin" in the DB is ignored; only ADMIN_EMAILS grants admin. The `hd` hint was removed
+  from the Google request (it hid non-school accounts, so an admin's gmail could not be chosen).
+- `npm run test:auth` checks these rules (10 cases: admin gmail -> /admin, other gmail -> bounced, school address without
+  role -> /pending-access, unverified, look-alike domains…). The real Google round trip was not exercised here:
+  it needs the anon key and the Google provider configured in Supabase.
