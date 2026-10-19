@@ -20,8 +20,10 @@
     { "binding": "BANS", "id": "00000000000000000000000000000000" }
   ],
   "ratelimits": [
-    { "name": "RL_PAGE", "namespace_id": "1001", "simple": { "limit": 60, "period": 60 } },
-    { "name": "RL_API", "namespace_id": "1002", "simple": { "limit": 20, "period": 60 } }
+    // per IP per location. Generous: a whole school can sit behind one NAT address, and every client navigation /
+    // Server Action is a request. Abuse beyond this is for the WAF rate-limiting rules (README).
+    { "name": "RL_PAGE", "namespace_id": "1001", "simple": { "limit": 600, "period": 60 } },
+    { "name": "RL_API", "namespace_id": "1002", "simple": { "limit": 60, "period": 60 } }
   ],
 
   // public values (not secret)

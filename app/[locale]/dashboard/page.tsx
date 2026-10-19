@@ -9,10 +9,10 @@ import { ceYear } from "@/lib/utils";
 export default async function DashboardHome({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ year?: string; denied?: string }> }) {
   const [{ locale }, sp] = await Promise.all([params, searchParams]);
   setRequestLocale(locale);
-  await requireRole(MEMBERS);
+  const s = await requireRole(MEMBERS);
   const t = await getTranslations("dashboard");
   const { years, year } = await yearParam(sp.year);
-  const c = await counts(year);
+  const c = await counts(s, year);
 
   return (
     <div className="space-y-6">

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- CommonJS on purpose: preloaded with node --require */
 // Windows only, build-time only: OpenNext symlinks traced packages; Windows refuses symlinks without Developer Mode
 // (EPERM). Directory symlinks become junctions (no privilege needed), file symlinks become copies.
 // Loaded with NODE_OPTIONS=--require by scripts/cf.mjs. Linux/macOS/CI never load it.

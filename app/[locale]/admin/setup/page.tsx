@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { requireRole } from "@/lib/auth";
-import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from "@/lib/env";
-import { ENV_VARS, envStatus, type EnvStatus } from "@/lib/env-spec";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { BINDINGS, ENV_VARS, envStatus, type EnvStatus } from "@/lib/env-spec";
 import { cn } from "@/lib/utils";
 
 type Status = EnvStatus | "unknown";
@@ -10,14 +10,10 @@ const TONE: Record<Status, string> = {
   set: "bg-done/12 text-done", test: "bg-progress/15 text-progress", missing: "bg-danger/10 text-danger", unknown: "bg-surface-2 text-muted",
 };
 
-/** Google provider on/off from Supabase's public auth settings (no secrets involved). */
-async function googleStatus(): Promise<Status> {
-  if (!supabaseConfigured()) return "unknown";
+/** A binding from wrangler.jsonc is present on this Worker (resource exists and is bound). */
+function bindingStatus(name: (typeof BINDINGS)[number]): Status {
   try {
-    const r = await fetch(`${SUPABASE_URL}/auth/v1/settings`, { headers: { apikey: SUPABASE_ANON_KEY }, cache: "no-store", signal: AbortSignal.timeout(4000) });
-    if (!r.ok) return "unknown";
-    const j = (await r.json()) as { external?: { google?: boolean } };
-    return j.external?.google ? "set" : "missing";
+    return (getCloudflareContext().env as unknown as Record<string, unknown>)[name] ? "set" : "missing";
   } catch {
     return "unknown";
   }
@@ -33,7 +29,6 @@ export default async function SetupPage({ params }: { params: Promise<{ locale: 
   await requireRole(["admin"]);
   const t = await getTranslations("setup");
   const rows = ENV_VARS.map((v) => ({ v, status: envStatus(v) as Status }));
-  const google = await googleStatus();
 
   // plain render helper (not a component), keyed by the caller
   const row = ({ name, status, url, need, pub }: { name: string; status: Status; url?: string; need?: "required" | "optional"; pub?: boolean }) => (
@@ -70,7 +65,19 @@ export default async function SetupPage({ params }: { params: Promise<{ locale: 
       </header>
       <ul className="space-y-3">
         {rows.map(({ v, status }) => row({ name: v.name, status, url: v.url, need: v.need, pub: v.public }))}
-        {row({ name: "GOOGLE_OAUTH", status: google, url: "https://supabase.com/dashboard/project/_/auth/providers" })}
+      </ul>
+      <h2 className="pt-2 text-lg font-semibold text-strong">{t("bindingsTitle")}</h2>
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {BINDINGS.map((b) => {
+          const st = bindingStatus(b);
+          return (
+            <li key={b} className="flex items-center gap-2 rounded-2xl border border-line bg-surface px-4 py-3 text-sm">
+              <code className="font-mono font-semibold">{b}</code>
+              <span className="flex-1 text-muted">{t(`bindings.${b}`)}</span>
+              <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-semibold", TONE[st])}>{BADGE[st]} {t(`status.${st}`)}</span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

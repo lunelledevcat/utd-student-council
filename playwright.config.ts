@@ -1,8 +1,8 @@
 import { defineConfig } from "@playwright/test";
-import { ADMIN, BASE, PORT, env } from "./e2e/env";
+import { BASE, PORT, STATE, VARS } from "./e2e/env";
 
-// End-to-end tests against the real Supabase project (rows are created by two test users and removed afterwards).
-// Run: npm run build && npm run test:e2e
+// End-to-end tests against the OpenNext build running on workerd (`wrangler dev`) with local D1/R2/KV in e2e/.state.
+// Run: npm run test:e2e (builds, resets e2e/.state, applies migrations, writes test vars, then runs Playwright).
 export default defineConfig({
   testDir: "e2e",
   timeout: 90_000,
@@ -11,7 +11,6 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"]],
   globalSetup: "./e2e/global-setup.ts",
-  globalTeardown: "./e2e/global-teardown.ts",
   use: {
     baseURL: BASE,
     channel: "chrome", // installed Google Chrome, no browser download
@@ -21,19 +20,11 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: `npx next start -p ${PORT}`,
+    command: `npx wrangler dev --port ${PORT} --ip 127.0.0.1 --local --persist-to ${STATE} --env-file ${VARS} --show-interactive-dev-session=false`,
     url: `${BASE}/th`,
     reuseExistingServer: false,
     stdout: "pipe",
     stderr: "pipe",
     timeout: 120_000,
-    env: {
-      ...env,
-      // test server only: the e2e admin account, and Cloudflare's documented always-pass Turnstile test keys
-      ADMIN_EMAILS: `${env.ADMIN_EMAILS},${ADMIN}`,
-      NEXT_PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA",
-      TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
-      NEXT_PUBLIC_SITE_URL: BASE,
-    },
   },
 });

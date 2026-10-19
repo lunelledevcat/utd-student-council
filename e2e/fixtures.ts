@@ -1,6 +1,5 @@
 import { test as base, expect, type Browser, type Page } from "@playwright/test";
-import { createClient } from "@supabase/supabase-js";
-import { env } from "./env";
+export { one, r2keys, sql } from "./local-db";
 
 /** A page signed in as the given test account (fresh context per call). */
 export async function as(browser: Browser, who: "admin" | "council"): Promise<Page> {
@@ -9,9 +8,6 @@ export async function as(browser: Browser, who: "admin" | "council"): Promise<Pa
 }
 export const uniq = (label: string) => `[E2E] ${label} ${Date.now().toString(36)}`;
 export const img = (n: number) => `e2e/.auth/img/photo-${n}.jpg`;
-/** service-role client for assertions on stored state (never used to perform the action under test) */
-export const db = () => createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-export const publicUrl = (path: string) => `${env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/public/${path}`;
 
 /** a row in a back-office list */
 export const row = (page: Page, text: string) => page.locator("tbody tr", { hasText: text });

@@ -5,9 +5,9 @@ import { STAFF, requireRole } from "@/lib/auth";
 
 export default async function HeroPage({ params }: { params: Promise<{ locale: string }> }) {
   setRequestLocale((await params).locale);
-  await requireRole(STAFF);
+  const s = await requireRole(STAFF);
   const t = await getTranslations("dashboard.hero");
-  const photos = await approvedPhotos();
+  const photos = await approvedPhotos(s);
   return (
     <div className="space-y-6">
       <header>

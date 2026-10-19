@@ -69,10 +69,6 @@ export async function submitVoice(_prev: VoiceState, fd: FormData): Promise<Voic
       message: parsed.data.message,
       anonymous: parsed.data.anonymous,
       ip_hash: hashIp(ip),
-      status: "received",
-      reply: null,
-      public: false,
-      created_at: new Date().toISOString(),
     });
   } catch (e) {
     console.error("[voice] save failed", e);

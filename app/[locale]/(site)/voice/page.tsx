@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { publicEnv } from "@/lib/env";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { VoiceView } from "@/components/sections/VoiceView";
 
@@ -14,5 +15,5 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 export default async function VoicePage({ params }: { params: Promise<{ locale: string }> }) {
   setRequestLocale((await params).locale);
-  return <VoiceView />;
+  return <VoiceView siteKey={publicEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY")} />;
 }

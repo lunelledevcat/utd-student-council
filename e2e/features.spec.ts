@@ -1,4 +1,4 @@
-import { approve, as, db, expect, fillDate, img, row, saveStay, submitForm, test, uniq } from "./fixtures";
+import { approve, as, expect, fillDate, img, one, row, saveStay, submitForm, test, uniq } from "./fixtures";
 
 // The speed / comfort features of the back-office form and lists.
 test.describe.configure({ mode: "serial" });
@@ -111,6 +111,5 @@ test("staff edits stay published; Ctrl+Enter submits", async ({ browser }) => {
   await row(admin, title).getByRole("link", { name: "แก้ไข" }).click();
   await admin.locator('[name="body"]').fill("แก้โดยครู");
   await saveStay(admin);
-  const { data } = await db().from("announcements").select("status,body").eq("title", title).single();
-  expect(data).toEqual({ status: "approved", body: "แก้โดยครู" });
+  expect(await one("SELECT status, body FROM announcements WHERE title = ?", title)).toEqual({ status: "approved", body: "แก้โดยครู" });
 });

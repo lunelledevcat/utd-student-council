@@ -1,12 +1,12 @@
-// Creates the two test users in Supabase (confirmed, email_verified) and stores a real signed-in session for each
-// as Playwright storage state. Cookies are produced by @supabase/ssr itself, exactly as the app would set them.
+// Creates the two test users in the local D1 with a database session each (exactly the rows Auth.js writes after a
+// Google sign-in) and stores the session cookie as Playwright storage state. Google itself is not contacted: the
+// sign-in rules are unit-tested (lib/data/rules.test.ts) and e2e checks the redirect to Google.
 // Also generates the test images (no binary fixtures in git).
-import { createServerClient } from "@supabase/ssr";
-import { createClient } from "@supabase/supabase-js";
 import { randomBytes } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import sharp from "sharp";
-import { ADMIN, COUNCIL, env } from "./env";
+import { ADMIN, ADMIN_ID, BASE, COUNCIL, COUNCIL_ID } from "./env";
+import { closeLocal, sql } from "./local-db";
 
 async function makeImages() {
   mkdirSync("e2e/.auth/img", { recursive: true });
@@ -22,32 +22,18 @@ async function makeImages() {
 
 export default async function globalSetup() {
   await makeImages();
-  const url = env.NEXT_PUBLIC_SUPABASE_URL, anon = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const admin = createClient(url, env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-
-  for (const [email, file, role] of [[ADMIN, "admin", null], [COUNCIL, "council", "council"]] as const) {
-    const password = randomBytes(24).toString("base64url");
-    const { data: list } = await admin.auth.admin.listUsers({ perPage: 1000 });
-    const existing = list?.users.find((u) => u.email === email);
-    const meta = { user_metadata: { email_verified: true }, email_confirm: true, password };
-    const { data, error } = existing
-      ? await admin.auth.admin.updateUserById(existing.id, meta)
-      : await admin.auth.admin.createUser({ email, ...meta });
-    if (error || !data.user) throw new Error(`create ${email}: ${error?.message}`);
-    await admin.from("profiles").upsert({ id: data.user.id, email, role });
-
-    const jar = new Map<string, string>();
-    const sb = createServerClient(url, anon, {
-      cookies: {
-        getAll: () => [...jar].map(([name, value]) => ({ name, value })),
-        setAll: (l) => l.forEach(({ name, value }) => jar.set(name, value)),
-      },
-    });
-    const { error: e2 } = await sb.auth.signInWithPassword({ email, password });
-    if (e2) throw new Error(`sign in ${email}: ${e2.message}`);
-    const cookies = [...jar].map(([name, value]) => ({
-      name, value, domain: "localhost", path: "/", expires: -1, httpOnly: false, secure: false, sameSite: "Lax" as const,
+  const now = new Date().toISOString();
+  // a fresh database: one current academic year (the admin adds years in /dashboard/years)
+  await sql("INSERT OR IGNORE INTO academic_years (year, is_current) VALUES (2569, 1)");
+  for (const [id, email, role, file] of [[ADMIN_ID, ADMIN, null, "admin"], [COUNCIL_ID, COUNCIL, "council", "council"]] as const) {
+    await sql("INSERT OR REPLACE INTO users (id, email, emailVerified, role, created_at) VALUES (?, ?, ?, ?, ?)", id, email, Date.now(), role, now);
+    const token = randomBytes(32).toString("hex");
+    await sql("INSERT INTO sessions (sessionToken, userId, expires) VALUES (?, ?, ?)", token, id, Date.now() + 864e5);
+    const { hostname } = new URL(BASE);
+    writeFileSync(`e2e/.auth/${file}.json`, JSON.stringify({
+      cookies: [{ name: "authjs.session-token", value: token, domain: hostname, path: "/", expires: Math.floor(Date.now() / 1000) + 86400, httpOnly: true, secure: false, sameSite: "Lax" }],
+      origins: [],
     }));
-    writeFileSync(`e2e/.auth/${file}.json`, JSON.stringify({ cookies, origins: [] }));
   }
+  await closeLocal();
 }

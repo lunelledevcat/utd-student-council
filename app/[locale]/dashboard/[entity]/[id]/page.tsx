@@ -16,13 +16,13 @@ export default async function EntityEdit({ params, searchParams }: Props) {
   setRequestLocale(locale);
   const s = await requireRole(MEMBERS);
   const t = await getTranslations("dashboard");
-  const loaded = id === "new" ? null : await getRowForForm(entity, id);
+  const loaded = id === "new" ? null : await getRowForForm(s, entity, id);
   if (id !== "new" && !loaded) notFound();
 
   // duplicate: copy the text fields of another row (no photos, no review state; slug gets -copy)
   let row: Record<string, unknown> = loaded?.row ?? {};
   if (id === "new" && sp.from && UUID.test(sp.from)) {
-    const src = await getRowForForm(entity, sp.from);
+    const src = await getRowForForm(s, entity, sp.from);
     if (src) {
       const e = ENTITIES[entity];
       row = Object.fromEntries(e.fields.filter((f) => f.kind !== "image" && f.kind !== "images").flatMap((f) => [[f.name, src.row[f.name]], [`${f.name}_en`, src.row[`${f.name}_en`]]]));

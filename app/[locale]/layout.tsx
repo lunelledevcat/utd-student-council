@@ -1,3 +1,4 @@
+import { siteUrl } from "@/lib/env";
 import type { Metadata, Viewport } from "next";
 import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -15,13 +16,13 @@ const kanit = Kanit({ variable: "--font-kanit", subsets: ["thai", "latin"], weig
 const plex = IBM_Plex_Sans_Thai({ variable: "--font-plex", subsets: ["thai", "latin"], weight: ["400", "500"], display: "swap" });
 const notoSerif = Noto_Serif_Thai({ variable: "--font-noto-serif", subsets: ["thai", "latin"], weight: ["400", "500", "700"], display: "swap" });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "meta" });
   return {
-    metadataBase: new URL(SITE_URL),
+    metadataBase: new URL(siteUrl()),
     title: { default: t("title"), template: `%s · ${t("title")}` },
     description: t("description"),
     alternates: { canonical: `/${locale}`, languages: { th: "/th", en: "/en", "x-default": "/th" } },

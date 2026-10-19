@@ -1,13 +1,11 @@
 import "server-only";
-import banner from "@/content/banner.json";
-import seed from "@/content/seed.json";
-import { supabaseConfigured } from "@/lib/env";
-import { adminClient } from "@/lib/supabase/admin";
-import { publicClient, publicImageUrl } from "@/lib/supabase/public";
+import * as data from "@/lib/data/content";
+import type { PhotoRow } from "@/lib/data/content";
+import { getDb } from "@/lib/db";
+import { publicPhotoUrl } from "@/lib/media";
 
-// Public content, scoped to one academic year. With Supabase configured it comes from approved rows
-// (RLS: anon sees status='approved' only, and never the instagram/contact columns); without it (local dev)
-// content/seed.json — same row shape as the tables — is used so the site still renders.
+// Public content, scoped to one academic year: approved rows and approved photos only (lib/data/content.ts), contacts
+// only with consent (contactOf below).
 // Everything here is public by design and small (one year of one school council), so a year is sent to the page
 // in one piece, in both languages, and tabs / search / language switching run client-side.
 
@@ -40,17 +38,14 @@ const lp = (th: string | null | undefined, en: string | null | undefined): L<str
   const e = paragraphs(en);
   return { th: paragraphs(th), en: e.length ? e : null };
 };
-const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
 
-type PhotoRow = { id: string; width: number; height: number; blur: string | null; sort_order?: number };
-const IMG_COLS = "id,width,height,blur,sort_order";
-const toImg = (r: PhotoRow | null): Img | null => {
+const toImg = (r: Pick<PhotoRow, "id" | "width" | "height" | "blur"> | null | undefined): Img | null => {
   if (!r) return null;
-  const p = (w: number) => publicImageUrl(`photos/${r.id}/${w}.webp`);
+  const p = (w: 480 | 960 | 1920) => publicPhotoUrl(r.id, w);
   return { id: r.id, w: r.width, h: r.height, blur: r.blur, src: { 480: p(480), 960: p(960), 1920: p(1920) } };
 };
-const sortedImgs = (rows: PhotoRow[] | null | undefined) =>
-  [...(rows ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map(toImg).filter((x): x is Img => !!x);
+const sortedImgs = (rows: PhotoRow[]) =>
+  [...rows].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map(toImg).filter((x): x is Img => !!x);
 
 /** Only consented contacts leave the server. `@handle` is stripped to a bare IG handle. */
 const contactOf = (consent: boolean, instagram: string | null | undefined, contact: string | null | undefined): Contact =>
@@ -63,42 +58,49 @@ const contactOf = (consent: boolean, instagram: string | null | undefined, conta
 type Row = Record<string, unknown> & { id: string };
 const s = (r: Row, k: string) => (r[k] as string | null | undefined) ?? "";
 
-const toAnnouncement = (r: Row): Announcement => ({
+type Pics = { byId: Map<string, PhotoRow>; activity: Map<string, PhotoRow[]>; policy: Map<string, PhotoRow[]> };
+function pics(imgs: PhotoRow[]): Pics {
+  const group = (k: "activity_id" | "policy_id") => imgs.reduce((m, p) => (p[k] ? m.set(p[k]!, [...(m.get(p[k]!) ?? []), p]) : m), new Map<string, PhotoRow[]>());
+  return { byId: new Map(imgs.map((p) => [p.id, p])), activity: group("activity_id"), policy: group("policy_id") };
+}
+const pic = (P: Pics, id: unknown) => toImg(typeof id === "string" ? P.byId.get(id) : null);
+
+const toAnnouncement = (r: Row, P: Pics): Announcement => ({
   id: r.id, title: l(s(r, "title"), s(r, "title_en")), date: s(r, "published_on"), body: lp(s(r, "body"), s(r, "body_en")),
-  link: (r.link_url as string | null) ?? null, pinned: !!r.pinned, cover: toImg(one(r.cover as PhotoRow | PhotoRow[] | null)),
+  link: (r.link_url as string | null) ?? null, pinned: !!r.pinned, cover: pic(P, r.cover_photo_id),
 });
-const toActivity = (r: Row): Activity => ({
+const toActivity = (r: Row, P: Pics): Activity => ({
   id: r.id, title: l(s(r, "title"), s(r, "title_en")), date: s(r, "event_date"), body: lp(s(r, "body"), s(r, "body_en")),
-  photos: sortedImgs(r.photos as PhotoRow[] | null),
+  photos: sortedImgs(P.activity.get(r.id) ?? []),
 });
-const toPolicy = (r: Row): Policy => ({
+const toPolicy = (r: Row, P: Pics): Policy => ({
   id: r.id, slug: s(r, "slug"), title: l(s(r, "title"), s(r, "title_en")), summary: l(s(r, "summary"), s(r, "summary_en")),
   body: lp(s(r, "body"), s(r, "body_en")), status: s(r, "progress_status") as PolicyStatus, progress: Number(r.progress ?? 0),
   owner: l(s(r, "owner"), s(r, "owner_en")),
   timeline: (Array.isArray(r.timeline) ? r.timeline : [])
     .filter((t): t is { date: string; text: string; text_en?: string } => typeof t?.date === "string" && typeof t?.text === "string")
     .map((t) => ({ date: t.date, text: l(t.text, t.text_en) })),
-  cover: toImg(one(r.cover as PhotoRow | PhotoRow[] | null)), photos: sortedImgs(r.photos as PhotoRow[] | null),
+  cover: pic(P, r.cover_photo_id), photos: sortedImgs(P.policy.get(r.id) ?? []),
 });
-const toMember = (r: Row, contact: Contact): Member => ({
+const toMember = (r: Row, P: Pics): Member => ({
   id: r.id, name: l(s(r, "name"), s(r, "name_en")), nickname: l(s(r, "nickname"), s(r, "nickname_en")),
   role: l(s(r, "role_title"), s(r, "role_title_en")), termNo: s(r, "term_no"), execTitle: l(s(r, "exec_title"), s(r, "exec_title_en")),
-  dept: l(s(r, "dept"), s(r, "dept_en")), party: l(s(r, "party"), s(r, "party_en")), photo: toImg(one(r.photo as PhotoRow | null)),
-  rank: Number(r.sort_order ?? 0), ...contact,
+  dept: l(s(r, "dept"), s(r, "dept_en")), party: l(s(r, "party"), s(r, "party_en")), photo: pic(P, r.photo_id),
+  rank: Number(r.sort_order ?? 0), ...contactOf(!!r.consent_public, r.instagram as string, r.contact as string),
 });
-const toAdvisor = (r: Row, contact: Contact): Advisor => ({
+const toAdvisor = (r: Row, P: Pics): Advisor => ({
   id: r.id, name: l(s(r, "name"), s(r, "name_en")), nickname: l(s(r, "nickname"), s(r, "nickname_en")),
   role: l(s(r, "role_label"), s(r, "role_label_en")), subject: l(s(r, "subject_group"), s(r, "subject_group_en")),
-  position: l(s(r, "position"), s(r, "position_en")), photo: toImg(one(r.photo as PhotoRow | null)), ...contact,
+  position: l(s(r, "position"), s(r, "position_en")), photo: pic(P, r.photo_id),
+  ...contactOf(!!r.consent_public, r.instagram as string, r.contact as string),
 });
 
 // ───────────────────────── years ─────────────────────────
 
 export async function getYears(): Promise<{ years: number[]; current: number }> {
-  if (!supabaseConfigured()) return { years: seed.years, current: seed.current };
-  const { data } = await publicClient().from("academic_years").select("year,is_current").order("year", { ascending: false });
-  const years = (data ?? []).map((r) => r.year as number);
-  const current = (data ?? []).find((r) => r.is_current)?.year ?? years[0] ?? new Date().getFullYear() + 543;
+  const rows = await data.years(getDb());
+  const years = rows.map((r) => r.year);
+  const current = rows.find((r) => r.is_current)?.year ?? years[0] ?? new Date().getFullYear() + 543;
   return { years: years.length ? years : [current], current };
 }
 
@@ -107,97 +109,38 @@ export async function getYears(): Promise<{ years: number[]; current: number }> 
 export async function getYearContent(requested?: number): Promise<YearContent> {
   const { years, current } = await getYears();
   const year = requested && years.includes(requested) ? requested : current;
-  const content = supabaseConfigured() ? await fromDb(year) : fromSeed(year);
-  return { year, years, current, ...content };
-}
-
-type Lists = Pick<YearContent, "announcements" | "activities" | "policies" | "members" | "advisors">;
-const bySort = (a: Row, b: Row) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0);
-
-function fromSeed(year: number): Lists {
-  const ofYear = (xs: Row[]) => xs.filter((x) => x.year === year);
-  const rows = seed as unknown as Record<"announcements" | "activities" | "policies" | "members" | "advisors", Row[]>;
-  const c = (r: Row) => contactOf(!!r.consent_public, r.instagram as string, r.contact as string);
+  const d = await data.yearRows(getDb(), year);
+  const P = pics(d.imgs);
+  const rows = (xs: unknown[]) => xs as Row[];
   return {
-    announcements: ofYear(rows.announcements)
-      .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || s(b, "published_on").localeCompare(s(a, "published_on")))
-      .map(toAnnouncement),
-    activities: ofYear(rows.activities).sort((a, b) => s(b, "event_date").localeCompare(s(a, "event_date"))).map(toActivity),
-    policies: ofYear(rows.policies).sort(bySort).map(toPolicy),
-    members: ofYear(rows.members).sort(bySort).map((r) => toMember(r, c(r))),
-    advisors: ofYear(rows.advisors).sort(bySort).map((r) => toAdvisor(r, c(r))),
+    year, years, current,
+    announcements: rows(d.ann).map((r) => toAnnouncement(r, P)),
+    activities: rows(d.act).map((r) => toActivity(r, P)),
+    policies: rows(d.pol).map((r) => toPolicy(r, P)),
+    members: rows(d.mem).map((r) => toMember(r, P)),
+    advisors: rows(d.adv).map((r) => toAdvisor(r, P)),
   };
-}
-
-const ANN = `id,title,title_en,body,body_en,published_on,link_url,pinned,cover:photos!cover_photo_id(${IMG_COLS})`;
-const ACT = `id,title,title_en,body,body_en,event_date,photos:photos!activity_id(${IMG_COLS})`;
-const POL = `id,year,slug,title,title_en,summary,summary_en,body,body_en,progress_status,progress,owner,owner_en,timeline,sort_order,cover:photos!cover_photo_id(${IMG_COLS}),photos:photos!policy_id(${IMG_COLS})`;
-const MEM = `id,name,name_en,nickname,nickname_en,role_title,role_title_en,term_no,exec_title,exec_title_en,dept,dept_en,party,party_en,sort_order,photo:photos!photo_id(${IMG_COLS})`;
-const ADV = `id,name,name_en,nickname,nickname_en,role_label,role_label_en,subject_group,subject_group_en,position,position_en,sort_order,photo:photos!photo_id(${IMG_COLS})`;
-
-async function fromDb(year: number): Promise<Lists> {
-  const db = publicClient();
-  const [ann, act, pol, mem, adv] = await Promise.all([
-    db.from("announcements").select(ANN).eq("year", year).order("pinned", { ascending: false }).order("published_on", { ascending: false }),
-    db.from("activities").select(ACT).eq("year", year).order("event_date", { ascending: false }),
-    db.from("policies").select(POL).eq("year", year).order("sort_order"),
-    db.from("members").select(MEM).eq("year", year).order("sort_order"),
-    db.from("advisors").select(ADV).eq("year", year).order("sort_order"),
-  ]);
-  for (const r of [ann, act, pol, mem, adv]) if (r.error) console.error("[content]", r.error.message);
-  const contacts = await consentedContacts(year);
-  const none = contactOf(false, null, null);
-  const rows = (d: unknown) => (d ?? []) as Row[];
-  return {
-    announcements: rows(ann.data).map(toAnnouncement),
-    activities: rows(act.data).map(toActivity),
-    policies: rows(pol.data).map(toPolicy),
-    members: rows(mem.data).map((r) => toMember(r, contacts.get(r.id) ?? none)),
-    advisors: rows(adv.data).map((r) => toAdvisor(r, contacts.get(r.id) ?? none)),
-  };
-}
-
-/** instagram/contact are not readable with the anon key; read them with the service role, consented + approved only. */
-async function consentedContacts(year: number) {
-  const out = new Map<string, Contact>();
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return out;
-  const db = adminClient();
-  const q = (t: "members" | "advisors") =>
-    db.from(t).select("id,instagram,contact").eq("year", year).eq("status", "approved").eq("consent_public", true);
-  const [m, a] = await Promise.all([q("members"), q("advisors")]);
-  for (const r of [...(m.data ?? []), ...(a.data ?? [])]) out.set(r.id, contactOf(true, r.instagram, r.contact));
-  return out;
 }
 
 // ───────────────────────── policy page ─────────────────────────
 
 export async function getPolicyBySlug(slug: string): Promise<(Policy & { year: number }) | null> {
-  if (!supabaseConfigured()) {
-    const r = (seed.policies as unknown as Row[]).find((x) => x.slug === slug);
-    return r ? { ...toPolicy(r), year: Number(r.year) } : null;
-  }
-  const { data } = await publicClient().from("policies").select(POL).eq("slug", slug).maybeSingle();
-  return data ? { ...toPolicy(data as unknown as Row), year: (data as unknown as Row).year as number } : null;
+  const d = await data.policyBySlug(getDb(), slug);
+  return d ? { ...toPolicy(d.p as unknown as Row, pics(d.imgs)), year: d.p.year } : null;
 }
 
-export async function getPolicySlugs(): Promise<string[]> {
-  if (!supabaseConfigured()) return seed.policies.map((p) => p.slug);
-  const { data } = await publicClient().from("policies").select("slug");
-  return (data ?? []).map((r) => r.slug);
-}
+export const getPolicySlugs = () => data.policySlugs(getDb());
 
 // ───────────────────────── hero ─────────────────────────
 
-/** Hero slides: approved photos ticked "is_hero", in admin-defined order (uploads and public/banner files alike).
- *  Without Supabase (local dev) every file in content/banner.json is used. None -> one gradient slide. */
+/** Hero slides: approved photos ticked "is_hero", in staff-defined order (uploads and public/banner files alike).
+ *  None -> one gradient slide. */
 export async function getHeroPhotos(): Promise<Photo[]> {
-  if (!supabaseConfigured()) return banner.map((b) => staticSlide(b.id, `/banner/${b.file}`, b.w, b.h, b.blur, "", "school"));
-  const { data } = await publicClient()
-    .from("photos").select(`${IMG_COLS},caption,static_path,credit`).eq("is_hero", true).order("hero_order", { ascending: true });
-  return (data ?? []).map((r) => {
-    if (r.static_path) return staticSlide(r.id, r.static_path, r.width, r.height, r.blur, r.caption, r.credit === "school" ? "school" : null);
-    const img = toImg(r as PhotoRow) as Img;
-    return { id: img.id, w: img.w, h: img.h, blur: img.blur, src: img.src[1920], srcSet: `${img.src[480]} 480w, ${img.src[960]} 960w, ${img.src[1920]} 1920w`, caption: r.caption, credit: r.credit === "school" ? "school" : null };
+  return (await data.heroPhotos(getDb())).map((r) => {
+    const credit = r.credit === "school" ? "school" : null;
+    if (r.static_path) return staticSlide(r.id, r.static_path, r.width, r.height, r.blur, r.caption, credit);
+    const img = toImg(r) as Img;
+    return { id: img.id, w: img.w, h: img.h, blur: img.blur, src: img.src[1920], srcSet: `${img.src[480]} 480w, ${img.src[960]} 960w, ${img.src[1920]} 1920w`, caption: r.caption, credit };
   });
 }
 

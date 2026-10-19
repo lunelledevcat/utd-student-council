@@ -1,7 +1,8 @@
-import { env } from "./env";
-import { acceptNextDialog, approve, as, db, expect, fillDate, img, publicUrl, row, submitForm, test, uniq } from "./fixtures";
+import { readFileSync } from "node:fs";
+import { VARS } from "./env";
+import { acceptNextDialog, approve, as, expect, fillDate, img, one, r2keys, row, sql, submitForm, test, uniq } from "./fixtures";
 
-// Real Supabase: every flow creates -> edits -> reviews -> shows on the site (or is deleted), as the two test users.
+// Local D1/R2 on workerd: every flow creates -> edits -> reviews -> shows on the site (or is deleted), as the two test users.
 test.describe.configure({ mode: "serial" });
 
 
@@ -62,18 +63,19 @@ test("activity with photos: upload 2, approve publishes files, site shows them; 
   await expect(council.locator('input[type="hidden"][name="photos"]')).toHaveCount(2, { timeout: 60_000 });
   await submitForm(council);
 
-  const { data: act } = await db().from("activities").select("id").eq("title", title).single();
-  const { data: photos } = await db().from("photos").select("id,status").eq("activity_id", act!.id);
+  const act = await one<{ id: string }>("SELECT id FROM activities WHERE title = ?", title);
+  const photos = await sql<{ id: string; status: string }>("SELECT id, status FROM photos WHERE activity_id = ?", act!.id);
   expect(photos).toHaveLength(2);
-  expect(photos!.every((p) => p.status === "pending")).toBe(true);
-  expect((await fetch(publicUrl(`photos/${photos![0].id}/960.webp`))).status).not.toBe(200);
+  expect(photos.every((p) => p.status === "pending")).toBe(true);
+  expect((await council.request.get(`/media/public/photos/${photos[0].id}/960.webp`)).status()).toBe(404);
 
   const admin = await as(browser, "admin");
   await approve(admin, "activities", title);
-  const { data: after } = await db().from("photos").select("id,status").eq("activity_id", act!.id);
-  expect(after!.every((p) => p.status === "approved")).toBe(true);
-  const id = after![0].id;
-  for (const w of [480, 960, 1920]) expect((await fetch(publicUrl(`photos/${id}/${w}.webp`))).status).toBe(200);
+  const after = await sql<{ id: string; status: string }>("SELECT id, status FROM photos WHERE activity_id = ? ORDER BY sort_order", act!.id);
+  expect(after.every((p) => p.status === "approved")).toBe(true);
+  const id = after[0].id;
+  for (const w of [480, 960, 1920]) expect((await admin.request.get(`/media/public/photos/${id}/${w}.webp`)).status()).toBe(200);
+  expect(await r2keys(`pending/`)).not.toContain(expect.stringContaining(id)); // moved, not copied
 
   const pub = await browser.newPage();
   await pub.goto("/th");
@@ -91,11 +93,10 @@ test("activity with photos: upload 2, approve publishes files, site shows them; 
   acceptNextDialog(admin);
   await card.getByRole("button", { name: "ลบรูป" }).click();
   await expect(admin.locator(`img[src*="${id}"]`)).toHaveCount(0);
-  // check the bucket itself: the CDN may keep serving a cached copy of a public object for a while
-  const { data: left } = await db().storage.from("public").list(`photos/${id}`);
-  expect(left ?? []).toHaveLength(0);
-  const { count } = await db().from("photos").select("id", { count: "exact", head: true }).eq("id", id);
-  expect(count).toBe(0);
+  // check the bucket itself: an edge cache may keep serving a public copy for a while
+  // the card disappears before the server confirms: wait for the stored state
+  await expect.poll(() => one("SELECT id FROM photos WHERE id = ?", id), { timeout: 15_000 }).toBeNull();
+  await expect.poll(() => r2keys(`public/photos/${id}/`), { timeout: 15_000 }).toHaveLength(0);
 });
 
 test("policy: create (TH+EN), approve, page renders, staff edits, delete -> 404", async ({ browser }) => {
@@ -171,8 +172,8 @@ test("academic years (admin): add with copy -> copies start pending", async ({ b
   await expect(admin.getByText("เพิ่มปีแล้ว")).toBeVisible();
   await admin.reload();
   await expect(admin.getByText("2690").first()).toBeVisible();
-  const { data } = await db().from("members").select("status").eq("year", 2690);
-  expect((data ?? []).every((m) => m.status === "pending")).toBe(true);
+  const copies = await sql<{ status: string }>("SELECT status FROM members WHERE year = 2690");
+  expect(copies.every((m) => m.status === "pending")).toBe(true);
 });
 
 test("setup page: admin only, statuses without values", async ({ browser }) => {
@@ -180,10 +181,9 @@ test("setup page: admin only, statuses without values", async ({ browser }) => {
   await admin.goto("/th/admin/setup");
   await expect(admin.getByRole("heading", { name: "ตั้งค่าระบบ" })).toBeVisible();
   const html = await admin.content();
-  // none of the server secrets may reach the page (compared against the real values, which stay out of the repo)
-  for (const k of ["SUPABASE_SERVICE_ROLE_KEY", "UPSTASH_REDIS_REST_TOKEN", "TURNSTILE_SECRET_KEY", "APP_SECRET"]) {
-    if (env[k]) expect(html.includes(env[k]), k).toBe(false);
-  }
+  // none of the server secrets may reach the page (compared against the test server's values)
+  const vars = Object.fromEntries(readFileSync(VARS, "utf8").split("\n").filter((l) => l.includes("=")).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)]));
+  for (const k of ["APP_SECRET", "AUTH_SECRET", "AUTH_GOOGLE_SECRET", "TURNSTILE_SECRET_KEY"]) expect(html.includes(vars[k]), k).toBe(false);
   const council = await as(browser, "council");
   await council.goto("/th/admin/setup");
   await expect(council).toHaveURL(/denied=1/);
@@ -200,5 +200,5 @@ test("voice: public form submits and the code can be tracked", async ({ page }) 
   await page.locator("#ref-code").fill(code);
   await page.getByRole("button", { name: "ตรวจสอบ" }).click();
   await expect(page.getByText("รับเรื่องแล้ว")).toBeVisible();
-  await db().from("voice_messages").delete().eq("ref_code", code);
+  expect(await one("SELECT status FROM voice_messages WHERE ref_code = ?", code)).toEqual({ status: "received" });
 });

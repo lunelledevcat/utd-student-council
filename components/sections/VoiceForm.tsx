@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/Button";
 import { VOICE_CATEGORIES } from "@/lib/site";
 
 const INITIAL: VoiceState = { ok: false };
-const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 /** Five Kae Farang petals bloom when the message is sent. */
 function Bloom() {
@@ -36,7 +35,9 @@ function Bloom() {
   );
 }
 
-export function VoiceForm() {
+/** siteKey: Turnstile site key, passed from the server (runtime var) */
+export function VoiceForm({ siteKey }: { siteKey: string }) {
+  const SITE_KEY = siteKey;
   const t = useTranslations("voice");
   const te = useTranslations("voice.errors");
   const err = (k?: string, v?: Record<string, number>) => (k ? te(k, v) : undefined);

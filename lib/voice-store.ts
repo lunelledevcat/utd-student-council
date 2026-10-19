@@ -1,9 +1,7 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { appendFile, mkdir, readFile } from "node:fs/promises";
-import path from "node:path";
-import { SUPABASE_URL } from "@/lib/env";
-import { adminClient } from "@/lib/supabase/admin";
+import * as adm from "@/lib/data/admin";
+import { getDb } from "@/lib/db";
 
 export type VoiceStatus = "received" | "reviewing" | "answered";
 export type VoiceRecord = {
@@ -11,15 +9,8 @@ export type VoiceRecord = {
   category: string;
   message: string;
   anonymous: boolean;
-  ip_hash: string;
-  status: VoiceStatus;
-  reply: string | null;
-  public: boolean; // never auto-published; a council member must approve
-  created_at: string;
+  ip_hash: string; // only a hash of the IP is stored
 };
-
-const DEV_FILE = path.join(process.cwd(), ".data", "voice.jsonl");
-const usingSupabase = () => !!(SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 // No 0/O/1/I to keep codes easy to read out loud.
 const ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -28,51 +19,11 @@ export function newCode() {
   return "UTD-" + Array.from(b.subarray(0, 6), (x) => ALPHABET[x % ALPHABET.length]).join("");
 }
 
-export function storeConfigured() {
-  return usingSupabase() || process.env.NODE_ENV !== "production";
-}
+/** D1 is always bound on Cloudflare (local preview simulates it). */
+export const storeConfigured = () => true;
 
-export async function saveVoice(rec: VoiceRecord) {
-  if (usingSupabase()) {
-    // service role: the public has no table access at all (RLS). Only a hash of the IP is stored.
-    const { error } = await adminClient().from("voice_messages").insert({
-      ref_code: rec.code,
-      category: rec.category,
-      message: rec.message,
-      anonymous: rec.anonymous,
-      ip_hash: rec.ip_hash,
-      status: "received",
-    });
-    if (error) throw new Error(`supabase insert failed: ${error.message}`);
-    return;
-  }
-  if (process.env.NODE_ENV === "production") throw new Error("Supabase env not set");
-  await mkdir(path.dirname(DEV_FILE), { recursive: true });
-  await appendFile(DEV_FILE, JSON.stringify(rec) + "\n", "utf8");
-}
+/** Server only (after Turnstile + rate limit): the public has no direct database access at all. */
+export const saveVoice = (rec: VoiceRecord) => adm.saveVoice(getDb(), rec);
 
 /** Public lookup: only status + an APPROVED council reply, never the message or hashes. */
-export async function lookupVoice(code: string): Promise<{ status: VoiceStatus; reply: string | null } | null> {
-  if (usingSupabase()) {
-    const db = adminClient();
-    const { data: msg } = await db.from("voice_messages").select("id,status").eq("ref_code", code).maybeSingle();
-    if (!msg) return null;
-    const { data: rep } = await db
-      .from("voice_replies")
-      .select("body")
-      .eq("voice_id", msg.id)
-      .eq("status", "approved")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    return { status: msg.status as VoiceStatus, reply: rep?.body ?? null };
-  }
-  try {
-    const lines = (await readFile(DEV_FILE, "utf8")).split("\n").filter(Boolean);
-    for (const l of lines) {
-      const rec = JSON.parse(l) as VoiceRecord;
-      if (rec.code === code) return { status: rec.status, reply: rec.reply };
-    }
-  } catch {}
-  return null;
-}
+export const lookupVoice = (code: string) => adm.lookupVoice(getDb(), code);

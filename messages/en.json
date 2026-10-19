@@ -541,78 +541,86 @@
     "devWarning": "[setup] These values are missing or test values (details at /admin/setup or in .env.example):",
     "vars": {
       "APP_SECRET": {
-        "purpose": "The app's secret: signs short-lived API tokens and salts IP hashes",
-        "where": "Generate it: node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\" and paste the output (at least 32 characters)",
-        "missingDev": "Uses a temporary dev-only key",
-        "missingProd": "API tokens and voice submissions fail (error)"
+        "purpose": "App secret: signs short-lived API tokens and upload/preview links, salts IP hashes",
+        "where": "Generate: node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\", then npx wrangler secret put APP_SECRET (locally: .dev.vars)",
+        "missingDev": "a temporary dev key is used",
+        "missingProd": "photo uploads and the voice form fail"
       },
-      "NEXT_PUBLIC_SITE_URL": {
-        "purpose": "The site's public address, used for the sitemap, hreflang links and Open Graph",
-        "where": "Your deployed domain, e.g. https://council.utd.ac.th (Vercel → Project → Settings → Domains), no trailing /",
-        "missingDev": "Uses http://localhost:3000",
-        "missingProd": "Sitemap / share links point to localhost"
+      "AUTH_SECRET": {
+        "purpose": "Auth.js secret (encrypts sign-in cookies)",
+        "where": "Generate like APP_SECRET (a different value), then npx wrangler secret put AUTH_SECRET",
+        "missingDev": "sign-in fails",
+        "missingProd": "sign-in fails"
       },
-      "NEXT_PUBLIC_SUPABASE_URL": {
-        "purpose": "The Supabase project (database, sign-in, photo storage)",
-        "where": "supabase.com → your project → Project Settings → Data API → Project URL (https://xxxx.supabase.co, no /rest/v1)",
-        "missingDev": "Site uses sample data from content/seed.json; no back office",
-        "missingProd": "No real content, nobody can sign in"
+      "AUTH_GOOGLE_ID": {
+        "purpose": "Google OAuth client ID (Sign in with Google)",
+        "where": "Google Cloud Console → APIs & Services → Credentials → OAuth client (Web) → Client ID; add the redirect URI <SITE_URL>/api/auth/callback/google; then npx wrangler secret put AUTH_GOOGLE_ID",
+        "missingDev": "sign-in button disabled",
+        "missingProd": "sign-in fails"
       },
-      "NEXT_PUBLIC_SUPABASE_ANON_KEY": {
-        "purpose": "Supabase public key, reads approved content (limited by RLS)",
-        "where": "supabase.com → Project Settings → API Keys → Publishable key (or the Legacy tab → anon public)",
-        "missingDev": "Same as missing SUPABASE_URL",
-        "missingProd": "No real content, nobody can sign in"
-      },
-      "SUPABASE_SERVICE_ROLE_KEY": {
-        "purpose": "Supabase admin key (bypasses RLS), server-side only after a role check: approvals, photo uploads, voice messages",
-        "where": "supabase.com → Project Settings → API Keys → Secret key (or Legacy → service_role) — never in browser code",
-        "missingDev": "Voice messages go to .data/voice.jsonl; approve/upload don't work",
-        "missingProd": "Voice form rejects submissions; back office doesn't work"
-      },
-      "UPSTASH_REDIS_REST_URL": {
-        "purpose": "Redis for rate limits and the IP ban list, shared by every server instance",
-        "where": "upstash.com → Redis → Create Database → database page → REST API tab → UPSTASH_REDIS_REST_URL (starts with https://, not rediss://)",
-        "missingDev": "In-memory limiter (fine on one machine)",
-        "missingProd": "Each instance limits on its own — weaker bot protection"
-      },
-      "UPSTASH_REDIS_REST_TOKEN": {
-        "purpose": "Read/write token for the Redis above",
-        "where": "upstash.com → database page → REST API tab → UPSTASH_REDIS_REST_TOKEN (the normal token, not the Readonly token)",
-        "missingDev": "In-memory limiter",
-        "missingProd": "Same as missing URL"
-      },
-      "NEXT_PUBLIC_TURNSTILE_SITE_KEY": {
-        "purpose": "Cloudflare Turnstile public key (the \"not a bot\" check) on the voice form",
-        "where": "dash.cloudflare.com → Turnstile → Add widget → add the site's domain → Site Key — test key 1x00000000000000000000AA (always passes)",
-        "missingDev": "No check widget",
-        "missingProd": "No widget and the form never passes"
+      "AUTH_GOOGLE_SECRET": {
+        "purpose": "Client secret of the same OAuth client",
+        "where": "Same page → Client secret, then npx wrangler secret put AUTH_GOOGLE_SECRET (never in a committed file)",
+        "missingDev": "sign-in button disabled",
+        "missingProd": "sign-in fails"
       },
       "TURNSTILE_SECRET_KEY": {
-        "purpose": "Turnstile secret, verifies the check on the server",
-        "where": "dash.cloudflare.com → Turnstile → your widget → Secret Key — test key 1x0000000000000000000000000000000AA (always passes)",
-        "missingDev": "Check skipped",
-        "missingProd": "Every submission rejected (fails closed)"
+        "purpose": "Turnstile secret (checks a person sent the form)",
+        "where": "Cloudflare → Turnstile → existing widget → add the new hostname → Secret key, then npx wrangler secret put TURNSTILE_SECRET_KEY",
+        "missingDev": "test key (always passes)",
+        "missingProd": "the voice form fails"
+      },
+      "R2_ACCOUNT_ID": {
+        "purpose": "Cloudflare account ID for presigned direct-to-R2 uploads",
+        "where": "Cloudflare → R2 → Overview → Account ID, then npx wrangler secret put R2_ACCOUNT_ID",
+        "missingDev": "uploads go through the Worker (works)",
+        "missingProd": "uploads go through the Worker (works, slightly slower)"
+      },
+      "R2_ACCESS_KEY_ID": {
+        "purpose": "R2 API token access key (Object Read & Write, bucket utd-council-media only)",
+        "where": "Cloudflare → R2 → Manage API tokens → Create → Object Read & Write → bucket utd-council-media, then npx wrangler secret put R2_ACCESS_KEY_ID",
+        "missingDev": "uploads go through the Worker",
+        "missingProd": "uploads go through the Worker"
+      },
+      "R2_SECRET_ACCESS_KEY": {
+        "purpose": "Secret access key of the same token",
+        "where": "Shown once when the token is created; npx wrangler secret put R2_SECRET_ACCESS_KEY",
+        "missingDev": "uploads go through the Worker",
+        "missingProd": "uploads go through the Worker"
+      },
+      "NEXT_PUBLIC_SITE_URL": {
+        "purpose": "The site's public URL (sitemap, metadata)",
+        "where": "The URL after deploy, e.g. https://utd-student-council.<subdomain>.workers.dev or the real domain, in wrangler.jsonc → vars",
+        "missingDev": "http://localhost:3000",
+        "missingProd": "wrong sitemap links"
+      },
+      "NEXT_PUBLIC_TURNSTILE_SITE_KEY": {
+        "purpose": "Turnstile site key (shown in the page)",
+        "where": "Cloudflare → Turnstile → existing widget → Site key, in wrangler.jsonc → vars",
+        "missingDev": "no Turnstile",
+        "missingProd": "the voice form fails"
       },
       "ALLOWED_EMAIL_DOMAIN": {
-        "purpose": "Email domain allowed into the back office (school Google accounts)",
-        "where": "The school's email domain, default utd.ac.th — set only to change it",
-        "missingDev": "Uses utd.ac.th",
-        "missingProd": "Uses utd.ac.th"
+        "purpose": "Email domain allowed to sign in",
+        "where": "wrangler.jsonc → vars (normally utd.ac.th)",
+        "missingDev": "utd.ac.th",
+        "missingProd": "utd.ac.th"
       },
       "ADMIN_EMAILS": {
-        "purpose": "Administrator emails (comma-separated): instant admin role and the only exception to the domain rule (must be Google-verified)",
-        "where": "The admins' Google addresses, e.g. admin1@utd.ac.th,someone@gmail.com — removing one revokes access at once",
-        "missingDev": "Nobody is admin",
-        "missingProd": "Nobody is admin — no one can grant roles or add years"
-      },
-      "GOOGLE_OAUTH": {
-        "purpose": "Google sign-in (not an .env value — configured in Supabase)",
-        "where": "1) console.cloud.google.com → APIs & Services → Credentials → Create credentials → OAuth client ID → Web application → Authorized redirect URI: https://<project>.supabase.co/auth/v1/callback  2) supabase.com → Authentication → Sign In / Providers → Google → enable, paste Client ID + Client Secret  3) Authentication → URL Configuration → Site URL = NEXT_PUBLIC_SITE_URL, add <SITE_URL>/auth/callback to Redirect URLs",
-        "missingDev": "Sign-in button doesn't work",
-        "missingProd": "Sign-in button doesn't work"
+        "purpose": "Administrator emails (comma separated): admin at once, may sign in from outside the domain",
+        "where": "wrangler.jsonc → vars, then deploy",
+        "missingDev": "no admin",
+        "missingProd": "no admin"
       }
-    }
+    },
+    "bindings": {
+      "DB": "D1 database (utd-council)",
+      "MEDIA": "R2 photo bucket (utd-council-media)",
+      "BANS": "KV for banned IPs",
+      "RL_PAGE": "Page rate limit",
+      "RL_API": "API rate limit"
+    },
+    "bindingsTitle": "Cloudflare bindings"
   },
   "lang": {
     "button": "Change language (now: {current})",

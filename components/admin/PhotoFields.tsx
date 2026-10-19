@@ -1,6 +1,5 @@
 "use client";
 
-import imageCompression from "browser-image-compression";
 import { Reorder } from "motion/react";
 import { useTranslations } from "next-intl";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
@@ -8,11 +7,12 @@ import { createUploadUrl, finalizeUpload } from "@/app/[locale]/dashboard/action
 import { IconClose, IconImages, IconReset } from "@/components/icons/Icon";
 import type { FormPhoto } from "@/lib/admin/data";
 import { sniffImage } from "@/lib/image-sniff";
+import { makeVariants } from "@/lib/image-variants";
 import { cn } from "@/lib/utils";
 
-// Fast upload: compress in the browser (WebP, <= 1920 px) -> PUT straight to Supabase Storage with a one-time signed
-// URL (progress via XHR, cancellable) -> finalize (row inserted at once, variants built in the background on the
-// server). Three files upload at the same time.
+// Fast upload: the browser makes the three WebP sizes (1920/960 watermarked, 480) + blur placeholder
+// (lib/image-variants.ts) -> PUTs them straight to R2 with 5-minute URLs bound to key/type/size (progress via XHR,
+// cancellable) -> finalize (server checks the bytes, row inserted at once). Three photos upload at the same time.
 
 const CONCURRENCY = 3;
 const ACCEPT = "image/jpeg,image/png,image/webp";
@@ -30,7 +30,6 @@ function putWithProgress(url: string, file: Blob, onProgress: (p: number) => voi
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", url);
     xhr.setRequestHeader("content-type", "image/webp");
-    xhr.setRequestHeader("x-upsert", "false");
     xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
     xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`upload ${xhr.status}`)));
     xhr.onerror = () => reject(new Error("network"));
@@ -62,17 +61,21 @@ function usePhotoQueue(initial: FormPhoto[], max: number) {
       patch(key, { status: "compressing", progress: 0, error: undefined });
       // real image? (a renamed .html/.svg is refused here; the server checks the uploaded bytes again)
       if (!sniffImage(new Uint8Array(await file.slice(0, 16).arrayBuffer()))) throw new Error(t("errors.badFile"));
-      const small = await imageCompression(file, { maxWidthOrHeight: 1920, fileType: "image/webp", initialQuality: 0.85, useWebWorker: false, signal: ac.signal });
-      const bmp = await createImageBitmap(small);
-      const { width, height } = bmp;
-      bmp.close();
-      const u = await createUploadUrl();
+      const v = await makeVariants(file, ac.signal);
+      const u = await createUploadUrl({ 480: v.files[480].size, 960: v.files[960].size, 1920: v.files[1920].size });
       if (!u.ok) throw new Error(t(`errors.${u.error.key}`, u.error.values));
-      if (!u.id || !u.url) throw new Error(t("image.failed"));
+      if (!u.id || !u.urls) throw new Error(t("image.failed"));
       patch(key, { status: "uploading" });
-      await putWithProgress(u.url, small, (p) => patch(key, { progress: p }), ac.signal);
+      // three PUTs in parallel; progress = bytes sent over all three
+      const total = v.files[480].size + v.files[960].size + v.files[1920].size;
+      const sent = { 480: 0, 960: 0, 1920: 0 };
+      await Promise.all(([480, 960, 1920] as const).map((w) =>
+        putWithProgress(u.urls![w], v.files[w], (p) => {
+          sent[w] = (p / 100) * v.files[w].size;
+          patch(key, { progress: Math.round(((sent[480] + sent[960] + sent[1920]) / total) * 100) });
+        }, ac.signal)));
       patch(key, { status: "finalizing", progress: 100 });
-      const fin = await finalizeUpload(u.id, width, height);
+      const fin = await finalizeUpload(u.id, v.width, v.height, v.blur);
       if (!fin.ok) throw new Error(t(`errors.${fin.error.key}`, fin.error.values));
       files.current.delete(key);
       patch(key, { status: "done", id: u.id, pending: true });
@@ -80,7 +83,7 @@ function usePhotoQueue(initial: FormPhoto[], max: number) {
       if ((err as Error).name !== "AbortError") {
         console.error("[upload]", err);
         const msg = (err as Error).message;
-        patch(key, { status: "error", error: msg && !/^(network|upload d+)$/.test(msg) ? msg : t("image.failed") });
+        patch(key, { status: "error", error: msg && !/^(network|upload \d+)$/.test(msg) ? msg : t("image.failed") });
       }
     } finally {
       aborts.current.delete(key);

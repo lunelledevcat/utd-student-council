@@ -1,8 +1,12 @@
 import { createHash } from "node:crypto";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { drizzle } from "drizzle-orm/d1";
+import { insertSecurityEvent } from "@/lib/data/admin";
+import * as schema from "@/lib/db/schema";
 
-// Security monitoring: writes to public.security_events (service role, RLS-hidden) and to the server log.
-// Plain fetch (no supabase-js) so the proxy can use it too. Never throws, never blocks the response for long,
-// and the same (kind, ip) is recorded at most once a minute per instance so a flood cannot flood the table.
+// Security monitoring: writes to the D1 table security_events (shown in /admin/security) and to the Worker log.
+// Usable from the proxy too. Never throws, and the same (kind, source) is stored at most once a minute per
+// instance so a flood cannot flood the table.
 
 export type SecurityKind =
   | "trap" | "ua_blocked" | "fake_bot" | "rate_limited" | "unauth_write"
@@ -22,17 +26,9 @@ export async function logSecurity(kind: SecurityKind, e: { ip?: string; userId?:
   if ((recent.get(k) ?? 0) > now - 60_000) return;
   recent.set(k, now);
   if (recent.size > 5000) recent.clear();
-
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return;
   try {
-    await fetch(`${url}/rest/v1/security_events`, {
-      method: "POST",
-      headers: { apikey: key, authorization: `Bearer ${key}`, "content-type": "application/json", prefer: "return=minimal" },
-      body: JSON.stringify({ kind, ip_hash: ipHash, user_id: e.userId ?? null, path: e.path?.slice(0, 300) ?? null, detail: e.detail ?? {} }),
-      signal: AbortSignal.timeout(1500),
-    });
+    const db = drizzle(getCloudflareContext().env.DB, { schema });
+    await insertSecurityEvent(db, { kind, ip_hash: ipHash, user_id: e.userId ?? null, path: e.path?.slice(0, 300) ?? null, detail: e.detail ?? {} });
   } catch {
     // monitoring must never break the request
   }

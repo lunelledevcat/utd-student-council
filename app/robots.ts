@@ -1,8 +1,9 @@
+import { siteUrl } from "@/lib/env";
 import type { MetadataRoute } from "next";
 import { AI_CRAWLERS } from "@/lib/bots";
 
 export default function robots(): MetadataRoute.Robots {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const base = siteUrl();
   return {
     rules: [
       { userAgent: [...AI_CRAWLERS], disallow: "/" },
@@ -11,3 +12,6 @@ export default function robots(): MetadataRoute.Robots {
     sitemap: `${base}/sitemap.xml`,
   };
 }
+
+// read at request time: D1 (sitemap) and the runtime SITE_URL var are not available at build time
+export const dynamic = "force-dynamic";

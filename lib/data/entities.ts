@@ -146,7 +146,7 @@ export async function deleteRow(db: Db, a: Actor, key: EntityKey, id: string) {
   if (!r || !canDelete(a, owned(r))) throw new DataError("deleteFailed");
   const { all } = await rowPhotoIds(db, key, id, r);
   const files = all.length
-    ? await db.select({ id: photos.id, static_path: photos.static_path, status: photos.status }).from(photos).where(inArray(photos.id, all))
+    ? await db.select({ id: photos.id, static_path: photos.static_path, uploaded_by: photos.uploaded_by }).from(photos).where(inArray(photos.id, all))
     : [];
   const own = files.filter((p) => !p.static_path);
   await db.batch([

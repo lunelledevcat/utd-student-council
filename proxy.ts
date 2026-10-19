@@ -2,19 +2,20 @@ import createIntlMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { routing } from "@/i18n/routing";
 import { TRAP_PATHS, isAiCrawler, isBlockedTool, verifySearchBot } from "@/lib/bots";
-import { SUPABASE_URL, supabaseConfigured } from "@/lib/env";
 import { ban, isBanned, limit } from "@/lib/ratelimit";
 import { logSecurity } from "@/lib/security-log";
-import { refreshSession } from "@/lib/supabase/proxy";
 
 const isDev = process.env.NODE_ENV === "development";
-const SB_ORIGIN = SUPABASE_URL ? new URL(SUPABASE_URL).origin : "";
+// production uploads go straight from the browser to R2 (presigned S3 URL)
+const R2_ORIGIN = process.env.R2_ACCOUNT_ID ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : "";
+// Auth.js session cookie (database session; the token is looked up in D1 by every page/action)
+const SESSION_COOKIES = ["__Secure-authjs.session-token", "authjs.session-token"];
 
 // Back office + auth pages: never indexed, require a session (role is checked again server-side in every page/action).
 // Page paths may carry a locale prefix (/th, /en); next-intl adds it when missing.
 const PRIVATE = /^(?:\/(?:th|en))?\/(dashboard|admin|pending-access)(\/|$)/;
 const NOINDEX = /^(?:\/(?:th|en))?\/(dashboard|admin|pending-access|login|auth)(\/|$)/;
-const LOGIN = /^(?:\/(?:th|en))?\/login$/;
+const SIGN_IN = /^\/(auth\/google|api\/auth\/(signin|callback))(\/|$)/;
 // Not pages: route handlers and files keep their unprefixed paths.
 const NOT_PAGE = /^\/(api|auth|_hp)(\/|$)|\.[a-z0-9]+$/i;
 const intl = createIntlMiddleware(routing);
@@ -25,9 +26,9 @@ function csp(nonce: string) {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
     `style-src 'self' 'nonce-${nonce}'`,
     "style-src-attr 'unsafe-inline'", // inline style="" from animation libs; scripts stay nonce-locked
-    `img-src 'self' blob: data: ${SB_ORIGIN}`,
+    "img-src 'self' blob: data:",
     "font-src 'self'",
-    `connect-src 'self' ${SB_ORIGIN} https://challenges.cloudflare.com${isDev ? " ws: wss:" : ""}`,
+    `connect-src 'self' ${R2_ORIGIN} https://challenges.cloudflare.com${isDev ? " ws: wss:" : ""}`,
     "frame-src https://challenges.cloudflare.com",
     "object-src 'none'",
     "base-uri 'self'",
@@ -44,7 +45,8 @@ function deny(status: number, body: string, extra?: Record<string, string>) {
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const ua = req.headers.get("user-agent") ?? "";
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "local";
+  // set by Cloudflare's edge; a client cannot forge it (x-forwarded-for can be)
+  const ip = req.headers.get("cf-connecting-ip") || "local";
 
   // 1) honeypot / scanner paths -> temp ban
   if (TRAP_PATHS.test(pathname)) {
@@ -71,7 +73,8 @@ export async function proxy(req: NextRequest) {
 
   // 3) rate limit (verified search bots are exempt)
   if (searchBot !== true) {
-    const bucket = LOGIN.test(pathname) || pathname.startsWith("/auth/google") ? "login" : pathname.startsWith("/api/") ? "api" : "page";
+    // login = sign-in attempts (start at Google, Auth.js sign-in/callback), not views of the /login page
+    const bucket = SIGN_IN.test(pathname) ? "login" : pathname.startsWith("/api/") ? "api" : "page";
     const r = await limit(bucket, ip);
     if (!r.ok) {
       void logSecurity("rate_limited", { ip, path: pathname, detail: { bucket } });
@@ -92,8 +95,8 @@ export async function proxy(req: NextRequest) {
   if (NOINDEX.test(pathname)) res.headers.set("x-robots-tag", "noindex, nofollow, noai, noimageai");
 
   if (PRIVATE.test(pathname)) {
-    const user = supabaseConfigured() ? await refreshSession(req, res) : null;
-    if (!user) {
+    // cheap gate only: the session token itself is verified against D1 by requireRole()/authorize()
+    if (!SESSION_COOKIES.some((c) => req.cookies.has(c))) {
       // a write (Server Action POST) without a session gets a plain 401, not a redirect to the sign-in page
       if (req.method !== "GET" && req.method !== "HEAD") {
         void logSecurity("unauth_write", { ip, path: pathname });
@@ -111,7 +114,7 @@ export async function proxy(req: NextRequest) {
 export const config = {
   matcher: [
     {
-      source: "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
+      source: "/((?!_next/static|_next/image|media/public|favicon.ico|robots.txt|sitemap.xml).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },

@@ -49,6 +49,7 @@ export function isSameOrigin(req: Request) {
   }
 }
 
+/** Visitor IP. On Cloudflare, cf-connecting-ip is set by the edge and cannot be forged by the client. */
 export function clientIp(headers: Headers) {
-  return headers.get("x-forwarded-for")?.split(",")[0]?.trim() || headers.get("x-real-ip") || "unknown";
+  return headers.get("cf-connecting-ip") || "unknown";
 }

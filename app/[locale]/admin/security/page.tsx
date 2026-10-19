@@ -1,6 +1,7 @@
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { requireRole } from "@/lib/auth";
-import { adminClient } from "@/lib/supabase/admin";
+import { securitySummary } from "@/lib/data/admin";
+import { getDb } from "@/lib/db";
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 864e5).toISOString();
 
@@ -11,16 +12,12 @@ type RoleChange = { actor_email: string | null; detail: { email?: string; from?:
 export default async function SecurityPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  await requireRole(["admin"]);
+  const s = await requireRole(["admin"]);
   const t = await getTranslations("security");
   const f = await getFormatter();
   const since = daysAgo(7);
-  const db = adminClient();
-  const [{ data: ev }, { data: roles }] = await Promise.all([
-    db.from("security_events" as never).select("kind,path,ip_hash,created_at").gte("created_at", since).order("created_at", { ascending: false }).limit(500),
-    db.from("audit_logs").select("actor_email,detail,created_at").eq("action", "role.change").gte("created_at", since).order("created_at", { ascending: false }).limit(50),
-  ]);
-  const events = (ev ?? []) as unknown as Event[];
+  const { events: ev, roles } = await securitySummary(getDb(), s, since);
+  const events = ev as Event[];
   const counts = Object.entries(events.reduce<Record<string, number>>((m, e) => ((m[e.kind] = (m[e.kind] ?? 0) + 1), m), {})).sort((a, b) => b[1] - a[1]);
   const when = (s: string) => f.dateTime(new Date(s), { dateStyle: "medium", timeStyle: "short" });
 

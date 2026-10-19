@@ -1,13 +1,13 @@
-import { db, expect, test } from "./fixtures";
+import { expect, one, sql, test } from "./fixtures";
 
 // Language menu + switch. Screenshots go to SHOTS (default ../utd-shots/compare/lang).
 const SHOTS = process.env.SHOTS ?? "../utd-shots/compare/lang";
 
 test("globe menu: keyboard, overlay switch keeps tab + scroll + open popup", async ({ page }) => {
   // one approved member so the council tab has a card to open (removed at the end)
-  const { data: y } = await db().from("academic_years").select("year").eq("is_current", true).single();
-  const { data: m } = await db().from("members").insert({ year: y!.year, name: "[E2E] สมาชิกตัวอย่าง", name_en: "[E2E] Sample member", role_title: "กรรมการ", dept: "บริหาร", status: "approved" }).select("id").single();
-  test.info().attach("member", { body: m!.id });
+  const y = await one<{ year: number }>("SELECT year FROM academic_years WHERE is_current = 1");
+  const m = { id: crypto.randomUUID() };
+  await sql("INSERT INTO members (id, year, name, name_en, role_title, dept, status) VALUES (?, ?, ?, ?, ?, ?, 'approved')", m.id, y!.year, "[E2E] สมาชิกตัวอย่าง", "[E2E] Sample member", "กรรมการ", "บริหาร");
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/th?tab=council");
   const button = page.getByRole("button", { name: /เปลี่ยนภาษา/ });
@@ -41,7 +41,7 @@ test("globe menu: keyboard, overlay switch keeps tab + scroll + open popup", asy
   await expect(page).toHaveURL(/\/en\?tab=council/);
   expect(Math.abs((await page.evaluate(() => scrollY)) - scrollBefore)).toBeLessThan(5);
   await page.screenshot({ path: `${SHOTS}/4-after-en.png` });
-  await db().from("members").delete().eq("id", m!.id);
+  await sql("DELETE FROM members WHERE id = ?", m.id);
 });
 
 test("double click during a switch does not stack; mobile menu has the language row", async ({ page }) => {

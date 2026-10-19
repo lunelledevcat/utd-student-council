@@ -18,7 +18,7 @@ export default async function EntityList({ params, searchParams }: Props) {
   const t = await getTranslations("dashboard");
   const { years, year } = await yearParam(sp.year);
   const q = sp.q ?? "";
-  const { rows, page, pages } = await listRows(entity, year, s.id, { page: Number(sp.page) || 1, q });
+  const { rows, page, pages } = await listRows(s, entity, year, { page: Number(sp.page) || 1, q });
   const staff = STAFF.includes(s.role);
   const pageHref = (p: number) => ({ pathname: `/dashboard/${entity}`, query: { year: String(year), ...(q ? { q } : {}), page: String(p) } });
 
