@@ -1,0 +1,34 @@
+{
+  // Cloudflare Worker for the site (built by @opennextjs/cloudflare). Secrets are NOT here: `wrangler secret put`
+  // (production) and .dev.vars (local, gitignored). See README "Cloudflare".
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "utd-student-council",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "utd-student-council" }],
+  "observability": { "enabled": true },
+
+  "d1_databases": [
+    // id: Cloudflare dashboard -> Storage & Databases -> D1 -> utd-council -> Database ID
+    { "binding": "DB", "database_name": "utd-council", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "drizzle" }
+  ],
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "utd-council-media" }],
+  "kv_namespaces": [
+    // id: dashboard -> Storage & Databases -> KV -> utd-council-bans -> ID
+    { "binding": "BANS", "id": "00000000000000000000000000000000" }
+  ],
+  "ratelimits": [
+    { "name": "RL_PAGE", "namespace_id": "1001", "simple": { "limit": 60, "period": 60 } },
+    { "name": "RL_API", "namespace_id": "1002", "simple": { "limit": 20, "period": 60 } }
+  ],
+
+  // public values (not secret)
+  "vars": {
+    "NEXT_PUBLIC_SITE_URL": "https://utd-student-council.<your-subdomain>.workers.dev",
+    "NEXT_PUBLIC_TURNSTILE_SITE_KEY": "",
+    "ALLOWED_EMAIL_DOMAIN": "utd.ac.th",
+    "ADMIN_EMAILS": ""
+  }
+}

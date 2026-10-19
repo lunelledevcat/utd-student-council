@@ -16,7 +16,11 @@
     "test:e2e": "node scripts/e2e.mjs",
     "prepare": "node -e \"try{require('child_process').execSync('git config core.hooksPath .githooks',{stdio:'ignore'})}catch{}\"",
     "secrets:scan": "node scripts/secret-scan.mjs",
-    "security:check": "node scripts/security-check.mjs"
+    "security:check": "node scripts/security-check.mjs",
+    "preview": "node scripts/cf.mjs preview",
+    "deploy": "node scripts/cf.mjs deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "cf:build": "node scripts/cf.mjs build"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
