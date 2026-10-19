@@ -79,3 +79,20 @@ Behaviour only was studied; no code, images, text or logos were copied.
   linked from the footer.
 - IG / contact of a member or advisor is only sent to the browser when `consent_public` is true (filtered server-side).
 - Gallery modal for activities is an addition over the reference (brief).
+
+## Home fixes (2026-10-19)
+- Hero = full-frame photo slider (mandapa graphic removed): Ken Burns + crossfade, 6 s autoplay paused on hover/focus/drag,
+  mouse drag + touch swipe + ←/→ keys (when the banner has focus), glass arrows (hover on desktop; small, bottom row on phones
+  so they never cover the headline), pink pill dots bottom-centre. No hero photo -> one gradient slide.
+- `public/sample/hero-{1,2,3}-{480,960,1920}.webp` are **generated abstract placeholders** (labelled "[รูปตัวอย่าง n]"),
+  used only when Supabase is not configured. Delete them once real approved hero photos exist.
+- Photos are optional for announcements, activities and policies: no photo -> text card (icon, date/status, title, 2-line
+  excerpt). Activity/policy cards with photos span the full row (reference); text cards share rows of 3.
+  Portrait cards (council/advisors) keep the portrait placeholder.
+- Bug fixes: card entrance moved off the layout-animated <li> (cards no longer stop mid-rise); tab highlight is measured
+  inside the tab list (a layoutId pill inside the sticky bar drifted out of the frame while scrolling); search placeholder
+  "ค้นหา..."; tab panel height is held during tab/year switches (no footer jump); year select shows the number only.
+- Prod build (`next start`) shows no console errors. The CSP "inline style" errors seen earlier happen in `next dev` only.
+- REA screenshots appear to freeze CSS keyframe animations (petals sit at the top in every capture while JS-driven
+  animations run) — petal fall was not verified in a capture.
+- `gsap` removed (no longer used).

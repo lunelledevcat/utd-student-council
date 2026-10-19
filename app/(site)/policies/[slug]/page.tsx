@@ -36,14 +36,13 @@ export default async function PolicyPage({ params }: Props) {
 
       <ViewTransition name={`policy-${p.slug}`} share="morph" default="none">
         <div className="relative overflow-hidden rounded-[24px] shadow-soft">
-          <SmartImage
-            img={p.cover ?? p.photos[0] ?? null}
-            alt={p.title}
-            sizes="(max-width: 1100px) 100vw, 1100px"
-            className="aspect-[16/9] w-full sm:aspect-[16/6]"
-            priority
-            label="[รูปปกนโยบาย]"
-          />
+          {p.cover ?? p.photos[0] ? (
+            <SmartImage img={p.cover ?? p.photos[0]} alt={p.title} sizes="(max-width: 1100px) 100vw, 1100px" className="aspect-[16/9] w-full sm:aspect-[16/6]" priority />
+          ) : (
+            <div aria-hidden className="aspect-[16/9] w-full bg-gradient-to-br from-brand-deep via-brand to-brand-mid sm:aspect-[16/5]">
+              <div className="h-full w-full bg-[radial-gradient(60%_90%_at_85%_15%,rgb(242_122_168/0.35),transparent_60%)]" />
+            </div>
+          )}
           <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-deep/85 via-brand-deep/15 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 space-y-2 p-5 text-on-brand md:p-8">
             <StatusPill status={p.status} className="bg-white/95" />

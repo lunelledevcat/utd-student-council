@@ -20,7 +20,7 @@ function ThemeToggle() {
       type="button"
       aria-label={dark ? "สลับเป็นโหมดสว่าง" : "สลับเป็นโหมดมืด"}
       aria-pressed={dark}
-      className="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-white/5 text-on-brand transition hover:-translate-y-0.5 hover:bg-white/15"
+      className="grid h-9 w-9 place-items-center rounded-full border border-white/15 sm:h-10 sm:w-10 bg-white/5 text-on-brand transition hover:-translate-y-0.5 hover:bg-white/15"
       onClick={() => {
         const next = dark ? "light" : "dark";
         setDark(!dark);
@@ -43,7 +43,7 @@ function LogoSlot({ label, text, delay }: { label: string; text: string; delay: 
       initial={reduce ? false : { scale: 0.3, opacity: 0, rotate: -20 }}
       animate={{ scale: 1, opacity: 1, rotate: 0 }}
       transition={{ type: "spring", stiffness: 380, damping: 16, delay }}
-      className="no-select grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white font-display text-[0.7rem] font-semibold leading-none text-brand shadow-[0_0_0_3px_rgb(255_255_255/0.15)] md:h-[54px] md:w-[54px] md:text-xs"
+      className="no-select grid h-9 w-9 shrink-0 sm:h-11 sm:w-11 place-items-center rounded-full bg-white font-display text-[0.7rem] font-semibold leading-none text-brand shadow-[0_0_0_3px_rgb(255_255_255/0.15)] md:h-[54px] md:w-[54px] md:text-xs"
     >
       {text}
     </motion.span>
@@ -64,12 +64,12 @@ export function Navbar() {
           <LogoSlot label="[โลโก้โรงเรียน]" text="[ตรา]" delay={0.05} />
           <LogoSlot label="[โลโก้สภานักเรียน]" text="[สภา]" delay={0.15} />
           <span className="ml-1 min-w-0">
-            <span className="block truncate font-display text-[0.95rem] font-semibold leading-snug sm:text-[1.1rem] md:text-[1.35rem]">{SITE.name}</span>
-            <span className="block truncate text-[0.7rem] tracking-[0.06em] text-on-brand/60 md:text-sm">{SITE.nameEn}</span>
+            <span className="line-clamp-2 block font-display text-[0.85rem] font-semibold leading-tight sm:truncate sm:text-[1.1rem] sm:leading-snug md:text-[1.35rem]">{SITE.name}</span>
+            <span className="hidden truncate text-[0.7rem] tracking-[0.06em] text-on-brand/60 sm:block md:text-sm">{SITE.nameEn}</span>
           </span>
         </Link>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {SOCIAL.map(({ label, href, Icon }) => (
             <a
               key={label}
@@ -77,7 +77,7 @@ export function Navbar() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={label}
-              className="inline-flex h-10 items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 text-sm font-medium transition duration-300 hover:-translate-y-0.5 hover:border-pink-400/70 hover:bg-white/10 hover:shadow-glow md:px-4"
+              className="inline-flex h-9 items-center gap-2 rounded-full border border-white/20 bg-white/5 px-2.5 sm:h-10 sm:px-3 text-sm font-medium transition duration-300 hover:-translate-y-0.5 hover:border-pink-400/70 hover:bg-white/10 hover:shadow-glow md:px-4"
             >
               <Icon width={17} height={17} />
               <span className="hidden md:inline">{label}</span>

@@ -1,4 +1,5 @@
 import "server-only";
+import sampleHero from "@/content/sample-hero.json";
 import seed from "@/content/seed.json";
 import { supabaseConfigured } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/admin";
@@ -11,12 +12,12 @@ import { publicClient, publicImageUrl } from "@/lib/supabase/public";
 
 export type Img = { id: string; w: number; h: number; blur: string | null; src: { 480: string; 960: string; 1920: string } };
 export type Announcement = { id: string; title: string; date: string; body: string[]; link: string | null; pinned: boolean; cover: Img | null };
-export type Activity = { id: string; title: string; date: string; body: string[]; photos: (Img | null)[] };
+export type Activity = { id: string; title: string; date: string; body: string[]; photos: Img[] };
 export type PolicyStatus = "planned" | "in-progress" | "done";
 export type TimelineStep = { date: string; text: string };
 export type Policy = {
   id: string; slug: string; title: string; summary: string; body: string[]; status: PolicyStatus; progress: number;
-  owner: string; timeline: TimelineStep[]; cover: Img | null; photos: (Img | null)[];
+  owner: string; timeline: TimelineStep[]; cover: Img | null; photos: Img[];
 };
 export type Contact = { instagram: string | null; contact: string | null };
 export type Member = {
@@ -41,7 +42,8 @@ const toImg = (r: PhotoRow | null): Img | null => {
   const p = (w: number) => publicImageUrl(`photos/${r.id}/${w}.webp`);
   return { id: r.id, w: r.width, h: r.height, blur: r.blur, src: { 480: p(480), 960: p(960), 1920: p(1920) } };
 };
-const sortedImgs = (rows: PhotoRow[] | null) => [...(rows ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map(toImg);
+const sortedImgs = (rows: PhotoRow[] | null) =>
+  [...(rows ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map(toImg).filter((x): x is Img => !!x);
 
 /** Only consented contacts leave the server. `@handle` / URL / spaces are stripped to a bare IG handle. */
 const contactOf = (consent: boolean, instagram: string | null | undefined, contact: string | null | undefined): Contact =>
@@ -70,7 +72,6 @@ export async function getYearContent(requested?: number): Promise<YearContent> {
 
 function fromSeed(year: number, years: number[]): Omit<YearContent, "current"> {
   const ofYear = <T extends { year: number }>(xs: T[]) => xs.filter((x) => x.year === year);
-  const blanks = (n: number) => Array.from({ length: n }, () => null);
   return {
     year,
     years,
@@ -79,10 +80,10 @@ function fromSeed(year: number, years: number[]): Omit<YearContent, "current"> {
       .map((a) => ({ id: a.id, title: a.title, date: a.date, body: paragraphs(a.body), link: a.link, pinned: a.pinned, cover: null })),
     activities: ofYear(seed.activities)
       .sort((a, b) => b.date.localeCompare(a.date))
-      .map((a) => ({ id: a.id, title: a.title, date: a.date, body: paragraphs(a.body), photos: blanks(a.photos) })),
+      .map((a) => ({ id: a.id, title: a.title, date: a.date, body: paragraphs(a.body), photos: [] })),
     policies: ofYear(seed.policies).map((p) => ({
       id: p.id, slug: p.slug, title: p.title, summary: p.summary, body: paragraphs(p.body), status: p.status as PolicyStatus,
-      progress: p.progress, owner: p.owner, timeline: p.timeline, cover: null, photos: blanks(p.photos),
+      progress: p.progress, owner: p.owner, timeline: p.timeline, cover: null, photos: [],
     })),
     members: ofYear(seed.members).map((m, i) => ({
       id: m.id, name: m.name, nickname: m.nickname, role: m.role, termNo: m.termNo, execTitle: m.execTitle, dept: m.dept,
@@ -183,9 +184,15 @@ export async function getPolicySlugs(): Promise<string[]> {
 
 // ───────────────────────── hero ─────────────────────────
 
-/** Hero slides: approved + ticked "is_hero", in admin-defined order. Empty -> gradient fallback. */
+/** Hero slides: approved + ticked "is_hero", in admin-defined order. Empty -> one gradient slide.
+ *  Without Supabase (local dev) three generated sample images in public/sample are used. */
 export async function getHeroPhotos(): Promise<Photo[]> {
-  if (!supabaseConfigured()) return [];
+  if (!supabaseConfigured()) {
+    return sampleHero.map((s, i) => {
+      const p = (w: number) => `/sample/hero-${i + 1}-${w}.webp`;
+      return { ...s, src: { 480: p(480), 960: p(960), 1920: p(1920) } };
+    });
+  }
   const { data } = await publicClient().from("photos").select(`${IMG_COLS},caption`).eq("is_hero", true).order("hero_order", { ascending: true });
   return (data ?? []).map((r) => ({ ...(toImg(r as PhotoRow) as Img), caption: r.caption }));
 }
