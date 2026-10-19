@@ -462,7 +462,8 @@
       "yearInvalid": "Invalid academic year (Buddhist era)",
       "yearExists": "This year already exists",
       "yearFailed": "Could not add the year",
-      "forbidden": "You are not allowed to do this"
+      "forbidden": "You are not allowed to do this",
+      "badFile": "This file is not a supported image (use JPG, PNG or WebP)."
     },
     "years": {
       "heading": "Academic years",
@@ -621,5 +622,38 @@
     "switching": "Switching to English…",
     "openMenu": "Open menu",
     "closeMenu": "Close menu"
+  },
+  "security": {
+    "title": "Security",
+    "lead": "Security events from the last 7 days (IP addresses are stored only as hashes).",
+    "summary": "7-day summary",
+    "recent": "Recent events",
+    "roles": "Role changes",
+    "none": "No events",
+    "time": "Time",
+    "kind": "Type",
+    "path": "Page",
+    "source": "Source (hash)",
+    "logoutAll": "Sign out on every device",
+    "logoutAllHelp": "Ends this account's sessions on every device, including this one. Use it if you think someone else has access.",
+    "kinds": {
+      "trap": "Trap page hit",
+      "ua_blocked": "Automated tool blocked",
+      "fake_bot": "Fake search bot",
+      "rate_limited": "Rate limited",
+      "unauth_write": "Write without sign-in",
+      "forbidden": "Action not allowed",
+      "upload_rejected": "Upload rejected",
+      "login": "Sign-in",
+      "logout_all": "Signed out everywhere",
+      "error": "Server error"
+    },
+    "nav": "Security"
+  },
+  "errorPage": {
+    "title": "Something went wrong",
+    "body": "Sorry, something failed on our side. Please try again. If it keeps happening, tell an administrator the reference code below.",
+    "ref": "Reference",
+    "retry": "Try again"
   }
 }

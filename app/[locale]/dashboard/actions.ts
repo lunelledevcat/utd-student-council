@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { ENTITIES, isEntity, rowColumns, type Entity, type EntityKey, type Field } from "@/lib/admin/entities";
-import { incomingExists, makeVariants, publishPhotos, removePhotoFiles, signedUpload } from "@/lib/admin/photos";
-import { MEMBERS, STAFF, audit, getSession, type Role, type Session } from "@/lib/auth";
+import { ENTITIES, isEntity, rowColumns, type EntityKey } from "@/lib/admin/entities";
+import { parse, type Err } from "@/lib/admin/validate";
+import { checkIncoming, makeVariants, publishPhotos, removePhotoFiles, signedUpload } from "@/lib/admin/photos";
+import { MEMBERS, STAFF, audit, authorize } from "@/lib/auth";
 import { limit } from "@/lib/ratelimit";
+import { logSecurity } from "@/lib/security-log";
 import { adminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,115 +16,44 @@ import { createClient } from "@/lib/supabase/server";
 // The service role is used only after the role check, for review, publishing photos, years and hero settings.
 // Errors are message keys under dashboard.errors (the client translates them).
 
-type Err = { key: string; values?: Record<string, number> };
 export type Result = { ok: true } | { ok: false; error: Err };
 export type FormState = { ok: boolean; id?: string; error?: Err; fieldErrors?: Record<string, Err> };
 
 const fail = (key: string, values?: Record<string, number>) => ({ ok: false as const, error: { key, values } });
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
-const validDate = (s: string) => DATE.test(s) && !Number.isNaN(Date.parse(s));
-
-async function role(allowed: Role[]): Promise<(Session & { role: Role }) | null> {
-  const s = await getSession();
-  return s?.role && allowed.includes(s.role) ? (s as Session & { role: Role }) : null;
-}
-
-type Parsed = { values: Record<string, unknown>; images: Record<string, string[]>; errors: Record<string, Err> };
-
-/** FormData -> column values, validated against the entity config. English columns are optional. */
-function parse(e: Entity, fd: FormData): Parsed {
-  const values: Record<string, unknown> = {};
-  const images: Record<string, string[]> = {};
-  const errors: Record<string, Err> = {};
-  const str = (n: string) => String(fd.get(n) ?? "").replace(/\r\n/g, "\n").trim();
-
-  for (const f of e.fields as Field[]) {
-    const v = str(f.name);
-    switch (f.kind) {
-      case "text":
-      case "textarea": {
-        if (f.required && !v) errors[f.name] = { key: "required" };
-        else if (v.length > f.max) errors[f.name] = { key: "tooLong", values: { max: f.max } };
-        else if (f.kind === "text" && f.pattern && v && !new RegExp(f.pattern.re).test(v)) errors[f.name] = { key: f.pattern.error };
-        values[f.name] = f.name === "instagram" ? v.replace(/^@/, "") : v;
-        if (f.en) {
-          const en = str(`${f.name}_en`);
-          if (en.length > f.max) errors[`${f.name}_en`] = { key: "tooLong", values: { max: f.max } };
-          values[`${f.name}_en`] = en;
-        }
-        break;
-      }
-      case "date":
-        if (!validDate(v)) errors[f.name] = { key: "badDate" };
-        values[f.name] = v;
-        break;
-      case "url": {
-        let ok = !v;
-        try { ok ||= new URL(v).protocol === "https:"; } catch { /* invalid */ }
-        if (!ok) errors[f.name] = { key: "badUrl" };
-        values[f.name] = v || null;
-        break;
-      }
-      case "number": {
-        const n = v === "" ? f.min : Number(v);
-        if (!Number.isInteger(n) || n < f.min || n > f.max) errors[f.name] = { key: "badNumber", values: { min: f.min, max: f.max } };
-        values[f.name] = n;
-        break;
-      }
-      case "select":
-        if (!f.options.includes(v)) errors[f.name] = { key: "badChoice" };
-        values[f.name] = v;
-        break;
-      case "checkbox":
-        values[f.name] = fd.get(f.name) === "on";
-        break;
-      case "timeline": {
-        const en = str(`${f.name}_en`).split("\n").map((l) => l.trim());
-        const steps: { date: string; text: string; text_en?: string }[] = [];
-        v.split("\n").map((l) => l.trim()).filter(Boolean).forEach((line, i) => {
-          const [d, ...rest] = line.split("|");
-          const text = rest.join("|").trim();
-          if (!validDate(d.trim()) || !text) errors[f.name] ??= { key: "badTimeline", values: { line: i + 1 } };
-          else steps.push({ date: d.trim(), text: text.slice(0, 300), ...(en[i] ? { text_en: en[i].slice(0, 300) } : {}) });
-        });
-        if (steps.length > 50) errors[f.name] = { key: "tooManyTimeline" };
-        if (en.filter(Boolean).length > steps.length && !errors[f.name]) errors[`${f.name}_en`] = { key: "timelineEnCount" };
-        values[f.name] = steps;
-        break;
-      }
-      case "image":
-        if (v && !UUID.test(v)) errors[f.name] = { key: "badImage" };
-        values[f.name] = v || null;
-        break;
-      case "images": {
-        const ids = fd.getAll(f.name).map(String).filter(Boolean);
-        if (ids.some((id) => !UUID.test(id)) || ids.length > 60) errors[f.name] = { key: "badImages" };
-        images[f.name] = [...new Set(ids)];
-        break;
-      }
-    }
-  }
-  return { values, images, errors };
-}
+const role = authorize;
+/** Logged, then answered with the translated "forbidden". */
+const denied = () => {
+  after(() => logSecurity("forbidden", { detail: { at: "dashboard action" } }));
+  return fail("forbidden");
+};
 
 export async function saveEntity(key: EntityKey, id: string | null, year: number, locale: string, _prev: FormState, fd: FormData): Promise<FormState> {
   if (!isEntity(key) || (id !== null && !UUID.test(id)) || !Number.isInteger(year)) return fail("badRequest");
   const s = await role(MEMBERS);
-  if (!s) return fail("forbidden");
+  if (!s) return denied();
   const e = ENTITIES[key];
   const { values, images, errors } = parse(e, fd);
   if (Object.keys(errors).length) return { ok: false, error: { key: "fix" }, fieldErrors: errors };
 
   const db = await createClient();
 
-  // every referenced photo must be readable by the caller (RLS: own uploads, or any for staff)
-  const photoIds = [...e.fields.filter((f) => f.kind === "image").map((f) => values[f.name] as string | null), ...Object.values(images).flat()].filter(
+  // Photos the caller may attach: their own uploads, photos already on this row, or any photo for staff.
+  // (Approved photos are publicly readable, so "can read it" is not enough — that would let a council member move
+  // someone else's published photo onto their own row: IDOR.)
+  const photoIds = [...new Set([...e.fields.filter((f) => f.kind === "image").map((f) => values[f.name] as string | null), ...Object.values(images).flat()].filter(
     (x): x is string => !!x,
-  );
-  if (photoIds.length) {
-    const { data } = await db.from("photos").select("id").in("id", photoIds);
-    if ((data ?? []).length !== new Set(photoIds).size) return fail("photoNotAllowed");
+  ))];
+  if (photoIds.length && !STAFF.includes(s.role)) {
+    const { data } = await adminClient().from("photos").select("id,uploaded_by,activity_id,policy_id").in("id", photoIds);
+    let current: string[] = [];
+    if (id) {
+      const imageCols = e.fields.filter((f) => f.kind === "image").map((f) => f.name);
+      const { data: row } = imageCols.length ? await db.from(key).select(imageCols.join(",")).eq("id", id).maybeSingle() : { data: null };
+      current = imageCols.map((c) => (row as unknown as Record<string, string | null> | null)?.[c]).filter((x): x is string => !!x);
+    }
+    const allowed = (data ?? []).filter((p) => p.uploaded_by === s.id || current.includes(p.id) || (!!id && (p.activity_id === id || p.policy_id === id)));
+    if (allowed.length !== photoIds.length) return fail("photoNotAllowed");
   }
 
   const cols = Object.fromEntries(rowColumns(e).map((c) => [c, values[c]]));
@@ -156,7 +87,7 @@ export async function saveEntity(key: EntityKey, id: string | null, year: number
 export async function deleteEntity(key: EntityKey, id: string): Promise<Result> {
   if (!isEntity(key) || !UUID.test(id)) return fail("badRequest");
   const s = await role(MEMBERS);
-  if (!s) return fail("forbidden");
+  if (!s) return denied();
   // photos that belong only to this row (gallery rows cascade in the DB, but their files would stay in storage)
   const admin = adminClient();
   const e = ENTITIES[key];
@@ -184,7 +115,7 @@ export async function deleteEntity(key: EntityKey, id: string): Promise<Result> 
 export async function reviewEntity(key: EntityKey, id: string, action: "approve" | "reject" | "hide", reason: string): Promise<Result> {
   if (!isEntity(key) || !UUID.test(id) || !["approve", "reject", "hide"].includes(action)) return fail("badRequest");
   const s = await role(STAFF);
-  if (!s) return fail("forbidden");
+  if (!s) return denied();
   const r = String(reason ?? "").trim().slice(0, 500);
   if (action === "reject" && !r) return fail("reasonRequired");
   const e = ENTITIES[key];
@@ -220,7 +151,7 @@ export async function reviewEntity(key: EntityKey, id: string, action: "approve"
 /** One-time URL for the browser to PUT an already-compressed WebP straight into storage (not through Next). */
 export async function createUploadUrl(): Promise<Result & { id?: string; url?: string }> {
   const s = await role(MEMBERS);
-  if (!s) return fail("forbidden");
+  if (!s) return denied();
   const rl = await limit("upload", s.id);
   if (!rl.ok) return fail("rate", { min: Math.ceil(rl.retryAfter / 60) });
   try {
@@ -234,12 +165,17 @@ export async function createUploadUrl(): Promise<Result & { id?: string; url?: s
 /** Registers an upload as a pending photo right away; variants are built in the background (after the response). */
 export async function finalizeUpload(id: string, width: number, height: number): Promise<Result & { id?: string }> {
   const s = await role(MEMBERS);
-  if (!s) return fail("forbidden");
+  if (!s) return denied();
   if (!UUID.test(String(id)) || !Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || width * height > 60_000_000) {
     return fail("badRequest");
   }
   try {
-    if (!(await incomingExists(s.id, id))) return fail("upload");
+    const file = await checkIncoming(s.id, id);
+    if (file === "missing") return fail("upload");
+    if (file === "bad") {
+      after(() => logSecurity("upload_rejected", { userId: s.id, detail: { id } }));
+      return fail("badFile");
+    }
     const { error } = await (await createClient())
       .from("photos")
       .insert({ id, width: Math.min(width, 1920), height: Math.round(height * Math.min(1, 1920 / width)), caption: "", status: "pending", uploaded_by: s.id });
@@ -256,7 +192,7 @@ export async function finalizeUpload(id: string, width: number, height: number):
 
 export async function addYear(_prev: FormState, fd: FormData): Promise<FormState> {
   const s = await role(["admin"]);
-  if (!s) return fail("forbidden");
+  if (!s) return denied();
   const year = Number(fd.get("year"));
   const copyFrom = Number(fd.get("copyFrom")) || null;
   if (!Number.isInteger(year) || year < 2500 || year > 2700) return { ok: false, fieldErrors: { year: { key: "yearInvalid" } } };
@@ -282,7 +218,7 @@ export async function addYear(_prev: FormState, fd: FormData): Promise<FormState
 
 export async function setCurrentYear(year: number): Promise<Result> {
   const s = await role(["admin"]);
-  if (!s) return fail("forbidden");
+  if (!s) return denied();
   if (!Number.isInteger(year)) return fail("badRequest");
   const db = adminClient();
   const { data } = await db.from("academic_years").select("year").eq("year", year).maybeSingle();
@@ -300,7 +236,7 @@ export async function setCurrentYear(year: number): Promise<Result> {
 export async function deletePhoto(photoId: string): Promise<Result> {
   if (!UUID.test(photoId)) return fail("badRequest");
   const s = await role(STAFF);
-  if (!s) return fail("forbidden");
+  if (!s) return denied();
   const db = adminClient();
   const { data: p } = await db.from("photos").select("static_path,uploaded_by").eq("id", photoId).maybeSingle();
   if (!p) return fail("badRequest");
@@ -315,7 +251,7 @@ export async function deletePhoto(photoId: string): Promise<Result> {
 export async function setHero(photoId: string, on: boolean, order: number): Promise<Result> {
   if (!UUID.test(photoId) || !Number.isInteger(order) || order < 0 || order > 999) return fail("badRequest");
   const s = await role(STAFF);
-  if (!s) return fail("forbidden");
+  if (!s) return denied();
   const { error } = await adminClient().from("photos").update({ is_hero: on, hero_order: order }).eq("id", photoId).eq("status", "approved");
   if (error) return fail("saveFailed");
   await audit(s, on ? "hero:on" : "hero:off", "photos", photoId, { order });

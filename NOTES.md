@@ -270,3 +270,18 @@ Timing before speed work (local, 10 × 2400×1500 JPEG): upload 10 photos 56.7 s
   navigate (behind the overlay).
 - Header no longer clips its children (only the decorative glow is clipped), so the menu can drop below it.
 - All external links: rel="noopener noreferrer nofollow".
+
+## Security hardening (2026-10-19) — details in SECURITY.md
+- `authorize()` in lib/auth.ts is the single action/route check; zod validation in lib/admin/validate.ts (https-only URLs).
+- IDOR fix: council could attach any *approved* (public) photo id to their own row; now only own uploads / photos already
+  on that row (staff unrestricted).
+- Uploads: magic bytes checked in the browser and on the server (WebP + sharp decode), bad files deleted + logged;
+  pending bucket WebP-only; preview signed URLs 10 min.
+- Cookies HttpOnly/Secure/Lax; POST to private paths without a session -> 401; COOP/CORP headers; global sign-out.
+- Migration 0006: security_events (RLS, no policies), role-change audit trigger, bucket mime.
+- /admin/security: 7-day summary, recent events, role changes, sign out everywhere. Error page shows the digest as a
+  reference code.
+- Pre-commit secret scan (.githooks, enabled by `npm install` via prepare), Dependabot, `npm run security:check`
+  (21 checks, all pass). Not done: DOMPurify (no HTML is rendered anywhere — React escapes; add with any rich text),
+  `style-src-attr 'unsafe-inline'` kept for animation style attributes.
+- E2E: 20 tests (backoffice 8, features 5, lang 2, security 5) pass.

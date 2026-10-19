@@ -17,6 +17,8 @@ const securityHeaders = [
     value: "max-age=63072000; includeSubDomains; preload",
   },
   { key: "X-Robots-Tag", value: "noai, noimageai" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
 ];
 
 const nextConfig: NextConfig = {

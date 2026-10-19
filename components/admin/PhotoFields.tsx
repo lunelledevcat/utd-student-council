@@ -7,6 +7,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { createUploadUrl, finalizeUpload } from "@/app/[locale]/dashboard/actions";
 import { IconClose, IconImages, IconReset } from "@/components/icons/Icon";
 import type { FormPhoto } from "@/lib/admin/data";
+import { sniffImage } from "@/lib/image-sniff";
 import { cn } from "@/lib/utils";
 
 // Fast upload: compress in the browser (WebP, <= 1920 px) -> PUT straight to Supabase Storage with a one-time signed
@@ -59,6 +60,8 @@ function usePhotoQueue(initial: FormPhoto[], max: number) {
     aborts.current.set(key, ac);
     try {
       patch(key, { status: "compressing", progress: 0, error: undefined });
+      // real image? (a renamed .html/.svg is refused here; the server checks the uploaded bytes again)
+      if (!sniffImage(new Uint8Array(await file.slice(0, 16).arrayBuffer()))) throw new Error(t("errors.badFile"));
       const small = await imageCompression(file, { maxWidthOrHeight: 1920, fileType: "image/webp", initialQuality: 0.85, useWebWorker: false, signal: ac.signal });
       const bmp = await createImageBitmap(small);
       const { width, height } = bmp;

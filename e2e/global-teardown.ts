@@ -15,6 +15,8 @@ export default async function globalTeardown() {
   await db.from("photos").delete().in("uploaded_by", ids);
   await db.from("academic_years").delete().gte("year", 2690); // test years only
   await db.from("audit_logs").delete().in("actor_id", ids);
+  await db.from("audit_logs").delete().eq("action", "role.change").in("target_id", ids);
+  await db.from("security_events").delete().in("user_id", ids);
   await db.from("profiles").delete().in("id", ids);
   for (const id of ids) await db.auth.admin.deleteUser(id);
 }

@@ -2,15 +2,20 @@ import { createServerClient } from "@supabase/ssr";
 import type { NextRequest, NextResponse } from "next/server";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/env";
 
+// Auth cookies: HttpOnly (no browser code reads them — every Supabase call runs on the server), Secure in production,
+// SameSite=Lax (sent on top-level navigation from Google's redirect, never on cross-site subrequests).
+export const AUTH_COOKIE = { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax" as const, path: "/" };
+
 /**
  * Refreshes the Supabase session cookies on `res` and returns the verified user (or null).
  * getUser() asks the Auth server to validate the JWT — never trust the cookie alone.
  */
 export async function refreshSession(req: NextRequest, res: NextResponse) {
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    cookieOptions: AUTH_COOKIE,
     cookies: {
       getAll: () => req.cookies.getAll(),
-      setAll: (list) => list.forEach(({ name, value, options }) => res.cookies.set(name, value, options)),
+      setAll: (list) => list.forEach(({ name, value, options }) => res.cookies.set(name, value, { ...options, ...AUTH_COOKIE })),
     },
   });
   const { data } = await supabase.auth.getUser();

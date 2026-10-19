@@ -45,6 +45,16 @@ export async function getSession(): Promise<Session | null> {
   return { id: u.id, email, role: await resolveRole(u.id, email) };
 }
 
+/**
+ * The one authorization check for Server Actions and route handlers: verified session (Auth server) + sign-in rule +
+ * role in `allowed`. Returns null instead of throwing, so actions answer with a translated "forbidden".
+ * Pages/layouts use requireRole() below (same rule, but redirects).
+ */
+export async function authorize(allowed: Role[]): Promise<(Session & { role: Role }) | null> {
+  const s = await getSession();
+  return s?.role && allowed.includes(s.role) ? (s as Session & { role: Role }) : null;
+}
+
 /** For pages/layouts: redirects when the caller lacks access. */
 export async function requireRole(allowed: Role[]): Promise<Session & { role: Role }> {
   const s = await getSession();

@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
+import { sniffImage } from "@/lib/image-sniff";
 import { adminClient } from "@/lib/supabase/admin";
 import { publicImageUrl } from "@/lib/supabase/public";
 
@@ -16,6 +17,8 @@ import { publicImageUrl } from "@/lib/supabase/public";
 export const WIDTHS = [480, 960, 1920] as const;
 const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_PIXELS = 60_000_000;
+/** Back-office previews of unapproved photos: short-lived signed URLs (10 min), only for rows the caller may open. */
+const PREVIEW_TTL = 600;
 const incomingPath = (userId: string, id: string) => `incoming/${userId}/${id}.webp`;
 
 export async function signedUpload(userId: string) {
@@ -26,11 +29,26 @@ export async function signedUpload(userId: string) {
   return { id, url: data.signedUrl };
 }
 
-/** True when the browser's upload for (user, id) is in storage and within limits. */
-export async function incomingExists(userId: string, id: string) {
-  const { data } = await adminClient().storage.from("pending").list(`incoming/${userId}`, { search: `${id}.webp`, limit: 1 });
-  const f = data?.find((o) => o.name === `${id}.webp`);
-  return !!f && (f.metadata?.size ?? 0) <= MAX_BYTES;
+/**
+ * Checks the browser's upload for (user, id): exists, <= 10 MB, really a WebP image (magic bytes) and decodable within
+ * the pixel limit. A file that fails is deleted. "missing" | "bad" | "ok".
+ */
+export async function checkIncoming(userId: string, id: string): Promise<"missing" | "bad" | "ok"> {
+  const store = adminClient().storage.from("pending");
+  const { data, error } = await store.download(incomingPath(userId, id));
+  if (error || !data) return "missing";
+  const buf = new Uint8Array(await data.arrayBuffer());
+  let ok = buf.byteLength <= MAX_BYTES && sniffImage(buf.subarray(0, 16)) === "webp";
+  if (ok) {
+    try {
+      const m = await sharp(buf, { limitInputPixels: MAX_PIXELS }).metadata();
+      ok = m.format === "webp" && !!m.width && !!m.height;
+    } catch {
+      ok = false;
+    }
+  }
+  if (!ok) await store.remove([incomingPath(userId, id)]);
+  return ok ? "ok" : "bad";
 }
 
 /** Small, centred-bottom-right watermark (Latin text: server fonts may lack Thai glyphs). */
@@ -86,11 +104,11 @@ export async function previewUrls(photos: { id: string; status: string; uploaded
   for (const p of photos) if (p.status === "approved") out[p.id] = publicImageUrl(`photos/${p.id}/480.webp`);
   const pending = photos.filter((p) => p.status !== "approved");
   if (pending.length) {
-    const { data } = await store.createSignedUrls(pending.map((p) => `photos/${p.id}/480.webp`), 3600);
+    const { data } = await store.createSignedUrls(pending.map((p) => `photos/${p.id}/480.webp`), PREVIEW_TTL);
     for (const [i, d] of (data ?? []).entries()) if (d.signedUrl && !d.error) out[pending[i].id] = d.signedUrl;
     const missing = pending.filter((p) => !out[p.id] && p.uploadedBy);
     if (missing.length) {
-      const { data: src } = await store.createSignedUrls(missing.map((p) => incomingPath(p.uploadedBy!, p.id)), 3600);
+      const { data: src } = await store.createSignedUrls(missing.map((p) => incomingPath(p.uploadedBy!, p.id)), PREVIEW_TTL);
       for (const [i, d] of (src ?? []).entries()) if (d.signedUrl && !d.error) out[missing[i].id] = d.signedUrl;
     }
   }

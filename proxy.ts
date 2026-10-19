@@ -4,6 +4,7 @@ import { routing } from "@/i18n/routing";
 import { TRAP_PATHS, isAiCrawler, isBlockedTool, verifySearchBot } from "@/lib/bots";
 import { SUPABASE_URL, supabaseConfigured } from "@/lib/env";
 import { ban, isBanned, limit } from "@/lib/ratelimit";
+import { logSecurity } from "@/lib/security-log";
 import { refreshSession } from "@/lib/supabase/proxy";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -48,23 +49,23 @@ export async function proxy(req: NextRequest) {
   // 1) honeypot / scanner paths -> temp ban
   if (TRAP_PATHS.test(pathname)) {
     await ban(ip);
-    console.warn(`[security] trap hit ip=${ip} path=${pathname}`);
+    void logSecurity("trap", { ip, path: pathname });
     return deny(403, "Forbidden");
   }
   if (await isBanned(ip)) return deny(403, "Forbidden");
 
   // 2) user agent policy
   if (!ua.trim()) {
-    console.warn(`[security] empty UA ip=${ip} path=${pathname}`);
+    void logSecurity("ua_blocked", { ip, path: pathname, detail: { ua: "" } });
     return deny(403, "Forbidden");
   }
   if (isAiCrawler(ua) || isBlockedTool(ua)) {
-    console.warn(`[security] blocked UA ip=${ip} ua=${ua.slice(0, 80)}`);
+    void logSecurity("ua_blocked", { ip, path: pathname, detail: { ua: ua.slice(0, 80) } });
     return deny(403, "Forbidden");
   }
   const searchBot = await verifySearchBot(ip, ua);
   if (searchBot === false && !isDev) {
-    console.warn(`[security] fake search bot ip=${ip}`);
+    void logSecurity("fake_bot", { ip, path: pathname });
     return deny(403, "Forbidden");
   }
 
@@ -73,7 +74,7 @@ export async function proxy(req: NextRequest) {
     const bucket = LOGIN.test(pathname) || pathname.startsWith("/auth/google") ? "login" : pathname.startsWith("/api/") ? "api" : "page";
     const r = await limit(bucket, ip);
     if (!r.ok) {
-      console.warn(`[security] 429 bucket=${bucket} ip=${ip}`);
+      void logSecurity("rate_limited", { ip, path: pathname, detail: { bucket } });
       return deny(429, "Too Many Requests", { "retry-after": String(r.retryAfter) });
     }
   }
@@ -93,6 +94,11 @@ export async function proxy(req: NextRequest) {
   if (PRIVATE.test(pathname)) {
     const user = supabaseConfigured() ? await refreshSession(req, res) : null;
     if (!user) {
+      // a write (Server Action POST) without a session gets a plain 401, not a redirect to the sign-in page
+      if (req.method !== "GET" && req.method !== "HEAD") {
+        void logSecurity("unauth_write", { ip, path: pathname });
+        return deny(401, "Unauthorized");
+      }
       const to = req.nextUrl.clone();
       to.pathname = `/${pathname.split("/")[1] === "en" ? "en" : "th"}/login`;
       to.search = "";

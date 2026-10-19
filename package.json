@@ -13,7 +13,10 @@
     "test:auth": "node --no-warnings scripts/test-auth-rules.mts",
     "env:docs": "node --no-warnings scripts/gen-env-docs.mts",
     "db:migrate": "node scripts/db-migrate.mjs",
-    "test:e2e": "node scripts/e2e.mjs"
+    "test:e2e": "node scripts/e2e.mjs",
+    "prepare": "node -e \"try{require('child_process').execSync('git config core.hooksPath .githooks',{stdio:'ignore'})}catch{}\"",
+    "secrets:scan": "node scripts/secret-scan.mjs",
+    "security:check": "node scripts/security-check.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
