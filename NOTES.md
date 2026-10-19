@@ -285,3 +285,24 @@ Timing before speed work (local, 10 × 2400×1500 JPEG): upload 10 photos 56.7 s
   (21 checks, all pass). Not done: DOMPurify (no HTML is rendered anywhere — React escapes; add with any rich text),
   `style-src-attr 'unsafe-inline'` kept for animation style attributes.
 - E2E: 20 tests (backoffice 8, features 5, lang 2, security 5) pass.
+
+## Real 2569 data (2026-10-20, main)
+- Sources in `_import/` (gitignored): SCC.pdf, brander/IMG_6115|6116|6118.pdf, members-2569.json, logos. Images are
+  taken out of the PDFs as embedded (JPEG bytes / raw pixels) — never re-drawn or edited (`scripts/import-2569.mjs`).
+- Members: `content/members-2569.json` (names + roleKey; titles TH/EN in messages `people.titles`), seeded by
+  `scripts/seed-2569.mjs` (fixed ids, re-runnable, never overwrites consent / IG). Cards grouped chair -> 4 vice -> heads.
+- Portraits: card = head-and-shoulders box (320,200,440x550) — clean on all 16 pages (no frame/logo/text; the poster's
+  photo-collage background stays); popup = whole poster 720x900. AVIF + WebP, all < 80 KB. Stored in the PRIVATE bucket
+  (`pending/members/2569/NN-*`): the repo is public, and photos must not be reachable without consent. `consent_photo`
+  (null = awaiting, default) -> /dashboard/consent (admin): per person on/off, "show all" asks twice + server checks the
+  count; on = copy to the public bucket, off = remove from it.
+- Banner 02: the 3 delivered files are council group photos (2048x1365, 1574x1040, 6240x4160 ≈ 1.5:1) — not the
+  "SCUTD 2026" / memorial artwork described, so all three are registered OFF (hero order 2–4; 1 kept for banner 01).
+  Banner slides (`/banners/`) show the whole image (contain + own blurred fill), no zoom, nothing over them, credit under
+  the frame. Hero rows have a show window (hero_start/hero_end) editable on /dashboard/hero.
+- Channels: `lib/site.ts CHANNELS` (FB share link, IG utd_scc pending confirmation vs utd_stdcc, TikTok utd.sc).
+- Logos: council logo black background removed by flood fill from the edges only (outlines kept); favicon.ico, icon,
+  apple-icon, OG image generated. No SVG: tracing a raster emblem would change it — an official vector file is needed.
+- Migrations 0007 (columns, window, lock), 0008 (AVIF in buckets), 0009 (anon column grant for the new member columns).
+- Lighthouse /th (mobile, local): before 81–83/96/100/92 CLS 0 · after 83/97/100/92 CLS 0; council tab 81/100/100/100;
+  banner test page CLS 0.

@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { ENTITIES, isEntity, rowColumns, type EntityKey } from "@/lib/admin/entities";
 import { parse, type Err } from "@/lib/admin/validate";
 import { checkIncoming, makeVariants, publishPhotos, removePhotoFiles, signedUpload } from "@/lib/admin/photos";
+import { applyConsent } from "@/lib/admin/consent";
 import { MEMBERS, STAFF, audit, authorize } from "@/lib/auth";
 import { limit } from "@/lib/ratelimit";
 import { logSecurity } from "@/lib/security-log";
@@ -248,13 +249,55 @@ export async function deletePhoto(photoId: string): Promise<Result> {
   return { ok: true };
 }
 
-export async function setHero(photoId: string, on: boolean, order: number): Promise<Result> {
-  if (!UUID.test(photoId) || !Number.isInteger(order) || order < 0 || order > 999) return fail("badRequest");
+/** Show in the hero or not, order, and an optional show window (dates inclusive, "" = no limit). */
+export async function setHero(photoId: string, on: boolean, order: number, start = "", end = ""): Promise<Result> {
+  const date = (d: string) => d === "" || (/^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(Date.parse(d)));
+  if (!UUID.test(photoId) || !Number.isInteger(order) || order < 0 || order > 999 || !date(start) || !date(end)) return fail("badRequest");
+  if (start && end && start > end) return fail("heroWindow");
   const s = await role(STAFF);
   if (!s) return denied();
-  const { error } = await adminClient().from("photos").update({ is_hero: on, hero_order: order }).eq("id", photoId).eq("status", "approved");
+  const { error } = await adminClient().from("photos")
+    .update({ is_hero: on, hero_order: order, hero_start: start || null, hero_end: end || null }).eq("id", photoId).eq("status", "approved");
   if (error) return fail("saveFailed");
-  await audit(s, on ? "hero:on" : "hero:off", "photos", photoId, { order });
+  await audit(s, on ? "hero:on" : "hero:off", "photos", photoId, { order, start, end });
+  revalidatePath("/[locale]", "layout");
   revalidatePath("/[locale]/dashboard", "layout");
   return { ok: true };
+}
+
+// ───────────────────────── member photo consent (admin) ─────────────────────────
+
+/** One member: true = show photo, false = refused, null = not asked yet. Files follow at once (lib/admin/consent.ts). */
+export async function setPhotoConsent(memberId: string, value: boolean | null): Promise<Result> {
+  if (!UUID.test(memberId) || ![true, false, null].includes(value)) return fail("badRequest");
+  const s = await role(["admin"]);
+  if (!s) return denied();
+  try {
+    await applyConsent([memberId], value);
+  } catch (err) {
+    console.error("[dashboard] consent", err);
+    return fail("saveFailed");
+  }
+  after(() => audit(s, "consent:photo", "members", memberId, { value }));
+  revalidatePath("/[locale]", "layout");
+  return { ok: true };
+}
+
+/** Every member of a year at once. The page asks twice; the server also needs the exact count the admin confirmed. */
+export async function setPhotoConsentAll(year: number, confirmedCount: number): Promise<Result & { n?: number }> {
+  if (!Number.isInteger(year) || !Number.isInteger(confirmedCount)) return fail("badRequest");
+  const s = await role(["admin"]);
+  if (!s) return denied();
+  const { data } = await adminClient().from("members").select("id").eq("year", year).neq("status", "hidden");
+  const ids = (data ?? []).map((r) => r.id as string);
+  if (!ids.length || ids.length !== confirmedCount) return fail("badRequest");
+  try {
+    await applyConsent(ids, true);
+  } catch (err) {
+    console.error("[dashboard] consent all", err);
+    return fail("saveFailed");
+  }
+  after(() => audit(s, "consent:photo:all", "members", String(year), { n: ids.length }));
+  revalidatePath("/[locale]", "layout");
+  return { ok: true, n: ids.length };
 }

@@ -13,7 +13,11 @@ import { publicClient, publicImageUrl } from "@/lib/supabase/public";
 
 /** Text in Thai (always) and English (optional — null = not translated, the UI falls back to Thai with a "TH" label). */
 export type L<T = string> = { th: T; en: T | null };
-export type Img = { id: string; w: number; h: number; blur: string | null; src: { 480: string; 960: string; 1920: string } };
+export type Img = {
+  id: string; w: number; h: number; blur: string | null; src: { 480: string; 960: string; 1920: string };
+  /** optional AVIF srcset (served through <picture>, WebP stays the fallback) */
+  avif?: string;
+};
 export type Announcement = { id: string; title: L; date: string; body: L<string[]>; link: string | null; pinned: boolean; cover: Img | null };
 export type Activity = { id: string; title: L; date: string; body: L<string[]>; photos: Img[] };
 export type PolicyStatus = "planned" | "in-progress" | "done";
@@ -23,8 +27,12 @@ export type Policy = {
   owner: L; timeline: TimelineStep[]; cover: Img | null; photos: Img[];
 };
 export type Contact = { instagram: string | null; contact: string | null };
+export type MemberGroup = "executive" | "head" | null;
 export type Member = {
   id: string; name: L; nickname: L; role: L; termNo: string; execTitle: L; dept: L; party: L; photo: Img | null; rank: number;
+  group: MemberGroup;
+  /** whole introduction poster, for the popup (same consent rule as photo) */
+  poster: Img | null;
 } & Contact;
 export type Advisor = { id: string; name: L; nickname: L; role: L; subject: L; position: L; photo: Img | null } & Contact;
 export type YearContent = {
@@ -32,7 +40,12 @@ export type YearContent = {
   announcements: Announcement[]; activities: Activity[]; policies: Policy[]; members: Member[]; advisors: Advisor[];
 };
 /** Hero slide: either an uploaded photo (storage variants) or a banner file shipped in public/banner. */
-export type Photo = { id: string; w: number; h: number; blur: string | null; src: string; srcSet: string; caption: string; credit: "school" | null };
+export type Photo = {
+  id: string; w: number; h: number; blur: string | null; src: string; srcSet: string; avifSet: string | null;
+  caption: string; alt: L | null; credit: "school" | "council" | null;
+  /** banner artwork shown exactly as delivered: no zoom, no overlay, whole image visible */
+  plain: boolean;
+};
 
 const paragraphs = (s: string | null | undefined) => (s ?? "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
 const l = (th: string | null | undefined, en: string | null | undefined): L => ({ th: th ?? "", en: en?.trim() ? en.trim() : null });
@@ -80,11 +93,26 @@ const toPolicy = (r: Row): Policy => ({
     .map((t) => ({ date: t.date, text: l(t.text, t.text_en) })),
   cover: toImg(one(r.cover as PhotoRow | PhotoRow[] | null)), photos: sortedImgs(r.photos as PhotoRow[] | null),
 });
+/**
+ * A member's photos are shown only with consent_photo = true (null = not asked yet). Poster files (photo_key) are in
+ * the public bucket only while consent is on (lib/admin/consent.ts copies / removes them).
+ */
+const memberPhotos = (r: Row): { photo: Img | null; poster: Img | null } => {
+  if (r.consent_photo !== true) return { photo: null, poster: null };
+  const key = r.photo_key as string | null;
+  if (!key) return { photo: toImg(one(r.photo as PhotoRow | null)), poster: null };
+  const file = (kind: "card" | "poster", w: number, h: number): Img => {
+    const webp = publicImageUrl(`${key}-${kind}.webp`);
+    return { id: `${key}-${kind}`, w, h, blur: null, src: { 480: webp, 960: webp, 1920: webp }, avif: `${publicImageUrl(`${key}-${kind}.avif`)} ${w}w` };
+  };
+  return { photo: file("card", 440, 550), poster: file("poster", 720, 900) };
+};
+
 const toMember = (r: Row, contact: Contact): Member => ({
   id: r.id, name: l(s(r, "name"), s(r, "name_en")), nickname: l(s(r, "nickname"), s(r, "nickname_en")),
   role: l(s(r, "role_title"), s(r, "role_title_en")), termNo: s(r, "term_no"), execTitle: l(s(r, "exec_title"), s(r, "exec_title_en")),
-  dept: l(s(r, "dept"), s(r, "dept_en")), party: l(s(r, "party"), s(r, "party_en")), photo: toImg(one(r.photo as PhotoRow | null)),
-  rank: Number(r.sort_order ?? 0), ...contact,
+  dept: l(s(r, "dept"), s(r, "dept_en")), party: l(s(r, "party"), s(r, "party_en")),
+  rank: Number(r.sort_order ?? 0), group: (r.member_group as MemberGroup) ?? null, ...contact, ...memberPhotos(r),
 });
 const toAdvisor = (r: Row, contact: Contact): Advisor => ({
   id: r.id, name: l(s(r, "name"), s(r, "name_en")), nickname: l(s(r, "nickname"), s(r, "nickname_en")),
@@ -132,7 +160,7 @@ function fromSeed(year: number): Lists {
 const ANN = `id,title,title_en,body,body_en,published_on,link_url,pinned,cover:photos!cover_photo_id(${IMG_COLS})`;
 const ACT = `id,title,title_en,body,body_en,event_date,photos:photos!activity_id(${IMG_COLS})`;
 const POL = `id,year,slug,title,title_en,summary,summary_en,body,body_en,progress_status,progress,owner,owner_en,timeline,sort_order,cover:photos!cover_photo_id(${IMG_COLS}),photos:photos!policy_id(${IMG_COLS})`;
-const MEM = `id,name,name_en,nickname,nickname_en,role_title,role_title_en,term_no,exec_title,exec_title_en,dept,dept_en,party,party_en,sort_order,photo:photos!photo_id(${IMG_COLS})`;
+const MEM = `id,name,name_en,nickname,nickname_en,role_title,role_title_en,term_no,exec_title,exec_title_en,dept,dept_en,party,party_en,sort_order,member_group,consent_photo,photo_key,photo:photos!photo_id(${IMG_COLS})`;
 const ADV = `id,name,name_en,nickname,nickname_en,role_label,role_label_en,subject_group,subject_group_en,position,position_en,sort_order,photo:photos!photo_id(${IMG_COLS})`;
 
 async function fromDb(year: number): Promise<Lists> {
@@ -188,19 +216,30 @@ export async function getPolicySlugs(): Promise<string[]> {
 
 // ───────────────────────── hero ─────────────────────────
 
-/** Hero slides: approved photos ticked "is_hero", in admin-defined order (uploads and public/banner files alike).
- *  Without Supabase (local dev) every file in content/banner.json is used. None -> one gradient slide. */
+/** Hero slides: approved photos ticked "is_hero" whose show window (hero_start..hero_end, Bangkok date) includes today,
+ *  in staff-defined order (uploads and shipped banner files alike). Without Supabase (local dev) content/banner.json.
+ *  None -> one gradient slide. Order 1 is kept free for banner 01 (to come); banner 02 slides are 2–4. */
 export async function getHeroPhotos(): Promise<Photo[]> {
-  if (!supabaseConfigured()) return banner.map((b) => staticSlide(b.id, `/banner/${b.file}`, b.w, b.h, b.blur, "", "school"));
+  if (!supabaseConfigured()) return banner.map((b) => staticSlide(b.id, `/banner/${b.file}`, b.w, b.h, b.blur, "", null, "school"));
+  const today = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
   const { data } = await publicClient()
-    .from("photos").select(`${IMG_COLS},caption,static_path,credit`).eq("is_hero", true).order("hero_order", { ascending: true });
+    .from("photos").select(`${IMG_COLS},caption,static_path,credit,alt_th,alt_en`).eq("is_hero", true)
+    .or(`hero_start.is.null,hero_start.lte.${today}`).or(`hero_end.is.null,hero_end.gte.${today}`)
+    .order("hero_order", { ascending: true });
   return (data ?? []).map((r) => {
-    if (r.static_path) return staticSlide(r.id, r.static_path, r.width, r.height, r.blur, r.caption, r.credit === "school" ? "school" : null);
+    const credit = r.credit === "school" || r.credit === "council" ? r.credit : null;
+    const alt = r.alt_th ? l(r.alt_th, r.alt_en) : null;
+    if (r.static_path) return staticSlide(r.id, r.static_path, r.width, r.height, r.blur, r.caption, alt, credit);
     const img = toImg(r as PhotoRow) as Img;
-    return { id: img.id, w: img.w, h: img.h, blur: img.blur, src: img.src[1920], srcSet: `${img.src[480]} 480w, ${img.src[960]} 960w, ${img.src[1920]} 1920w`, caption: r.caption, credit: r.credit === "school" ? "school" : null };
+    return { id: img.id, w: img.w, h: img.h, blur: img.blur, src: img.src[1920], srcSet: `${img.src[480]} 480w, ${img.src[960]} 960w, ${img.src[1920]} 1920w`, avifSet: null, caption: r.caption, alt, credit, plain: false };
   });
 }
 
-const staticSlide = (id: string, path: string, w: number, h: number, blur: string | null, caption: string, credit: "school" | null): Photo => ({
-  id, w, h, blur, caption, credit, src: `${path}-1920.webp`, srcSet: `${path}-768.webp 768w, ${path}-1280.webp 1280w, ${path}-1920.webp 1920w`,
-});
+/** Files shipped in public/: /banner/<name>-{768,1280,1920}.webp (school photos) or /banners/<name>-{640,1280,1920}.{avif,webp}
+ *  (council banners, shown as delivered). A file never wider than its source: the largest width is capped at w. */
+function staticSlide(id: string, path: string, w: number, h: number, blur: string | null, caption: string, alt: L | null, credit: Photo["credit"]): Photo {
+  const banner = path.startsWith("/banners/");
+  const widths = banner ? [640, 1280, 1920] : [768, 1280, 1920];
+  const set = (ext: string) => widths.map((x) => `${path}-${x}.${ext} ${Math.min(x, w)}w`).join(", ");
+  return { id, w, h, blur, caption, alt, credit, src: `${path}-1920.webp`, srcSet: set("webp"), avifSet: banner ? set("avif") : null, plain: banner };
+}

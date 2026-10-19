@@ -28,7 +28,9 @@
     "th": "TH",
     "en": "EN",
     "thName": "ภาษาไทย",
-    "enName": "English"
+    "enName": "English",
+    "schoolLogoAlt": "Uttaradit School emblem",
+    "councilLogoAlt": "Uttaradit School Student Council emblem"
   },
   "hero": {
     "label": "Banner",
@@ -39,7 +41,10 @@
     "pick": "Choose a slide",
     "slide": "Slide {n}",
     "alt": "Student council activity photo",
-    "credit": "Photo: Uttaradit School"
+    "credit": {
+      "school": "Photo: Uttaradit School",
+      "council": "Photo: Uttaradit School Student Council"
+    }
   },
   "year": {
     "label": "Academic year",
@@ -113,7 +118,32 @@
     "contact": "Contact",
     "noContact": "Contact details are not public",
     "partyChip": "{party} Party",
-    "teacherChip": "Kru {nickname}"
+    "teacherChip": "Kru {nickname}",
+    "titles": {
+      "chair": "Chairperson of the Student Council",
+      "viceGeneralAdmin": "Vice Chairperson of the Student Council for General Administration",
+      "viceStudentAffairs": "Vice Chairperson of the Student Council for Student Affairs",
+      "viceExecutiveAdmin": "Vice Chairperson of the Student Council for Executive Administration",
+      "viceAcademic": "Vice Chairperson of the Student Council for Academic Affairs",
+      "headPolicy": "Head of Policy and Planning",
+      "headPublicRelations": "Head of Public Relations",
+      "secretary": "Secretary of the Student Council",
+      "headAudioVisual": "Head of Audio-Visual Services",
+      "headActivities": "Head of Activities and Recreation",
+      "headDiscipline": "Head of Discipline",
+      "headTreasury": "Head of Treasury",
+      "headEvaluation": "Head of Measurement and Evaluation",
+      "headFacilities": "Head of Facilities and Hospitality",
+      "headWelfare": "Head of Welfare",
+      "headArts": "Head of Arts and Culture"
+    },
+    "groups": {
+      "chair": "Chairperson of the Student Council",
+      "vice": "Vice Chairpersons",
+      "heads": "Heads of Division and Secretary"
+    },
+    "poster": "Introduction poster of {name}",
+    "photoPending": "Photo awaiting permission"
   },
   "empty": {
     "notFound": "Nothing found",
@@ -463,7 +493,8 @@
       "yearExists": "This year already exists",
       "yearFailed": "Could not add the year",
       "forbidden": "You are not allowed to do this",
-      "badFile": "This file is not a supported image (use JPG, PNG or WebP)."
+      "badFile": "This file is not a supported image (use JPG, PNG or WebP).",
+      "heroWindow": "The start date must not be after the end date."
     },
     "years": {
       "heading": "Academic years",
@@ -479,7 +510,7 @@
     },
     "hero": {
       "heading": "Banner photos",
-      "sub": "Choose approved photos for the home page slider and their order",
+      "sub": "Choose approved photos for the home page slider, their order and the dates they show (order 1 is kept for banner 01)",
       "empty": "No approved photos yet",
       "show": "Show in banner",
       "order": "Order",
@@ -487,7 +518,12 @@
       "saved": "Saved",
       "delete": "Delete photo",
       "confirmDelete": "Delete this photo? This can't be undone.",
-      "schoolCredit": "From the school website"
+      "schoolCredit": "From the school website",
+      "councilCredit": "Council photo",
+      "window": "Show from",
+      "start": "Start date",
+      "end": "End date",
+      "windowHint": "(empty = no limit)"
     },
     "date": {
       "open": "Open calendar",
@@ -508,6 +544,21 @@
       "back": "Back to the form (draft can be restored)",
       "approved": "Approved {n}",
       "rejected": "Rejected"
+    },
+    "consent": {
+      "nav": "Member photo consent",
+      "title": "Student council photo consent",
+      "lead": "A member's photo appears on the site only when set to \"Yes\" (default: awaiting). Turning it off removes the published files at once.",
+      "pending": "Awaiting",
+      "yes": "Yes",
+      "no": "No",
+      "on": "Show photo",
+      "off": "Hide photo",
+      "all": "Show all",
+      "confirm1": "Show the photos of all {n} members of this year? Only if every member has agreed.",
+      "confirm2": "Confirm again: every member has agreed in writing.",
+      "noPhoto": "No photo file",
+      "saved": "Saved"
     }
   },
   "setup": {
@@ -655,5 +706,13 @@
     "body": "Sorry, something failed on our side. Please try again. If it keeps happening, tell an administrator the reference code below.",
     "ref": "Reference",
     "retry": "Try again"
+  },
+  "contact": {
+    "title": "Contact the Student Council",
+    "lead": "News and contact of the Uttaradit School Student Council",
+    "facebook": "Facebook",
+    "instagram": "Instagram",
+    "tiktok": "TikTok",
+    "opens": "(opens in a new tab)"
   }
 }

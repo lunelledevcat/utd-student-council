@@ -7,7 +7,7 @@ import {
   Star, User, UsersThree, X,
 } from "@phosphor-icons/react/ssr";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
-import { siFacebook, siInstagram } from "simple-icons";
+import { siFacebook, siInstagram, siTiktok } from "simple-icons";
 import { cn } from "@/lib/utils";
 
 const GLYPHS = {
@@ -17,7 +17,7 @@ const GLYPHS = {
   users: UsersThree, teacher: ChalkboardTeacher, info: Info, expand: ArrowsOut, reset: ArrowCounterClockwise, user: User,
   globe: Globe, check: Check, menu: List,
 } satisfies Record<string, PhosphorIcon>;
-const BRANDS = { facebook: siFacebook, instagram: siInstagram };
+const BRANDS = { facebook: siFacebook, instagram: siInstagram, tiktok: siTiktok };
 
 export type IconName = keyof typeof GLYPHS | keyof typeof BRANDS;
 
@@ -53,6 +53,7 @@ const alias = (name: IconName, weight?: IconProps["weight"]) => {
 };
 export const IconFacebook = alias("facebook");
 export const IconInstagram = alias("instagram");
+export const IconTiktok = alias("tiktok");
 export const IconSearch = alias("search");
 export const IconCalendar = alias("calendar");
 export const IconLink = alias("link");

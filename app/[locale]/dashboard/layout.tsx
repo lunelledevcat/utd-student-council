@@ -24,7 +24,7 @@ export default async function DashboardLayout({ children, params }: { children: 
     { href: "/dashboard", label: t("nav.overview") },
     ...ENTITY_KEYS.map((k) => ({ href: `/dashboard/${k}`, label: t(`entities.${k}`) })),
     ...(STAFF.includes(s.role) ? [{ href: "/dashboard/hero", label: t("nav.hero") }] : []),
-    ...(s.role === "admin" ? [{ href: "/dashboard/years", label: t("nav.years") }, { href: "/admin/setup", label: ts("nav") }, { href: "/admin/security", label: tsec("nav") }] : []),
+    ...(s.role === "admin" ? [{ href: "/dashboard/years", label: t("nav.years") }, { href: "/dashboard/consent", label: t("consent.nav") }, { href: "/admin/setup", label: ts("nav") }, { href: "/admin/security", label: tsec("nav") }] : []),
   ];
 
   return (

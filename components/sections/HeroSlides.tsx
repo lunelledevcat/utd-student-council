@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion, type PanInfo } from "motion/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import type { Photo } from "@/lib/content";
 import { IconChevronLeft, IconChevronRight } from "@/components/icons/Icon";
@@ -41,8 +41,11 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
     else if (info.offset.x > SWIPE || info.velocity.x > 400) go(-1);
   };
   const p = photos[i];
+  const locale = useLocale();
+  const alt = p ? (p.alt ? (locale === "en" && p.alt.en ? p.alt.en : p.alt.th) : p.caption || t("alt")) : "";
 
   return (
+    <>
     <section
       aria-label={t("label")}
       className="relative isolate aspect-[4/3] overflow-hidden rounded-[20px] bg-gradient-to-br from-brand-deep via-[#0b1f4d] to-brand-mid text-on-brand shadow-soft sm:aspect-[16/7] lg:aspect-[16/5]"
@@ -76,32 +79,45 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
           onDragEnd={onDragEnd}
         >
           <AnimatePresence initial={false}>
-            <motion.img
+            <motion.div
               key={p.id}
-              src={p.src}
-              srcSet={p.srcSet}
-              sizes="(max-width: 1320px) 100vw, 1320px"
-              alt={p.caption || t("alt")}
-              width={p.w}
-              height={p.h}
-              draggable={false}
-              fetchPriority={i === 0 ? "high" : "auto"}
-              className="no-select pointer-events-none absolute inset-0 h-full w-full object-cover"
-              style={{ transformOrigin: ORIGINS[i % ORIGINS.length], backgroundImage: p.blur ? `url(${p.blur})` : undefined, backgroundSize: "cover" }}
-              initial={{ opacity: 0, scale: 1 }}
-              animate={{ opacity: 1, scale: reduce ? 1 : 1.08 }}
+              className="pointer-events-none absolute inset-0"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ opacity: { duration: reduce ? 0.3 : 1.2 }, scale: { duration: (INTERVAL + 1200) / 1000, ease: "linear" } }}
-            />
+              transition={{ duration: reduce ? 0.3 : 1.2 }}
+            >
+              {/* banner artwork (plain): whole image visible, exactly as delivered — no zoom, nothing drawn over it;
+                  the frame around it is filled with its own blurred placeholder */}
+              {p.plain && p.blur && <div aria-hidden className="absolute inset-0 scale-110 bg-cover bg-center blur-2xl" style={{ backgroundImage: `url(${p.blur})` }} />}
+              <picture className="contents">
+                {p.avifSet && <source type="image/avif" srcSet={p.avifSet} sizes="(max-width: 1320px) 100vw, 1320px" />}
+                <motion.img
+                  src={p.src}
+                  srcSet={p.srcSet}
+                  sizes="(max-width: 1320px) 100vw, 1320px"
+                  alt={alt}
+                  width={p.w}
+                  height={p.h}
+                  draggable={false}
+                  fetchPriority={i === 0 ? "high" : "auto"}
+                  className={cn("no-select absolute inset-0 h-full w-full", p.plain ? "object-contain" : "object-cover")}
+                  style={{ transformOrigin: ORIGINS[i % ORIGINS.length], backgroundImage: !p.plain && p.blur ? `url(${p.blur})` : undefined, backgroundSize: "cover" }}
+                  initial={{ scale: 1 }}
+                  animate={{ scale: reduce || p.plain ? 1 : 1.08 }}
+                  transition={{ scale: { duration: (INTERVAL + 1200) / 1000, ease: "linear" } }}
+                />
+              </picture>
+            </motion.div>
           </AnimatePresence>
         </motion.div>
       )}
 
-      {children}
+      {!p?.plain && children}
 
-      {p?.credit && (
+      {p?.credit && !p.plain && (
         <span className="pointer-events-none absolute right-3 top-3 z-20 rounded-full bg-black/35 px-2.5 py-0.5 text-[0.68rem] text-white/85 backdrop-blur-sm md:right-4 md:top-4">
-          {t("credit")}
+          {t(`credit.${p.credit}`)}
         </span>
       )}
 
@@ -142,5 +158,8 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
       )}
     </div>
     </section>
+    {/* banner credit sits under the frame (nothing is drawn over banner artwork); fixed height = no layout shift */}
+    <p className="mt-1.5 h-4 text-right text-[0.7rem] leading-4 text-muted" aria-live="off">{p?.plain && p.credit ? t(`credit.${p.credit}`) : ""}</p>
+    </>
   );
 }

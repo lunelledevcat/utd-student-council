@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { HomeTabs } from "@/components/home/HomeTabs";
+import { ContactChannels } from "@/components/sections/ContactChannels";
 import { Hero } from "@/components/sections/Hero";
 import { getYearContent } from "@/lib/content";
 import { DEFAULT_TAB, isTab } from "@/lib/search";
@@ -20,6 +21,7 @@ export default async function HomePage({
     <>
       <Hero />
       <HomeTabs content={content} initialTab={isTab(sp.tab) ? sp.tab : DEFAULT_TAB} />
+      <ContactChannels />
     </>
   );
 }

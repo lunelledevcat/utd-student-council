@@ -44,7 +44,7 @@ if (env.SUPABASE_ACCESS_TOKEN && ref) {
   const noRls = await sql("select c.relname from pg_class c where c.relnamespace = 'public'::regnamespace and c.relkind = 'r' and not c.relrowsecurity");
   check("RLS enabled on every public table", noRls.length === 0, noRls.map((r) => r.relname).join(", "));
   const [b] = await sql("select public, allowed_mime_types from storage.buckets where id = 'pending'");
-  check("storage 'pending' bucket private + WebP only", b && !b.public && JSON.stringify(b.allowed_mime_types) === '["image/webp"]', JSON.stringify(b));
+  check("storage 'pending' bucket private + WebP/AVIF only", b && !b.public && JSON.stringify(b.allowed_mime_types) === '["image/webp","image/avif"]', JSON.stringify(b));
 } else {
   console.log("SKIP  RLS / bucket settings (no SUPABASE_ACCESS_TOKEN in .env.local)");
 }

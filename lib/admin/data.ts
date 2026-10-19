@@ -94,9 +94,12 @@ export async function getRowForForm(key: EntityKey, id: string) {
 
 export async function approvedPhotos() {
   const { data } = await (await createClient())
-    .from("photos").select("id,caption,is_hero,hero_order,created_at,static_path,credit").eq("status", "approved").order("is_hero", { ascending: false }).order("hero_order").order("created_at", { ascending: false }).limit(200);
+    .from("photos").select("id,caption,alt_th,is_hero,hero_order,hero_start,hero_end,created_at,static_path,credit").eq("status", "approved").order("is_hero", { ascending: false }).order("hero_order").order("created_at", { ascending: false }).limit(200);
   return (data ?? []).map((p) => ({
-    id: p.id as string, caption: p.caption as string, isHero: !!p.is_hero, order: p.hero_order as number, school: p.credit === "school",
-    url: p.static_path ? `${p.static_path}-768.webp` : publicImageUrl(`photos/${p.id}/480.webp`),
+    id: p.id as string, caption: (p.alt_th as string | null) || (p.caption as string), isHero: !!p.is_hero, order: p.hero_order as number,
+    start: (p.hero_start as string | null) ?? "", end: (p.hero_end as string | null) ?? "",
+    credit: p.credit === "school" || p.credit === "council" ? (p.credit as "school" | "council") : null,
+    // shipped files: /banner/<name>-768.webp (school) or /banners/<name>-640.webp (council banners)
+    url: p.static_path ? `${p.static_path}-${(p.static_path as string).startsWith("/banners/") ? 640 : 768}.webp` : publicImageUrl(`photos/${p.id}/480.webp`),
   }));
 }

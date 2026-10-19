@@ -1,0 +1,23 @@
+{
+  "academicYearBE": 2569,
+  "source": "SCC.pdf (โปสเตอร์กรรมการ สภานักเรียน SCUTD 2026) via _import/members-2569.json",
+  "note": "ชื่อถอดจากภาพ ให้เจ้าของข้อมูลตรวจตัวสะกดก่อน · role text comes from messages/<locale>.json people.titles.<roleKey> · consentPhoto/instagram are set in the back office, never here",
+  "members": [
+    { "order": 1, "name": "นายชนะชัย ใจจีน", "roleKey": "chair", "group": "executive", "posterPage": 1 },
+    { "order": 2, "name": "นางสาวกชกร ปลื้มพันธุ์", "roleKey": "viceGeneralAdmin", "group": "executive", "posterPage": 2 },
+    { "order": 3, "name": "นางสาวธนัชชา ใคร้คง", "roleKey": "viceStudentAffairs", "group": "executive", "posterPage": 3 },
+    { "order": 4, "name": "นางสาวพิมญาดา วาทีตรง", "roleKey": "viceExecutiveAdmin", "group": "executive", "posterPage": 4 },
+    { "order": 5, "name": "นางสาวนุชนาถ สิงกา", "roleKey": "viceAcademic", "group": "executive", "posterPage": 5 },
+    { "order": 6, "name": "นายศุภฤกษ์ จันมี", "roleKey": "headPolicy", "group": "head", "posterPage": 6 },
+    { "order": 7, "name": "นางสาววิพัณณ์ ธนเดชสิริพงศ์", "roleKey": "headPublicRelations", "group": "head", "posterPage": 7 },
+    { "order": 8, "name": "นางสาวณัฐณิชา ทองคำ", "roleKey": "secretary", "group": "head", "posterPage": 8 },
+    { "order": 9, "name": "นางสาวอริญรดา กุศล", "roleKey": "headAudioVisual", "group": "head", "posterPage": 9 },
+    { "order": 10, "name": "นางสาวชญาภรณ์ มหาวัน", "roleKey": "headActivities", "group": "head", "posterPage": 10 },
+    { "order": 11, "name": "นายสิรวิชญ์ จุ้ยสะวะ", "roleKey": "headDiscipline", "group": "head", "posterPage": 11 },
+    { "order": 12, "name": "นางสาวชญานี มีแก้ว", "roleKey": "headTreasury", "group": "head", "posterPage": 12 },
+    { "order": 13, "name": "นายกิตติกวิน สีทา", "roleKey": "headEvaluation", "group": "head", "posterPage": 13 },
+    { "order": 14, "name": "นายพีรภัทร โตม่วง", "roleKey": "headFacilities", "group": "head", "posterPage": 14 },
+    { "order": 15, "name": "นางสาวประกายฟ้า แสงซื่อ", "roleKey": "headWelfare", "group": "head", "posterPage": 15 },
+    { "order": 16, "name": "นางสาวชญานิศ เชื้อบาง", "roleKey": "headArts", "group": "head", "posterPage": 16 }
+  ]
+}
