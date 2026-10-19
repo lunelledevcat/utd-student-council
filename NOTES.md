@@ -285,3 +285,50 @@ Timing before speed work (local, 10 × 2400×1500 JPEG): upload 10 photos 56.7 s
   (21 checks, all pass). Not done: DOMPurify (no HTML is rendered anywhere — React escapes; add with any rich text),
   `style-src-attr 'unsafe-inline'` kept for animation style attributes.
 - E2E: 20 tests (backoffice 8, features 5, lang 2, security 5) pass.
+
+## Cloudflare migration — plan (branch `cloudflare-migration`, 2026-10-19)
+
+Not merged to `main` until build + preview + Playwright + security:check pass and the owner tests workers.dev.
+Vercel + Supabase stay live and untouched until the owner says to switch them off (rollback = keep using `main`).
+
+### Inventory (what changes)
+| Today | Where | Becomes |
+|---|---|---|
+| Vercel hosting, `next start` | — | Workers via @opennextjs/cloudflare 1.20 (supports Next 16.4 + Node `proxy.ts`), wrangler.jsonc, `nodejs_compat` |
+| Supabase Postgres + RLS + triggers (`lock_review_columns`, `touch_updated_at`, `audit_role_change`) | lib/content.ts, lib/admin/data.ts, dashboard/actions.ts, lib/voice-store.ts, lib/auth.ts, security pages | D1 + Drizzle; rules move to one data layer `lib/data/*` (unit-tested), triggers become code there |
+| Supabase Auth (Google, PKCE cookies) | app/auth/*, lib/supabase/{server,proxy}.ts, login page | Auth.js v5 (next-auth 5 beta.32) Google + Drizzle adapter on D1, **database** sessions |
+| Supabase Storage (pending/public buckets, signed upload URL) + sharp variants/watermark | lib/admin/photos.ts, PhotoFields | R2 `utd-council-media` (private): `pending/…`, `public/…`; browser makes 1920/960 (watermarked, canvas) + 480 + blur; presigned PUT (aws4fetch, 5 min); public files served by the Worker at `/media/public/…` |
+| Upstash rate limit + ban | lib/ratelimit.ts, proxy.ts | Workers Rate Limiting binding (short windows) + D1 counter (long windows) + KV ban with TTL |
+| x-forwarded-for | proxy.ts | `cf-connecting-ip` |
+| e2e on `next start` + Supabase users | e2e/* | `opennextjs-cloudflare preview` (workerd) + local D1/R2/KV; test sessions written to D1 |
+
+Schema: table names stay (`activities` = "works", `photos` = "work_photos"; hero settings are `photos.is_hero/hero_order`,
+there is no separate settings table). Dropped: `albums`, `photos.album_id/event_slug/hero_requested` (unused, 0 rows).
+`profiles` merges into Auth.js `users` (+ `role`, `last_login_at`); `role_invites`, `audit_logs`, `security_events` stay.
+uuid -> text (crypto.randomUUID), timestamptz -> integer ms, date -> 'YYYY-MM-DD' text, jsonb -> JSON text.
+
+Data to move: live DB has 1 academic year, 1 profile, 0 content rows; storage holds only test/banner files.
+`scripts/migrate-supabase-to-d1.mjs` still copies every table (idempotent upserts) for when real content exists.
+
+### Decisions
+- No ISR pages exist (every page is dynamic: per-request CSP nonce), so no OpenNext incremental cache bucket is needed;
+  `revalidatePath` only clears the client router cache. Re-check if a page ever gets `revalidate`.
+- Workers rate-limit binding only supports 10 s / 60 s windows: page/api use it; login 5/15 min, voice form 3/10 min and
+  uploads use a D1 counter table (consistent, unlike KV).
+- Uploads: presigned R2 S3 PUT when R2 S3 keys are set (production). Local preview has no S3 endpoint for its simulated
+  R2, so there the browser PUTs to `/api/upload` with an HMAC-signed 5-min URL carrying the same path/type/size limits.
+  Both end in the same finalize step (magic bytes read from R2 via the binding).
+- Unit tests: vitest + D1 from wrangler `getPlatformProxy` (real workerd SQLite, no native deps).
+- Google login itself cannot run in CI: the sign-in rules are unit-tested; Playwright checks the redirect to Google
+  (correct redirect_uri) and uses database sessions inserted into local D1 for the signed-in flows.
+
+### Risks
+- Auth.js v5 is still beta (API stable, used widely). Pin exact version.
+- Worker CPU limit: no sharp on the server any more; image work moved to the browser (older phones are slower).
+- D1 has no RLS: every query must go through `lib/data/*`; a lint-able rule: only lib/data imports the db.
+- Cutover needs a new Google redirect URI and DNS/route; Supabase redirect URI removed only after the switch.
+- workers.dev deploy needs the owner's Cloudflare login + resources (D1, R2, KV, secrets).
+
+### Steps (one commit each)
+1 hosting scaffold · 2 D1 schema + data layer + tests · 3 Auth.js · 4 app on D1 · 5 R2 uploads · 6 rate limit/KV ·
+7 env/docs/setup page · 8 e2e + security:check · 9 deploy to workers.dev (owner) · 10 ask before merge / switching off.
