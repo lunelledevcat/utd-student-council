@@ -24,6 +24,22 @@ export async function approve(page: Page, entity: string, text: string) {
   await expect(r).toContainText("เผยแพร่แล้ว", { timeout: 30_000 });
 }
 
+/** main button: council "ส่งอนุมัติ" (staff "บันทึกและเผยแพร่"); waits for the confirming toast */
+export async function submitForm(page: Page) {
+  await page.getByRole("button", { name: /^(ส่งอนุมัติ|บันทึกและเผยแพร่)$/ }).click();
+  await expect(page.getByRole("status").filter({ hasText: /ส่งอนุมัติแล้ว|บันทึกและเผยแพร่แล้ว|บันทึกแล้ว/ }).first()).toBeVisible({ timeout: 30_000 });
+}
+/** "บันทึก" — saves and stays on the form */
+export async function saveStay(page: Page) {
+  await page.getByRole("button", { name: "บันทึก", exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: "บันทึกแล้ว" }).first()).toBeVisible({ timeout: 30_000 });
+}
+/** date fields: type into the visible text box (Thai, BE or ISO accepted) */
+export async function fillDate(page: Page, name: string, text: string) {
+  await page.locator(`input#${name}`).fill(text);
+  await page.locator(`input#${name}`).press("Tab");
+}
+
 /** accept the next confirm() dialog on this page */
 export const acceptNextDialog = (page: Page) => page.once("dialog", (d) => d.accept());
 

@@ -40,7 +40,7 @@ export function RowActions({
           </button>
         )}
         {canReview && status !== "rejected" && (
-          <button type="button" disabled={pending} onClick={() => setRejecting((v) => !v)} className={cn(btn, "border border-danger/40 text-danger hover:bg-danger/10")}>
+          <button type="button" data-reject disabled={pending} onClick={() => setRejecting((v) => !v)} className={cn(btn, "border border-danger/40 text-danger hover:bg-danger/10")}>
             {t("review.reject")}
           </button>
         )}

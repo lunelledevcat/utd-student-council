@@ -1,11 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { ENTITIES, isEntity, rowColumns, type Entity, type EntityKey, type Field } from "@/lib/admin/entities";
-import { WIDTHS, previewUrls, processRaw, publishPhotos, signedRawUpload } from "@/lib/admin/photos";
+import { incomingExists, makeVariants, publishPhotos, removePhotoFiles, signedUpload } from "@/lib/admin/photos";
 import { MEMBERS, STAFF, audit, getSession, type Role, type Session } from "@/lib/auth";
-import { redirect } from "@/i18n/navigation";
-import { routing } from "@/i18n/routing";
 import { limit } from "@/lib/ratelimit";
 import { adminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -17,7 +16,7 @@ import { createClient } from "@/lib/supabase/server";
 
 type Err = { key: string; values?: Record<string, number> };
 export type Result = { ok: true } | { ok: false; error: Err };
-export type FormState = { ok: boolean; error?: Err; fieldErrors?: Record<string, Err> };
+export type FormState = { ok: boolean; id?: string; error?: Err; fieldErrors?: Record<string, Err> };
 
 const fail = (key: string, values?: Record<string, number>) => ({ ok: false as const, error: { key, values } });
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -137,29 +136,46 @@ export async function saveEntity(key: EntityKey, id: string | null, year: number
   }
   const rowId = res.data.id as string;
 
-  // link gallery photos: the caller just proved edit rights on the row (RLS) and read rights on the photos
-  for (const f of e.fields) {
-    if (f.kind !== "images") continue;
+  // link gallery photos: the caller just proved edit rights on the row (RLS) and read rights on the photos.
+  // All updates go out in parallel (was one round-trip per photo).
+  const admin = adminClient();
+  await Promise.all(e.fields.flatMap((f) => {
+    if (f.kind !== "images") return [];
     const ids = images[f.name];
-    const admin = adminClient();
     let unlink = admin.from("photos").update({ [f.fk]: null }).eq(f.fk, rowId);
     if (ids.length) unlink = unlink.not("id", "in", `(${ids.join(",")})`);
-    await unlink;
-    for (const [i, pid] of ids.entries()) await admin.from("photos").update({ [f.fk]: rowId, sort_order: i }).eq("id", pid);
-  }
+    return [unlink, ...ids.map((pid, i) => admin.from("photos").update({ [f.fk]: rowId, sort_order: i }).eq("id", pid))];
+  }));
 
-  await audit(s, id ? "update" : "create", key, rowId);
-  redirect({ href: { pathname: `/dashboard/${key}`, query: { year: String(year), saved: "1" } }, locale: routing.locales.includes(locale as "th") ? (locale as "th") : "th" });
-  return { ok: true };
+  after(() => audit(s, id ? "update" : "create", key, rowId));
+  revalidatePath(`/${locale}/dashboard/${key}`);
+  // navigation (back to the list, or a new blank form) is done by the client so the list can update optimistically
+  return { ok: true, id: rowId };
 }
 
 export async function deleteEntity(key: EntityKey, id: string): Promise<Result> {
   if (!isEntity(key) || !UUID.test(id)) return fail("badRequest");
   const s = await role(MEMBERS);
   if (!s) return fail("forbidden");
+  // photos that belong only to this row (gallery rows cascade in the DB, but their files would stay in storage)
+  const admin = adminClient();
+  const e = ENTITIES[key];
+  const imageCols = e.fields.filter((f) => f.kind === "image").map((f) => f.name);
+  const fks = e.fields.flatMap((f) => (f.kind === "images" ? [f.fk] : []));
+  const { data: row } = imageCols.length ? await admin.from(key).select(imageCols.join(",")).eq("id", id).maybeSingle() : { data: null };
+  const single = imageCols.map((c) => (row as unknown as Record<string, string | null> | null)?.[c]).filter((x): x is string => !!x);
+  const linked = (await Promise.all(fks.map((fk) => admin.from("photos").select("id").eq(fk, id)))).flatMap((r) => (r.data ?? []).map((p) => p.id as string));
+  const photoIds = [...single, ...linked];
+  const { data: photos } = photoIds.length ? await admin.from("photos").select("id,uploaded_by,static_path").in("id", photoIds) : { data: [] };
+
   const { error, count } = await (await createClient()).from(key).delete({ count: "exact" }).eq("id", id);
   if (error || !count) return fail("deleteFailed");
-  await audit(s, "delete", key, id);
+  const own = (photos ?? []).filter((p) => !p.static_path);
+  if (own.length) {
+    await admin.from("photos").delete().in("id", own.map((p) => p.id));
+    after(() => Promise.all(own.map((p) => removePhotoFiles(p.id, p.uploaded_by))).catch((err) => console.error("[dashboard] remove files", err)));
+  }
+  after(() => audit(s, "delete", key, id));
   revalidatePath("/[locale]/dashboard", "layout");
   return { ok: true };
 }
@@ -193,36 +209,43 @@ export async function reviewEntity(key: EntityKey, id: string, action: "approve"
     console.error("[dashboard] review", key, id, err);
     return fail("reviewFailed");
   }
-  await audit(s, `review:${action}`, key, id, r ? { reason: r } : {});
-  revalidatePath("/[locale]/dashboard", "layout");
+  after(() => audit(s, `review:${action}`, key, id, r ? { reason: r } : {}));
+  // the public pages and the back office show the new state on the next request
+  revalidatePath("/[locale]", "layout");
   return { ok: true };
 }
 
 // ───────────────────────── photos ─────────────────────────
 
-export async function createUploadUrl(): Promise<Result & { path?: string; url?: string }> {
+/** One-time URL for the browser to PUT an already-compressed WebP straight into storage (not through Next). */
+export async function createUploadUrl(): Promise<Result & { id?: string; url?: string }> {
   const s = await role(MEMBERS);
   if (!s) return fail("forbidden");
   const rl = await limit("upload", s.id);
   if (!rl.ok) return fail("rate", { min: Math.ceil(rl.retryAfter / 60) });
   try {
-    return { ok: true, ...(await signedRawUpload(s.id)) };
-  } catch {
+    return { ok: true, ...(await signedUpload(s.id)) };
+  } catch (err) {
+    console.error("[dashboard] upload url", err);
     return fail("upload");
   }
 }
 
-export async function finalizeUpload(rawPath: string): Promise<Result & { id?: string; url?: string }> {
+/** Registers an upload as a pending photo right away; variants are built in the background (after the response). */
+export async function finalizeUpload(id: string, width: number, height: number): Promise<Result & { id?: string }> {
   const s = await role(MEMBERS);
   if (!s) return fail("forbidden");
+  if (!UUID.test(String(id)) || !Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || width * height > 60_000_000) {
+    return fail("badRequest");
+  }
   try {
-    const p = await processRaw(String(rawPath), s.id);
+    if (!(await incomingExists(s.id, id))) return fail("upload");
     const { error } = await (await createClient())
       .from("photos")
-      .insert({ id: p.id, width: p.width, height: p.height, blur: p.blur, caption: "", status: "pending", uploaded_by: s.id });
+      .insert({ id, width: Math.min(width, 1920), height: Math.round(height * Math.min(1, 1920 / width)), caption: "", status: "pending", uploaded_by: s.id });
     if (error) throw error;
-    const urls = await previewUrls([{ id: p.id, status: "pending" }]);
-    return { ok: true, id: p.id, url: urls[p.id] ?? p.blur };
+    after(() => makeVariants(id, s.id).catch((err) => console.error("[dashboard] variants", id, err)));
+    return { ok: true, id };
   } catch (err) {
     console.error("[dashboard] upload", err);
     return fail("upload");
@@ -279,14 +302,11 @@ export async function deletePhoto(photoId: string): Promise<Result> {
   const s = await role(STAFF);
   if (!s) return fail("forbidden");
   const db = adminClient();
-  const { data: p } = await db.from("photos").select("static_path").eq("id", photoId).maybeSingle();
+  const { data: p } = await db.from("photos").select("static_path,uploaded_by").eq("id", photoId).maybeSingle();
   if (!p) return fail("badRequest");
   const { error } = await db.from("photos").delete().eq("id", photoId);
   if (error) return fail("deleteFailed");
-  if (!p.static_path) {
-    const paths = WIDTHS.map((w) => `photos/${photoId}/${w}.webp`);
-    await Promise.all([db.storage.from("public").remove(paths), db.storage.from("pending").remove(paths)]);
-  }
+  if (!p.static_path) await removePhotoFiles(photoId, p.uploaded_by);
   await audit(s, "photo:delete", "photos", photoId);
   revalidatePath("/[locale]/dashboard", "layout");
   return { ok: true };

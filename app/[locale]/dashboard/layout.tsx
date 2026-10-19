@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { DashNav } from "@/components/admin/DashNav";
+import { Toaster } from "@/components/admin/Toaster";
 import { LocaleSwitch } from "@/components/i18n/LocaleSwitch";
 import { Link } from "@/i18n/navigation";
 import { ENTITY_KEYS } from "@/lib/admin/entities";
@@ -46,6 +47,7 @@ export default async function DashboardLayout({ children, params }: { children: 
         </div>
       </aside>
       <main className="min-w-0 px-4 py-6 md:px-8 md:py-8">{children}</main>
+      <Toaster />
     </div>
   );
 }

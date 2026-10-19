@@ -4,63 +4,95 @@ import sharp from "sharp";
 import { adminClient } from "@/lib/supabase/admin";
 import { publicImageUrl } from "@/lib/supabase/public";
 
-// Photo pipeline. Browsers never write with their own token and never write to the public bucket:
-//  1. server hands out a one-time signed upload URL for pending/raw/<user>/<uuid> (role already checked by the caller)
-//  2. browser PUTs the original there
-//  3. server re-encodes it (sharp: auto-rotate, EXIF/GPS stripped, 480/960/1920 webp + 16px blur) into
-//     pending/photos/<id>/<w>.webp, inserts photos(status=pending), deletes the original
-//  4. on approval the variants are copied to the public bucket (publishPhotos)
+// Photo pipeline (fast path — the user never waits for image processing):
+//  1. browser compresses to WebP <= 1920 px, asks for a one-time signed upload URL (role checked by the caller)
+//     and PUTs the file straight to Supabase Storage: pending/incoming/<user>/<id>.webp (never through Next)
+//  2. finalize: server checks the object exists, inserts photos(status=pending) at once and schedules makeVariants()
+//     with after() — re-encode with sharp (EXIF/GPS stripped), 1920/960 (watermarked) + 480 + 16 px blur into
+//     pending/photos/<id>/<w>.webp, then deletes the incoming file
+//  3. on approval the variants are copied to the public bucket (publishPhotos -> ensureVariants first, in case step 2
+//     has not finished yet)
 
 export const WIDTHS = [480, 960, 1920] as const;
 const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_PIXELS = 60_000_000;
+const incomingPath = (userId: string, id: string) => `incoming/${userId}/${id}.webp`;
 
-export async function signedRawUpload(userId: string) {
-  const path = `raw/${userId}/${randomUUID()}`;
+export async function signedUpload(userId: string) {
+  const id = randomUUID();
+  const path = incomingPath(userId, id);
   const { data, error } = await adminClient().storage.from("pending").createSignedUploadUrl(path);
-  if (error || !data) throw new Error("upload url failed");
-  return { path, url: data.signedUrl };
+  if (error || !data) throw new Error(`signed upload url: ${error?.message}`);
+  return { id, url: data.signedUrl };
 }
 
-/** Re-encodes an uploaded original. `rawPath` must be inside the caller's own raw/ folder. */
-export async function processRaw(rawPath: string, userId: string) {
-  if (!new RegExp(`^raw/${userId}/[0-9a-f-]{36}$`).test(rawPath)) throw new Error("bad path");
+/** True when the browser's upload for (user, id) is in storage and within limits. */
+export async function incomingExists(userId: string, id: string) {
+  const { data } = await adminClient().storage.from("pending").list(`incoming/${userId}`, { search: `${id}.webp`, limit: 1 });
+  const f = data?.find((o) => o.name === `${id}.webp`);
+  return !!f && (f.metadata?.size ?? 0) <= MAX_BYTES;
+}
+
+/** Small, centred-bottom-right watermark (Latin text: server fonts may lack Thai glyphs). */
+function watermark(width: number) {
+  const size = Math.max(14, Math.round(width / 70));
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${size * 2}">
+    <text x="${width - size}" y="${Math.round(size * 1.4)}" text-anchor="end" font-family="sans-serif" font-size="${size}" font-weight="600"
+      fill="#ffffff" fill-opacity="0.55" stroke="#000000" stroke-opacity="0.18" stroke-width="1">© UTD Student Council</text></svg>`;
+  return Buffer.from(svg);
+}
+
+/** Builds the variants + blur from the uploaded source. Safe to call twice (upsert, source may already be gone). */
+export async function makeVariants(id: string, uploaderId: string) {
   const store = adminClient().storage.from("pending");
-  const { data: blob, error } = await store.download(rawPath);
-  if (error || !blob) throw new Error("raw upload not found");
-  try {
-    if (blob.size > MAX_BYTES) throw new Error("file over 10 MB");
-    const input = Buffer.from(await blob.arrayBuffer());
-    const base = sharp(input, { limitInputPixels: MAX_PIXELS, failOn: "error" }).rotate();
-    const meta = await base.metadata();
-    if (!meta.format || !["jpeg", "png", "webp"].includes(meta.format)) throw new Error("unsupported format");
-    // metadata() reports pre-rotation size; EXIF orientations 5-8 swap width/height
-    const swap = (meta.orientation ?? 1) >= 5;
-    const w = (swap ? meta.height : meta.width) ?? 0;
-    const h = (swap ? meta.width : meta.height) ?? 0;
-    if (!w || !h) throw new Error("unreadable size");
+  const src = incomingPath(uploaderId, id);
+  const { data: blob, error } = await store.download(src);
+  if (error || !blob) throw new Error(`source missing for ${id}`);
+  if (blob.size > MAX_BYTES) throw new Error(`source too large for ${id}`);
+  const base = sharp(Buffer.from(await blob.arrayBuffer()), { limitInputPixels: MAX_PIXELS, failOn: "error" }).rotate();
+  const meta = await base.metadata();
+  if (!meta.format || !["jpeg", "png", "webp"].includes(meta.format)) throw new Error(`unsupported format for ${id}`);
 
-    const id = randomUUID();
-    for (const width of WIDTHS) {
-      const out = await base.clone().resize({ width, withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
-      const { error: e } = await store.upload(`photos/${id}/${width}.webp`, out, { contentType: "image/webp", upsert: false });
-      if (e) throw new Error("variant upload failed");
+  await Promise.all(WIDTHS.map(async (width) => {
+    let img = base.clone().resize({ width, withoutEnlargement: true });
+    if (width >= 960) {
+      const { info } = await img.clone().toBuffer({ resolveWithObject: true });
+      img = img.composite([{ input: watermark(info.width), gravity: "southeast" }]);
     }
-    const tiny = await base.clone().resize({ width: 16 }).webp({ quality: 40 }).toBuffer();
-    return { id, width: w, height: h, blur: `data:image/webp;base64,${tiny.toString("base64")}` };
-  } finally {
-    await store.remove([rawPath]);
-  }
+    const out = await img.webp({ quality: 80 }).toBuffer();
+    const { error: e } = await store.upload(`photos/${id}/${width}.webp`, out, { contentType: "image/webp", upsert: true });
+    if (e) throw new Error(`variant ${width} for ${id}: ${e.message}`);
+  }));
+  const tiny = await base.clone().resize({ width: 16 }).webp({ quality: 40 }).toBuffer();
+  await adminClient().from("photos").update({ blur: `data:image/webp;base64,${tiny.toString("base64")}` }).eq("id", id);
+  await store.remove([src]);
 }
 
-/** Preview URLs for the back office: approved photos from the public bucket, others signed from pending (1 h). */
-export async function previewUrls(photos: { id: string; status: string }[]) {
+/** Variants present? If not (background job still running or failed), build them now. */
+export async function ensureVariants(id: string) {
+  const db = adminClient();
+  const { data: files } = await db.storage.from("pending").list(`photos/${id}`);
+  if (WIDTHS.every((w) => files?.some((f) => f.name === `${w}.webp`))) return;
+  const { data: row } = await db.from("photos").select("uploaded_by,static_path").eq("id", id).maybeSingle();
+  if (!row || row.static_path || !row.uploaded_by) return;
+  await makeVariants(id, row.uploaded_by);
+}
+
+/** Preview URLs for the back office: approved -> public bucket; pending -> signed 480 variant, or the uploaded source
+ *  while the variants are still being built. */
+export async function previewUrls(photos: { id: string; status: string; uploadedBy?: string | null }[]) {
   const out: Record<string, string> = {};
-  const pending = photos.filter((p) => p.status !== "approved");
+  const store = adminClient().storage.from("pending");
   for (const p of photos) if (p.status === "approved") out[p.id] = publicImageUrl(`photos/${p.id}/480.webp`);
+  const pending = photos.filter((p) => p.status !== "approved");
   if (pending.length) {
-    const { data } = await adminClient().storage.from("pending").createSignedUrls(pending.map((p) => `photos/${p.id}/480.webp`), 3600);
-    for (const [i, d] of (data ?? []).entries()) if (d.signedUrl) out[pending[i].id] = d.signedUrl;
+    const { data } = await store.createSignedUrls(pending.map((p) => `photos/${p.id}/480.webp`), 3600);
+    for (const [i, d] of (data ?? []).entries()) if (d.signedUrl && !d.error) out[pending[i].id] = d.signedUrl;
+    const missing = pending.filter((p) => !out[p.id] && p.uploadedBy);
+    if (missing.length) {
+      const { data: src } = await store.createSignedUrls(missing.map((p) => incomingPath(p.uploadedBy!, p.id)), 3600);
+      for (const [i, d] of (src ?? []).entries()) if (d.signedUrl && !d.error) out[missing[i].id] = d.signedUrl;
+    }
   }
   return out;
 }
@@ -71,14 +103,25 @@ export async function publishPhotos(ids: string[], reviewerId: string) {
   const db = adminClient();
   const { data } = await db.from("photos").select("id,status").in("id", ids);
   const todo = (data ?? []).filter((p) => p.status !== "approved").map((p) => p.id as string);
-  for (const id of todo) {
-    for (const w of WIDTHS) {
+  await Promise.all(todo.map(async (id) => {
+    await ensureVariants(id);
+    await Promise.all(WIDTHS.map(async (w) => {
       const path = `photos/${id}/${w}.webp`;
       const { error } = await db.storage.from("pending").copy(path, path, { destinationBucket: "public" });
       if (error && !/exists/i.test(error.message)) throw new Error(`publish ${id}: ${error.message}`);
-    }
-  }
+    }));
+  }));
   if (todo.length) {
     await db.from("photos").update({ status: "approved", reviewed_by: reviewerId, reviewed_at: new Date().toISOString(), reason: null }).in("id", todo);
   }
+}
+
+/** Removes every stored file of a photo (public + pending variants, and an unprocessed upload). */
+export async function removePhotoFiles(id: string, uploaderId: string | null) {
+  const store = adminClient().storage;
+  const paths = WIDTHS.map((w) => `photos/${id}/${w}.webp`);
+  await Promise.all([
+    store.from("public").remove(paths),
+    store.from("pending").remove([...paths, ...(uploaderId ? [incomingPath(uploaderId, id)] : [])]),
+  ]);
 }

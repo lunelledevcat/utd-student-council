@@ -1,27 +1,24 @@
 import { env } from "./env";
-import { acceptNextDialog, approve, as, db, expect, img, publicUrl, row, test, uniq } from "./fixtures";
+import { acceptNextDialog, approve, as, db, expect, fillDate, img, publicUrl, row, submitForm, test, uniq } from "./fixtures";
 
 // Real Supabase: every flow creates -> edits -> reviews -> shows on the site (or is deleted), as the two test users.
 test.describe.configure({ mode: "serial" });
 
-const save = (page: import("@playwright/test").Page) => page.getByRole("button", { name: "บันทึก", exact: true }).click();
 
 test("announcement: create, edit while pending, approve, visible on the site", async ({ browser }) => {
   const title = uniq("ประกาศ");
   const council = await as(browser, "council");
   await council.goto("/th/dashboard/announcements/new");
   await council.locator('[name="title"]').fill(`${title} ร่าง`);
-  await council.locator('[name="published_on"]').fill("2026-10-19");
+  await fillDate(council, "published_on", "2026-10-19");
   await council.locator('[name="body"]').fill("เนื้อหาทดสอบ");
   await council.locator('[name="link_url"]').fill("https://example.com/form");
-  await save(council);
-  await expect(council).toHaveURL(/saved=1/, { timeout: 30_000 });
+  await submitForm(council);
   await expect(row(council, title)).toContainText("รออนุมัติ");
 
   await row(council, title).getByRole("link", { name: "แก้ไข" }).click();
   await council.locator('[name="title"]').fill(title);
-  await save(council);
-  await expect(council).toHaveURL(/saved=1/, { timeout: 30_000 });
+  await submitForm(council);
 
   const admin = await as(browser, "admin");
   await approve(admin, "announcements", title);
@@ -35,9 +32,8 @@ test("announcement: reject with a reason, author sees it, staff deletes", async 
   const council = await as(browser, "council");
   await council.goto("/th/dashboard/announcements/new");
   await council.locator('[name="title"]').fill(title);
-  await council.locator('[name="published_on"]').fill("2026-10-18");
-  await save(council);
-  await expect(council).toHaveURL(/saved=1/, { timeout: 30_000 });
+  await fillDate(council, "published_on", "2026-10-18");
+  await submitForm(council);
 
   const admin = await as(browser, "admin");
   await admin.goto("/th/dashboard/announcements");
@@ -60,12 +56,11 @@ test("activity with photos: upload 2, approve publishes files, site shows them; 
   const council = await as(browser, "council");
   await council.goto("/th/dashboard/activities/new");
   await council.locator('[name="title"]').fill(title);
-  await council.locator('[name="event_date"]').fill("2026-10-10");
+  await fillDate(council, "event_date", "2026-10-10");
   await council.locator('[name="body"]').fill("ย่อหน้าหนึ่ง\n\nย่อหน้าสอง");
   await council.locator('input[type="file"]').setInputFiles([img(1), img(2)]);
   await expect(council.locator('input[type="hidden"][name="photos"]')).toHaveCount(2, { timeout: 60_000 });
-  await save(council);
-  await expect(council).toHaveURL(/saved=1/, { timeout: 30_000 });
+  await submitForm(council);
 
   const { data: act } = await db().from("activities").select("id").eq("title", title).single();
   const { data: photos } = await db().from("photos").select("id,status").eq("activity_id", act!.id);
@@ -115,8 +110,7 @@ test("policy: create (TH+EN), approve, page renders, staff edits, delete -> 404"
   await council.locator('[name="timeline"]').fill("2026-06-01 | เริ่มต้น\n2026-08-01 | ระยะที่ 1");
   await council.getByRole("tab", { name: "English" }).click();
   await council.locator('[name="title_en"]').fill("E2E policy");
-  await save(council);
-  await expect(council).toHaveURL(/saved=1/, { timeout: 30_000 });
+  await submitForm(council);
 
   const admin = await as(browser, "admin");
   await approve(admin, "policies", title);
@@ -128,8 +122,7 @@ test("policy: create (TH+EN), approve, page renders, staff edits, delete -> 404"
 
   await row(admin, title).getByRole("link", { name: "แก้ไข" }).click();
   await admin.locator('[name="progress"]').fill("80");
-  await save(admin);
-  await expect(admin).toHaveURL(/saved=1/, { timeout: 30_000 });
+  await submitForm(admin);
   acceptNextDialog(admin);
   await row(admin, title).getByRole("button", { name: "ลบ" }).click();
   await expect(row(admin, title)).toHaveCount(0);
@@ -146,14 +139,12 @@ test("members + advisors: approved people appear; IG only with consent", async (
     await council.locator('[name="dept"]').fill("บริหาร");
     await council.locator('[name="instagram"]').fill("@e2e_test_ig");
     if (consent) await council.locator('[name="consent_public"]').check();
-    await save(council);
-    await expect(council).toHaveURL(/saved=1/, { timeout: 30_000 });
+    await submitForm(council);
   }
   await council.goto("/th/dashboard/advisors/new");
   await council.locator('[name="name"]').fill(t);
   await council.locator('[name="role_label"]').fill("ครูที่ปรึกษา");
-  await save(council);
-  await expect(council).toHaveURL(/saved=1/, { timeout: 30_000 });
+  await submitForm(council);
 
   const admin = await as(browser, "admin");
   await approve(admin, "members", a);

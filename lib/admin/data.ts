@@ -18,13 +18,25 @@ export async function yearParam(raw: string | undefined) {
   return { years, current, year: years.includes(y) ? y : current };
 }
 
-export async function listRows(key: EntityKey, year: number, userId: string): Promise<ListRow[]> {
+export const PAGE_SIZE = 20;
+
+/** One page of a back-office list, optionally filtered by a search over the Thai/English title and subtitle. */
+export async function listRows(key: EntityKey, year: number, userId: string, opts: { page?: number; q?: string } = {}): Promise<{ rows: ListRow[]; total: number; page: number; pages: number }> {
   const e = ENTITIES[key];
   const hasEn = e.fields.some((f) => f.name === e.titleCol && "en" in f && f.en);
   const cols = ["id", e.titleCol, hasEn && `${e.titleCol}_en`, e.subCol, "status", "reason", "author_id"].filter(Boolean).join(",");
-  const { data, error } = await (await createClient()).from(key).select(cols).eq("year", year).order(e.order.col, { ascending: e.order.asc });
+  const page = Math.max(1, Math.floor(opts.page ?? 1));
+  let q = (await createClient()).from(key).select(cols, { count: "exact" }).eq("year", year);
+  const term = (opts.q ?? "").trim().slice(0, 80).replace(/[%,()*]/g, " ");
+  // text columns only (the subtitle can be a date column, which ilike would reject)
+  if (term) q = q.or([e.titleCol, hasEn && `${e.titleCol}_en`].filter(Boolean).map((c) => `${c}.ilike.*${term}*`).join(","));
+  const { data, error, count } = await q
+    .order(e.order.col, { ascending: e.order.asc })
+    .order("id")
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (error) console.error("[dashboard] list", key, error.message);
-  return ((data ?? []) as unknown as Record<string, unknown>[]).map((r) => ({
+  const total = count ?? 0;
+  const rows = ((data ?? []) as unknown as Record<string, unknown>[]).map((r) => ({
     id: r.id as string,
     title: String(r[e.titleCol] ?? ""),
     titleEn: hasEn ? String(r[`${e.titleCol}_en`] ?? "") || null : null,
@@ -33,6 +45,7 @@ export async function listRows(key: EntityKey, year: number, userId: string): Pr
     reason: (r.reason as string | null) ?? null,
     mine: r.author_id === userId,
   }));
+  return { rows, total, page, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
 }
 
 /** Total and pending rows per entity for the overview. */
@@ -67,9 +80,9 @@ export async function getRowForForm(key: EntityKey, id: string) {
     galleries[f.name] = (data ?? []).map((p) => p.id as string);
     ids.push(...galleries[f.name]);
   }
-  const { data: photos } = ids.length ? await db.from("photos").select("id,status").in("id", ids) : { data: [] };
+  const { data: photos } = ids.length ? await db.from("photos").select("id,status,uploaded_by").in("id", ids) : { data: [] };
   const status = new Map((photos ?? []).map((p) => [p.id as string, p.status as string]));
-  const urls = await previewUrls([...status].map(([pid, st]) => ({ id: pid, status: st })));
+  const urls = await previewUrls((photos ?? []).map((p) => ({ id: p.id as string, status: p.status as string, uploadedBy: p.uploaded_by as string | null })));
   const photo = (pid: string): FormPhoto | null => (urls[pid] ? { id: pid, url: urls[pid], pending: status.get(pid) !== "approved" } : null);
   const media: Record<string, FormPhoto[]> = {};
   for (const f of e.fields) {

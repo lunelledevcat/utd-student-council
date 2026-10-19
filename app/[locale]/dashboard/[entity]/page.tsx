@@ -1,14 +1,14 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { RowActions } from "@/components/admin/RowActions";
-import { StatusBadge } from "@/components/admin/StatusBadge";
+import { ListSearch } from "@/components/admin/ListSearch";
+import { ListTable } from "@/components/admin/ListTable";
 import { YearSelect } from "@/components/admin/YearSelect";
 import { Link } from "@/i18n/navigation";
 import { listRows, yearParam } from "@/lib/admin/data";
 import { isEntity } from "@/lib/admin/entities";
 import { MEMBERS, STAFF, requireRole } from "@/lib/auth";
 
-type Props = { params: Promise<{ locale: string; entity: string }>; searchParams: Promise<{ year?: string; saved?: string }> };
+type Props = { params: Promise<{ locale: string; entity: string }>; searchParams: Promise<{ year?: string; saved?: string; q?: string; page?: string }> };
 
 export default async function EntityList({ params, searchParams }: Props) {
   const [{ locale, entity }, sp] = await Promise.all([params, searchParams]);
@@ -17,8 +17,10 @@ export default async function EntityList({ params, searchParams }: Props) {
   const s = await requireRole(MEMBERS);
   const t = await getTranslations("dashboard");
   const { years, year } = await yearParam(sp.year);
-  const rows = await listRows(entity, year, s.id);
+  const q = sp.q ?? "";
+  const { rows, page, pages } = await listRows(entity, year, s.id, { page: Number(sp.page) || 1, q });
   const staff = STAFF.includes(s.role);
+  const pageHref = (p: number) => ({ pathname: `/dashboard/${entity}`, query: { year: String(year), ...(q ? { q } : {}), page: String(p) } });
 
   return (
     <div className="space-y-5">
@@ -34,54 +36,37 @@ export default async function EntityList({ params, searchParams }: Props) {
           </Link>
         </div>
       </header>
+      <ListSearch q={q} year={year} />
       {sp.saved && (
         <p role="status" className="rounded-xl border border-done/30 bg-done/10 px-4 py-3 text-sm text-done">{staff ? t("list.saved") : t("list.savedPending")}</p>
       )}
 
-      {rows.length === 0 ? (
-        <p className="rounded-[20px] border border-dashed border-line bg-surface p-8 text-center text-muted">{t("list.empty")}</p>
+      {rows.length === 0 && !q ? (
+        <>
+          <ListTable entity={entity} year={year} staff={staff} rows={[]} />
+          <p className="rounded-[20px] border border-dashed border-line bg-surface p-8 text-center text-muted">{t("list.empty")}</p>
+        </>
       ) : (
-        <div className="overflow-hidden rounded-[20px] border border-line bg-surface shadow-soft">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-surface-2 text-xs uppercase tracking-wide text-muted">
-              <tr>
-                <th scope="col" className="px-4 py-3">{t("list.columns.title")}</th>
-                <th scope="col" className="hidden px-4 py-3 sm:table-cell">{t("list.columns.status")}</th>
-                <th scope="col" className="px-4 py-3 text-right">{t("list.columns.actions")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {rows.map((r) => (
-                <tr key={r.id} className="align-top">
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-strong">{r.title}</p>
-                    <p className="text-xs text-muted">
-                      {r.sub}
-                      {r.titleEn !== null ? ` · ${r.titleEn}` : ""}
-                    </p>
-                    {r.titleEn === null && (
-                      <span className="mt-1 inline-block rounded bg-surface-2 px-1.5 py-0.5 text-[0.7rem] text-muted">{t("list.noEnglish")}</span>
-                    )}
-                    <div className="mt-1 sm:hidden"><StatusBadge status={r.status} /></div>
-                    {r.status === "rejected" && r.reason && <p className="mt-1 text-xs text-danger">{t("list.reason", { reason: r.reason })}</p>}
-                  </td>
-                  <td className="hidden px-4 py-3 sm:table-cell"><StatusBadge status={r.status} /></td>
-                  <td className="px-4 py-3">
-                    <RowActions
-                      entity={entity}
-                      id={r.id}
-                      status={r.status}
-                      canReview={staff}
-                      canDelete={staff || (r.mine && r.status === "pending")}
-                      canEdit={staff || (r.mine && (r.status === "pending" || r.status === "rejected"))}
-                      editHref={`/dashboard/${entity}/${r.id}?year=${year}`}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ListTable
+          entity={entity}
+          year={year}
+          staff={staff}
+          rows={rows.map((r) => ({
+            ...r,
+            canEdit: staff || (r.mine && (r.status === "pending" || r.status === "rejected")),
+            canDelete: staff || (r.mine && r.status === "pending"),
+            editHref: `/dashboard/${entity}/${r.id}?year=${year}`,
+          }))}
+        />
+      )}
+
+      {pages > 1 && (
+        <nav className="flex items-center justify-center gap-3 text-sm" aria-label={t("list.page", { page, pages })}>
+          {page > 1 && <Link href={pageHref(page - 1)} className="rounded-full border border-line px-4 py-1.5 hover:border-pink">← {t("list.prev")}</Link>}
+          <span className="text-muted">{t("list.page", { page, pages })}</span>
+          {/* Link prefetches the next page when it scrolls into view */}
+          {page < pages && <Link href={pageHref(page + 1)} prefetch className="rounded-full border border-line px-4 py-1.5 hover:border-pink">{t("list.next")} →</Link>}
+        </nav>
       )}
     </div>
   );

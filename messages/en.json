@@ -270,7 +270,17 @@
         "actions": "Actions"
       },
       "reason": "Reason: {reason}",
-      "noEnglish": "No English yet"
+      "noEnglish": "No English yet",
+      "pendingSave": "Saving…",
+      "search": "Search this list",
+      "searchPlaceholder": "Type to search…",
+      "prev": "Previous",
+      "next": "Next",
+      "page": "Page {page} / {pages}",
+      "selectAll": "Select all",
+      "select": "Select {title}",
+      "approveSelected": "Approve selected ({n})",
+      "keys": "Keys: J/K move · A approve · R reject · X select"
     },
     "review": {
       "approve": "Approve",
@@ -299,7 +309,23 @@
       "media": "Photos",
       "details": "Details",
       "timelineEn": "Timeline (English)",
-      "timelineEnHint": "One line per step, in the same order as the Thai timeline (no dates)"
+      "timelineEnHint": "One line per step, in the same order as the Thai timeline (no dates)",
+      "sections": {
+        "content": "Content",
+        "details": "Details",
+        "media": "Photos",
+        "contact": "Contact"
+      },
+      "send": "Submit for approval",
+      "sendStaff": "Save & publish",
+      "saveNew": "Save & add another",
+      "duplicate": "Duplicate",
+      "copySuffix": " (copy)",
+      "draftFound": "Unsaved draft found (auto-saved {time})",
+      "restore": "Restore draft",
+      "discard": "Discard",
+      "draftSaved": "Draft auto-saved {time}",
+      "shortcuts": "Ctrl+S save · Ctrl+Enter {send}"
     },
     "fields": {
       "announcements": {
@@ -397,7 +423,16 @@
       "right": "Move later",
       "none": "No photo yet",
       "pending": "Pending",
-      "formats": "JPG / PNG / WebP up to 10 MB · location data (EXIF) is removed automatically"
+      "formats": "JPG / PNG / WebP up to 10 MB · location data (EXIF) is removed automatically",
+      "drop": "Drop photos here, click to choose, or paste (Ctrl+V)",
+      "compressing": "Compressing…",
+      "progress": "Uploading {p}%",
+      "finalizing": "Saving…",
+      "cancel": "Cancel",
+      "retry": "Retry",
+      "failed": "Upload failed",
+      "dragToSort": "Drag to reorder",
+      "waitUploads": "Wait for uploads to finish before saving"
     },
     "errors": {
       "required": "Required",
@@ -452,6 +487,26 @@
       "delete": "Delete photo",
       "confirmDelete": "Delete this photo? This can't be undone.",
       "schoolCredit": "From the school website"
+    },
+    "date": {
+      "open": "Open calendar",
+      "dialog": "Choose a date",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "lastWeek": "Last week",
+      "clear": "Clear",
+      "placeholder": "e.g. 19 Oct 2026",
+      "invalid": "Invalid date",
+      "weekdays": "Su,Mo,Tu,We,Th,Fr,Sa"
+    },
+    "toast": {
+      "saved": "Saved",
+      "sent": "Submitted for approval",
+      "published": "Saved and published",
+      "failed": "Could not save: {msg}",
+      "back": "Back to the form (draft can be restored)",
+      "approved": "Approved {n}",
+      "rejected": "Rejected"
     }
   },
   "setup": {

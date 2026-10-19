@@ -228,3 +228,27 @@ Bugs found and fixed:
 - Deleted photos: removed from the buckets (verified), but Supabase's CDN can keep serving a cached public copy for up
   to the object's cache time (1 h default).
 Timing before speed work (local, 10 × 2400×1500 JPEG): upload 10 photos 56.7 s, save form 5.6 s.
+
+## Back office: date picker, fast uploads, comfort features (2026-10-19)
+- `<DatePicker>` (react-day-picker 10 + its th/en locales) replaces every date input: Thai month + BE year
+  (ตุลาคม 2569) / EN CE, weekday row อา จ อ พ พฤ ศ ส, selected = pink circle, today = navy ring, hover sky; month/year
+  dropdowns, arrows, shortcuts วันนี้/เมื่อวาน/สัปดาห์ที่แล้ว + ล้าง; typed dates accepted ("19 ต.ค. 2569", "19/10/2569",
+  "2026-10-19"); stores ISO in a hidden input; popover scale+fade, ESC/outside click; bottom sheet on phones.
+- Form: fields grouped in cards (content / details / photos / contact, derived from field kind — config unchanged),
+  equal-height inputs, red errors under fields, sticky action bar: ส่งอนุมัติ (staff: บันทึกและเผยแพร่ = save + approve),
+  บันทึก (stays), บันทึกและเพิ่มอันใหม่, ทำซ้ำรายการนี้ (`/new?from=<id>`, text only, slug gets -copy).
+  Ctrl+S = save, Ctrl+Enter = submit. Draft auto-saved to localStorage every 3 s, "กู้คืนร่าง" after reload/close.
+- Optimistic: submitting jumps to the list at once with a "กำลังบันทึก…" row and a toast when the server confirms;
+  on failure a toast links back to the form (draft kept). The action request starts before navigating
+  (an action posts to the current URL; the list route does not carry the form's action).
+- Uploads: browser-image-compression -> WebP <= 1920 px on the main thread (its web-worker mode loads a script from a
+  CDN, which the CSP blocks) -> direct PUT to a signed URL (XHR progress), 3 in parallel, cancel/retry per photo,
+  drag & drop, paste (Ctrl+V), drag to reorder (motion Reorder). Server registers the row at once; variants
+  (1920/960 watermarked "© UTD Student Council", 480, blur) are built with `after()`; approval builds them first if the
+  background job has not finished. Deleting a whole activity/policy now also removes its photo files.
+- Lists: 20 per page, debounced search (?q=, title TH/EN), next page prefetched; staff select rows + approve together,
+  keys J/K move, X select, A approve, R reject; public pages revalidated after every review.
+- E2E: 14 tests (backoffice + features + perf) pass against the real project.
+- Timing (local `next start`, 10 × 2400×1500 JPEG, same machine/network):
+  upload 10 photos **56.7 s -> 25.9 s**; save until the server confirms **5.6 s -> 2.5 s** (the list shows the item
+  immediately). Screenshots: `C:\dev\utd-shots\compare\backoffice`.
