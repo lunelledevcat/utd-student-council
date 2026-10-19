@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import type { Img } from "@/lib/content";
-import { IconImages, IconUser } from "@/components/ui/icons";
+import { Illustration } from "@/components/icons/Illustration";
 import { cn } from "@/lib/utils";
 
 /**
@@ -34,7 +34,6 @@ export function SmartImage({
   const [loaded, setLoaded] = useState(false);
 
   if (!img) {
-    const Icon = kind === "portrait" ? IconUser : IconImages;
     return (
       <div
         role="img"
@@ -48,7 +47,7 @@ export function SmartImage({
         )}
       >
         <div className="flex flex-col items-center gap-1.5">
-          <Icon width={kind === "portrait" ? 64 : 40} height={kind === "portrait" ? 64 : 40} strokeWidth={1.4} />
+          <Illustration name={kind === "portrait" ? "portrait" : "photo"} className={kind === "portrait" ? "h-24 w-auto" : "h-14 w-auto"} />
           <span className="text-xs font-medium text-muted">{label ?? t(kind === "portrait" ? "portrait" : "photo")}</span>
         </div>
       </div>

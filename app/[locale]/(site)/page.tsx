@@ -18,7 +18,7 @@ export default async function HomePage({
   const content = await getYearContent(Number(sp.year) || undefined);
   return (
     <>
-      <Hero year={content.year} />
+      <Hero />
       <HomeTabs content={content} initialTab={isTab(sp.tab) ? sp.tab : DEFAULT_TAB} />
     </>
   );

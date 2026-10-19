@@ -9,7 +9,7 @@ import { CardItem, Lift, ZoneTitle } from "@/components/home/parts";
 import { Tx, useL } from "@/components/i18n/LocaleProvider";
 import { Modal } from "@/components/ui/Modal";
 import { SmartImage } from "@/components/ui/SmartImage";
-import { IconCrown, IconInstagram, IconMedal, IconStar, IconTeacher, IconUser, IconUsers } from "@/components/ui/icons";
+import { IconCrown, IconInstagram, IconMedal, IconStar, IconTeacher, IconUser, IconUsers } from "@/components/icons/Icon";
 import { rankOf } from "@/lib/search";
 import { cn } from "@/lib/utils";
 

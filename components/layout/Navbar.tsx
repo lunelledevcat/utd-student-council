@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useLocale, useTranslations } from "next-intl";
 import { LocaleSwitch } from "@/components/i18n/LocaleSwitch";
-import { IconFacebook, IconInstagram } from "@/components/ui/icons";
+import { IconFacebook, IconInstagram } from "@/components/icons/Icon";
 import { Link } from "@/i18n/navigation";
 import { SITE } from "@/lib/site";
 
@@ -45,7 +45,7 @@ export function Navbar() {
             </span>
             {/* second line = the other language's name */}
             <span lang={locale === "th" ? "en" : "th"} className="hidden truncate text-[0.7rem] tracking-[0.04em] text-on-brand/60 sm:block md:text-sm">
-              {locale === "th" ? t("site.nameEn") : t("hero.sub")}
+              {locale === "th" ? t("site.nameEn") : t("site.nameTh")}
             </span>
           </span>
         </Link>

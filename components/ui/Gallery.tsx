@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Img } from "@/lib/content";
 import { SmartImage } from "@/components/ui/SmartImage";
-import { IconChevronLeft, IconChevronRight, IconClose, IconExpand } from "@/components/ui/icons";
+import { IconChevronLeft, IconChevronRight, IconClose, IconExpand } from "@/components/icons/Icon";
 import { useScrollLock } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
 

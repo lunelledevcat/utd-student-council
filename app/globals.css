@@ -26,8 +26,6 @@
   --c-progress: #e59a0b;
   --c-planned: #8a96b0;
   --c-danger: #b42318;
-  --mesh-a: rgb(29 59 139 / 0.16);
-  --mesh-b: rgb(232 80 139 / 0.13);
   --shadow-soft: 0 1px 2px rgb(11 31 77 / 0.04), 0 8px 28px -6px rgb(11 31 77 / 0.10);
   --shadow-lift: 0 2px 4px rgb(11 31 77 / 0.05), 0 22px 44px -14px rgb(232 80 139 / 0.30);
   --shadow-glow: 0 0 22px 2px rgb(242 122 168 / 0.55);
@@ -82,19 +80,49 @@ body {
 }
 
 body {
-  background: var(--c-page);
+  background: #ffffff;
   color: var(--c-text);
   font-family: var(--font-plex), sans-serif;
   line-height: 1.7; /* Thai text needs >= 1.6 */
   -webkit-font-smoothing: antialiased;
 }
 
-/* faint blue-pink mesh behind the top of every page */
-.mesh-top {
+/* Page background: soft mesh — light blue top-left (#DCE8FF) -> white centre -> light pink bottom-right (#FDE4EE).
+   A fixed pseudo-element (not background-attachment: fixed, which janks on phones) drifts very slowly. It moves with
+   transform rather than background-position: same look, but composited on the GPU instead of repainting the screen. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -12%;
+  z-index: -1;
+  pointer-events: none;
   background:
-    radial-gradient(60% 420px at 12% 0%, var(--mesh-a), transparent 70%),
-    radial-gradient(50% 380px at 88% 4%, var(--mesh-b), transparent 70%),
-    radial-gradient(40% 300px at 50% 0%, var(--mesh-a), transparent 75%);
+    radial-gradient(45% 45% at 8% 6%, #dce8ff 0%, rgb(220 232 255 / 0) 70%),
+    radial-gradient(40% 40% at 92% 96%, #fde4ee 0%, rgb(253 228 238 / 0) 70%),
+    radial-gradient(35% 30% at 85% 15%, rgb(220 232 255 / 0.55) 0%, rgb(220 232 255 / 0) 70%),
+    radial-gradient(35% 35% at 12% 88%, rgb(253 228 238 / 0.6) 0%, rgb(253 228 238 / 0) 70%),
+    #ffffff;
+  animation: mesh-drift 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes mesh-drift {
+  from { transform: translate3d(-3%, -2%, 0) scale(1); }
+  to { transform: translate3d(3%, 2%, 0) scale(1.06); }
+}
+
+/* icons: Phosphor duotone fill layer in pink; small bounce/tilt when the surrounding control is hovered */
+.ico path[opacity] {
+  fill: var(--c-pink);
+  opacity: 0.4;
+}
+.ico {
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+a:hover > .ico,
+button:hover > .ico,
+.group:hover .ico,
+a:hover > span > .ico {
+  transform: scale(1.12) rotate(-8deg);
 }
 
 h1, h2, h3, h4 {
@@ -179,6 +207,8 @@ h1, h2, h3, h4 {
   html { scroll-behavior: auto; }
   .petal { display: none; }
   .gold-shimmer::after { display: none; }
+  body::before { animation: none; }
+  .ico { transition: none; }
   ::view-transition-group(*) { animation-duration: 0.01ms; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

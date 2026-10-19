@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { createUploadUrl, finalizeUpload } from "@/app/[locale]/dashboard/actions";
 import type { FormPhoto } from "@/lib/admin/data";
-import { IconChevronLeft, IconChevronRight, IconClose, IconImages } from "@/components/ui/icons";
+import { IconChevronLeft, IconChevronRight, IconClose, IconImages } from "@/components/icons/Icon";
 import { cn } from "@/lib/utils";
 
 /** Signed URL -> PUT the original to private storage -> server re-encodes it. Returns the new photo or an error key. */

@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion, useScroll, useSpring } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { IconArrowUp } from "@/components/ui/icons";
+import { IconArrowUp } from "@/components/icons/Icon";
 
 const R = 22;
 

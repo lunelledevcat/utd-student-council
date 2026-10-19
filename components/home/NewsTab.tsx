@@ -10,7 +10,7 @@ import { ThBadge, Tx, useL } from "@/components/i18n/LocaleProvider";
 import { Gallery } from "@/components/ui/Gallery";
 import { Modal } from "@/components/ui/Modal";
 import { SmartImage } from "@/components/ui/SmartImage";
-import { IconExternal, IconImages, IconLink, IconMegaphone, IconPin, IconStar } from "@/components/ui/icons";
+import { IconExternal, IconImages, IconLink, IconMegaphone, IconPin, IconStar } from "@/components/icons/Icon";
 
 // Photos are optional everywhere: a card shows an image only when one exists, otherwise a text card.
 const CARD = "h-full overflow-hidden border border-line bg-surface shadow-soft transition-shadow duration-300 group-hover:shadow-lift";

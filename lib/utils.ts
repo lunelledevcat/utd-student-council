@@ -20,8 +20,3 @@ export function formatDate(iso: string, locale: string) {
 /** Buddhist-era year -> Common-era year. */
 export const ceYear = (be: number) => be - 543;
 
-/** Split text into words for word-by-word animation; Intl.Segmenter keeps Thai vowels/tone marks with their word. */
-export function words(text: string, locale: string): string[] {
-  const seg = new Intl.Segmenter(locale, { granularity: "word" });
-  return Array.from(seg.segment(text), (s) => s.segment);
-}

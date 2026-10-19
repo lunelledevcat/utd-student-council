@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import { LocaleSwitch } from "@/components/i18n/LocaleSwitch";
-import { IconClose } from "@/components/ui/icons";
+import { IconClose } from "@/components/icons/Icon";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.22, 1, 0.36, 1] as const;

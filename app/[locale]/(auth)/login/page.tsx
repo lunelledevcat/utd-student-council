@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { Illustration } from "@/components/icons/Illustration";
 import { getSession } from "@/lib/auth";
 import { allowedDomain, supabaseConfigured } from "@/lib/env";
 import { redirect } from "@/i18n/navigation";
@@ -30,6 +31,7 @@ export default async function LoginPage({ params, searchParams }: { params: Prom
 
   return (
     <div className="space-y-5">
+      <Illustration name="login" className="h-24 w-auto" />
       <div>
         <h1 className="text-2xl font-bold text-strong">{t("loginTitle")}</h1>
         <p className="mt-1 text-sm text-muted">{t("loginSub")}</p>

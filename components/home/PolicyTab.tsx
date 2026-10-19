@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/home/EmptyState";
 import { CardItem, Lift, TextCard, ZoneTitle } from "@/components/home/parts";
 import { WideMedia } from "@/components/home/NewsTab";
 import { Tx, useL } from "@/components/i18n/LocaleProvider";
-import { IconChevronRight, IconFlag } from "@/components/ui/icons";
+import { IconChevronRight, IconFlag } from "@/components/icons/Icon";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { Link } from "@/i18n/navigation";
 

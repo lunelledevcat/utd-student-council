@@ -14,7 +14,8 @@
     "school": "Uttaradit School",
     "address": "15 Inchaimi-Prachanimit Rd, Tha It, Mueang, Uttaradit, Thailand",
     "dataNote": "[Data note — e.g. last updated / report a correction at ...]",
-    "skip": "Skip to content"
+    "skip": "Skip to content",
+    "nameTh": "คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์"
   },
   "header": {
     "nav": "Header",
@@ -31,9 +32,6 @@
   },
   "hero": {
     "label": "Banner",
-    "line1": "Student Council",
-    "line2": "Uttaradit School",
-    "sub": "คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์",
     "roledesc": "carousel",
     "region": "Banner, image {i} of {n}",
     "prev": "Previous slide",
@@ -45,7 +43,6 @@
   },
   "year": {
     "label": "Academic year",
-    "badge": "Academic Year {ce} ({be})",
     "option": "{ce} ({be})"
   },
   "search": {

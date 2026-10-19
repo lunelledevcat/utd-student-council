@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { Illustration } from "@/components/icons/Illustration";
 import { getSession } from "@/lib/auth";
 import { redirect } from "@/i18n/navigation";
 
@@ -15,7 +16,7 @@ export default async function PendingAccessPage({ params }: { params: Promise<{ 
   if (s.role) return redirect({ href: "/dashboard", locale });
   return (
     <div className="space-y-5">
-      <div aria-hidden className="grid h-16 w-16 place-items-center rounded-full bg-pink-soft text-3xl">✿</div>
+      <Illustration name="pending" className="h-28 w-auto" />
       <div>
         <h1 className="text-2xl font-bold text-strong">{t("pendingTitle")}</h1>
         <p className="mt-2 text-muted">{t("pendingBody", { email: s.email })}</p>

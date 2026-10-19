@@ -2,7 +2,8 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
-import { IconReset } from "@/components/ui/icons";
+import { IconReset } from "@/components/icons/Icon";
+import { Illustration } from "@/components/icons/Illustration";
 
 /** Friendly "nothing here" box: a Kae Farang blossom holding a magnifier, bobbing gently. */
 export function EmptyState({ query, onClear, kind }: { query?: string; onClear?: () => void; kind: "news" | "policy" | "council" | "advisor" }) {
@@ -17,24 +18,13 @@ export function EmptyState({ query, onClear, kind }: { query?: string; onClear?:
       data-swap
       className="col-span-full mx-auto flex max-w-md flex-col items-center rounded-[20px] border border-dashed border-line bg-surface/70 px-6 py-10 text-center"
     >
-      <motion.svg
-        width="120"
-        height="110"
-        viewBox="0 0 120 110"
+      <motion.div
         aria-hidden
-        animate={reduce ? undefined : { y: [0, -6, 0], rotate: [0, -3, 0] }}
+        animate={reduce ? undefined : { y: [0, -6, 0], rotate: [0, -2, 0] }}
         transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
       >
-        {[0, 72, 144, 216, 288].map((r) => (
-          <ellipse key={r} cx="52" cy="30" rx="13" ry="20" fill="var(--c-pink-400)" opacity="0.85" transform={`rotate(${r} 52 52)`} />
-        ))}
-        <circle cx="52" cy="52" r="15" fill="var(--c-gold)" />
-        <circle cx="47" cy="50" r="2" fill="var(--c-brand-deep)" />
-        <circle cx="57" cy="50" r="2" fill="var(--c-brand-deep)" />
-        <path d={searching ? "M47 58q5-3 10 0" : "M47 57q5 4 10 0"} stroke="var(--c-brand-deep)" strokeWidth="2" fill="none" strokeLinecap="round" />
-        <circle cx="90" cy="74" r="13" fill="none" stroke="var(--c-brand-mid)" strokeWidth="5" />
-        <path d="m99 84 13 13" stroke="var(--c-brand-mid)" strokeWidth="7" strokeLinecap="round" />
-      </motion.svg>
+        <Illustration name="empty" className="h-32 w-auto" />
+      </motion.div>
       <p className="mt-3 font-display text-lg font-semibold text-strong">{searching ? t("notFound") : t(kind)}</p>
       <p className="mt-1 text-sm text-muted">
         {searching ? t("noResults", { q: query }) : t("forYear")}

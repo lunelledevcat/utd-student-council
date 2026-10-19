@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion, type PanInfo } from "motion/
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import type { Photo } from "@/lib/content";
-import { IconChevronLeft, IconChevronRight } from "@/components/ui/icons";
+import { IconChevronLeft, IconChevronRight } from "@/components/icons/Icon";
 import { cn } from "@/lib/utils";
 
 const INTERVAL = 6000;

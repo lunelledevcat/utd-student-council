@@ -2,7 +2,8 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { useLocale } from "next-intl";
-import { IconCalendar, IconChevronRight } from "@/components/ui/icons";
+import { IconCalendar, IconChevronRight } from "@/components/icons/Icon";
+import { Illustration } from "@/components/icons/Illustration";
 import { cn, formatDate } from "@/lib/utils";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -74,6 +75,7 @@ export function TextCard({
   return (
     <div className="relative flex h-full flex-col gap-2.5 overflow-hidden p-5">
       <span aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br from-sky to-pink-soft opacity-70 transition-transform duration-500 group-hover:scale-125" />
+      <Illustration name="decor-kaefarang" className="pointer-events-none absolute -bottom-4 -left-3 h-20 w-20 opacity-[0.12] transition-transform duration-500 group-hover:-rotate-6" />
       <div className="relative flex items-center gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand to-brand-mid text-white shadow-[0_8px_18px_-8px_var(--c-brand)]">{icon}</span>
         <div className="min-w-0 flex-1">{meta}</div>

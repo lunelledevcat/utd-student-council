@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { YearContent } from "@/lib/content";
 import { NewsTab } from "@/components/home/NewsTab";
+import { Illustration } from "@/components/icons/Illustration";
 import { PeopleTab } from "@/components/home/PeopleTab";
 import { PolicyTab } from "@/components/home/PolicyTab";
-import { IconCalendar, IconChevronDown, IconClose, IconFlag, IconInfo, IconMegaphone, IconSearch, IconTeacher, IconUsers } from "@/components/ui/icons";
+import { IconCalendar, IconChevronDown, IconClose, IconFlag, IconInfo, IconMegaphone, IconSearch, IconTeacher, IconUsers } from "@/components/icons/Icon";
 import { useLocale, useTranslations } from "next-intl";
 import { TAB_KEYS, filterContent, homeHref, tabCount, type TabKey } from "@/lib/search";
 import { ceYear, cn } from "@/lib/utils";
@@ -203,8 +204,10 @@ export function HomeTabs({ content, initialTab }: { content: YearContent; initia
         role="tabpanel"
         aria-labelledby={`tab-${tab}`}
         aria-busy={pending}
-        className={cn("relative mt-6 transition-opacity duration-300", pending && "pointer-events-none opacity-50")}
+        className={cn("relative isolate mt-6 transition-opacity duration-300", pending && "pointer-events-none opacity-50")}
       >
+        <Illustration name="decor-mandapa" className="pointer-events-none absolute right-0 top-0 -z-10 hidden w-56 opacity-[0.06] md:block" />
+        <Illustration name="decor-kaefarang" className="pointer-events-none absolute bottom-0 left-0 -z-10 hidden w-44 opacity-[0.08] md:block" />
         <AnimatePresence mode="wait" initial={false} custom={dir}>
           <motion.div
             key={`${tab}-${content.year}`}

@@ -9,7 +9,7 @@ import { PolicyProgress, PolicyTimeline } from "@/components/policy/PolicyMotion
 import { Gallery } from "@/components/ui/Gallery";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { StatusPill } from "@/components/ui/StatusPill";
-import { IconArrowLeft, IconImages, IconUsers } from "@/components/ui/icons";
+import { IconArrowLeft, IconImages, IconUsers } from "@/components/icons/Icon";
 import { Link } from "@/i18n/navigation";
 import { homeHref } from "@/lib/search";
 
