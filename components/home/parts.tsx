@@ -56,7 +56,7 @@ export function ZoneTitle({ icon, children, count }: { icon: React.ReactNode; ch
 export function DateChip({ iso, className }: { iso: string; className?: string }) {
   const locale = useLocale();
   return (
-    <span className={cn("inline-flex items-center gap-1.5 text-[0.8rem] font-medium text-pink", className)}>
+    <span className={cn("inline-flex items-center gap-1.5 text-[0.8rem] font-medium text-pink-ink", className)}>
       <IconCalendar width={14} height={14} />
       <time dateTime={iso}>{formatDate(iso, locale)}</time>
     </span>
@@ -85,7 +85,7 @@ export function TextCard({
       {excerpt && <p className="relative line-clamp-2 text-sm text-muted">{excerpt}</p>}
       <div className="relative mt-auto flex min-h-7 items-center justify-between gap-3 pt-1">
         {footer ?? <span />}
-        <span className="inline-flex shrink-0 items-center text-sm font-medium text-pink transition-transform group-hover:translate-x-1">
+        <span className="inline-flex shrink-0 items-center text-sm font-medium text-pink-ink transition-transform group-hover:translate-x-1">
           {action} <IconChevronRight width={16} height={16} />
         </span>
       </div>

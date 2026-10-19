@@ -19,6 +19,7 @@
   --c-sky-strong: #c9dcff;
   --c-pink: #e8508b;
   --c-pink-400: #f27aa8;
+  --c-pink-ink: #c2185b;      /* pink for text: >= 4.7:1 on white and on the page gradient (AA) */
   --c-pink-soft: #fde7f0;
   --c-gold: #d4af37;
   --c-gold-soft: #f6ecc8;
@@ -49,6 +50,7 @@
   --color-sky-strong: var(--c-sky-strong);
   --color-pink: var(--c-pink);
   --color-pink-400: var(--c-pink-400);
+  --color-pink-ink: var(--c-pink-ink);
   --color-pink-soft: var(--c-pink-soft);
   --color-gold: var(--c-gold);
   --color-gold-soft: var(--c-gold-soft);

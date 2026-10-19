@@ -48,7 +48,7 @@ export function VoiceForm() {
         <Bloom />
         <h3 className="text-2xl font-semibold">{t("done")}</h3>
         <p className="text-muted">{t("keep")}</p>
-        <p className="font-display text-3xl font-semibold tracking-wider text-pink" aria-label={t("refAria", { code: state.code ?? "" })}>{state.code}</p>
+        <p className="font-display text-3xl font-semibold tracking-wider text-pink-ink" aria-label={t("refAria", { code: state.code ?? "" })}>{state.code}</p>
       </div>
     );
   }

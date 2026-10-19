@@ -71,7 +71,7 @@ export function PolicyTimeline({ steps }: { steps: TimelineStep[] }) {
           transition={{ duration: 0.45, delay: i * 0.06 }}
         >
           <span aria-hidden className="absolute -left-7 top-1.5 h-4 w-4 rounded-full border-[3px] border-surface bg-pink shadow-[0_0_0_3px_var(--c-pink-soft)]" />
-          <time dateTime={s.date} className="text-xs font-semibold text-pink">{formatDate(s.date, locale)}</time>
+          <time dateTime={s.date} className="text-xs font-semibold text-pink-ink">{formatDate(s.date, locale)}</time>
           <p className="text-sm text-ink"><Tx v={s.text} /></p>
         </motion.li>
       ))}

@@ -23,7 +23,7 @@ export default async function EntityEdit({ params, searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <Link href={{ pathname: `/dashboard/${entity}`, query: { year: String(year) } }} className="text-sm text-muted hover:text-pink">← {t("form.back")}</Link>
+      <Link href={{ pathname: `/dashboard/${entity}`, query: { year: String(year) } }} className="text-sm text-muted hover:text-pink-ink">← {t("form.back")}</Link>
       <h1 className="text-2xl font-bold text-strong">{t(id === "new" ? "form.newTitle" : "form.editTitle", { entity: t(`entities.${entity}`) })}</h1>
       {!STAFF.includes(s.role) && <p className="rounded-xl bg-sky px-4 py-3 text-sm text-ink">{t("form.reviewNote")}</p>}
       <EntityForm entity={entity} id={id === "new" ? null : id} year={year} locale={locale} row={loaded?.row ?? {}} media={loaded?.media ?? {}} />

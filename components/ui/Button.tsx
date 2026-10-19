@@ -14,7 +14,7 @@ const VARIANTS: Record<Variant, string> = {
   primary: "bg-pink text-white hover:shadow-glow",
   outline: "border-2 border-on-brand text-on-brand hover:bg-white/10",
   "outline-dark": "border-2 border-brand text-ink hover:bg-brand hover:text-on-brand",
-  ghost: "text-ink hover:text-pink",
+  ghost: "text-ink hover:text-pink-ink",
 };
 
 type Props = {

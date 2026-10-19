@@ -165,7 +165,7 @@ function AnnouncementCard({ a, onOpen }: { a: Announcement; onOpen: () => void }
             <TextCard
               icon={<Icon width={18} height={18} />}
               meta={<DateChip iso={a.date} />}
-              badge={a.pinned ? <span className="rounded-full bg-pink-soft px-2 py-0.5 text-[0.7rem] font-semibold text-pink">{t("pinned")}</span> : null}
+              badge={a.pinned ? <span className="rounded-full bg-pink-soft px-2 py-0.5 text-[0.7rem] font-semibold text-pink-ink">{t("pinned")}</span> : null}
               title={<Tx v={a.title} />}
               excerpt={excerpt}
               footer={linkChip || undefined}

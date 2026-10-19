@@ -28,7 +28,7 @@ export function PolicyView({ p, currentYear }: { p: Policy & { year: number }; c
       <Link
         href={back}
         data-swap
-        className="group mb-4 inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-ink shadow-soft transition hover:-translate-y-0.5 hover:border-pink hover:text-pink"
+        className="group mb-4 inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-ink shadow-soft transition hover:-translate-y-0.5 hover:border-pink hover:text-pink-ink"
       >
         <IconArrowLeft width={16} height={16} className="transition-transform group-hover:-translate-x-1" /> {t("back")}
       </Link>

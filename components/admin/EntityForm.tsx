@@ -126,7 +126,7 @@ export function EntityForm({
                 <div key={l} className={cn("space-y-1.5", !visible && "hidden")}>
                   <label htmlFor={name} className="flex items-center gap-2 text-sm font-medium text-ink">
                     {l === "en" ? (f.kind === "timeline" ? t("form.timelineEn") : t("form.enOf", { label: label(f) })) : label(f)}
-                    {"required" in f && f.required && l === "th" && <span className="text-xs font-normal text-pink">{t("form.required")}</span>}
+                    {"required" in f && f.required && l === "th" && <span className="text-xs font-normal text-pink-ink">{t("form.required")}</span>}
                   </label>
                   {control(f, name, l)}
                   {(l === "th" ? hint(f) : f.kind === "timeline" ? t("form.timelineEnHint") : null) && (

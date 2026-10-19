@@ -56,7 +56,7 @@ export function PolicyTab({ policies, query, onClear }: { policies: Policy[]; qu
                           <>
                             <StatusPill status={p.status} />
                             <span className="font-display font-medium text-strong"><Tx v={p.title} /></span>
-                            <span className="inline-flex items-center text-sm text-pink transition-transform group-hover:translate-x-1">
+                            <span className="inline-flex items-center text-sm text-pink-ink transition-transform group-hover:translate-x-1">
                               {t("details")} <IconChevronRight width={16} height={16} />
                             </span>
                           </>

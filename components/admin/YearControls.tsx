@@ -22,7 +22,7 @@ export function SetCurrentButton({ year }: { year: number }) {
           if (r.ok) router.refresh();
           else setError(t(`errors.${r.error.key}`, r.error.values));
         })}
-        className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink hover:border-pink hover:text-pink disabled:opacity-50"
+        className="rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink hover:border-pink hover:text-pink-ink disabled:opacity-50"
       >
         {t("years.setCurrent")}
       </button>

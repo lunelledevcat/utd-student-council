@@ -166,3 +166,23 @@ of tab highlights, sticky-bar position). Before/after screenshots + JSON in `C:\
 - More recent activity photos are on the school's Facebook page (https://www.facebook.com/utd.ac.th) — not fetched
   automatically (platform terms). Download any you want by hand and upload them in the back office.
 - The photos show students; they were already published publicly by the school, but check with the school before launch.
+
+## Hero without text, gradient background, one icon/illustration set (2026-10-19)
+- Hero shows only the photos, arrows and dots; the navy overlay, year badge, headline and petals are gone (a light
+  shadow at the bottom keeps the dots visible). Council name stays in the header, year in the control bar. Unused hero
+  messages removed (`hero.line1/line2/sub`, `year.badge`); the header's other-language line uses `site.nameTh`.
+- Page background: mesh of radial gradients (#DCE8FF top-left -> white -> #FDE4EE bottom-right) on a fixed
+  `body::before`, drifting over 26 s with `transform` (composited; animating background-position would repaint the whole
+  screen every frame on phones). Off with reduced motion. Cards / control bar stay white with thin borders.
+- Contrast (WCAG): muted text #5a6480 = 4.77:1 on #DCE8FF, 4.91:1 on #FDE4EE, 5.88:1 on white. Pink #E8508B was only
+  3.53:1 on white, so pink **text** now uses `pink-ink` #C2185B (5.87:1 white, 4.76:1 #DCE8FF); pink fills/borders and
+  large white-on-pink button text are unchanged (large-text rule).
+- Icons: one `<Icon name>` (components/icons/Icon.tsx) — Phosphor duotone (MIT) with the fill layer recoloured pink in
+  CSS, Facebook/Instagram from Simple Icons (CC0). Small bounce/tilt on hover of the surrounding link/button/card
+  (off with reduced motion). The old `IconX` names are aliases of `<Icon>`, so call sites did not change.
+- Illustrations: drawn in-house instead of unDraw (no download / re-colour / licence tracking; matches the mandapa and
+  Kae Farang motifs): empty state, 404, pending access, login, photo / portrait placeholders, plus faint mandapa and
+  Kae Farang line art in section corners and text cards. SVGO-optimised (`npm run svg:optimize`), licences in
+  `public/illustrations/LICENSES.md`.
+- Checked with `npm run check:layout` at 1366/1440/1920/390: no horizontal overflow (also during tab switches),
+  CLS ≤ 0.004. Screenshots in `C:\dev\utd-shots\compare\bg-svg`.

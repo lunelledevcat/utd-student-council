@@ -33,7 +33,7 @@ export function RowActions({
   return (
     <div className="flex flex-col items-end gap-2">
       <div className="flex flex-wrap justify-end gap-1.5">
-        {canEdit && <Link href={editHref} className={cn(btn, "border border-line bg-surface text-ink hover:border-pink hover:text-pink")}>{t("list.edit")}</Link>}
+        {canEdit && <Link href={editHref} className={cn(btn, "border border-line bg-surface text-ink hover:border-pink hover:text-pink-ink")}>{t("list.edit")}</Link>}
         {canReview && status !== "approved" && (
           <button type="button" disabled={pending} onClick={() => run(() => reviewEntity(entity, id, "approve", ""))} className={cn(btn, "bg-done text-white hover:brightness-110")}>
             {t("review.approve")}

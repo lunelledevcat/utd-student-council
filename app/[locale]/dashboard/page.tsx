@@ -36,7 +36,7 @@ export default async function DashboardHome({ params, searchParams }: { params: 
                 <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-muted">{t("overview.total", { n: c[k].total })}</span>
                 {c[k].pending > 0 && <span className="rounded-full bg-progress/15 px-2.5 py-0.5 font-medium text-progress">{t("overview.pending", { n: c[k].pending })}</span>}
               </p>
-              <p className="mt-3 text-sm font-medium text-pink">{t("overview.manage")} →</p>
+              <p className="mt-3 text-sm font-medium text-pink-ink">{t("overview.manage")} →</p>
             </Link>
           </li>
         ))}
