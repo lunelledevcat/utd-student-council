@@ -1,6 +1,5 @@
 import "server-only";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { eq } from "drizzle-orm";
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { onSignIn } from "@/lib/data/admin";
@@ -45,9 +44,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
     events: {
       async signIn({ user, profile }) {
         if (!user.id || !user.email) return;
-        // Google confirmed the address in the signIn callback; the adapter does not store that for OAuth users
-        if (profile?.email_verified === true) await db.update(users).set({ emailVerified: new Date() }).where(eq(users.id, user.id));
-        await onSignIn(db, user.id, user.email);
+        await onSignIn(db, user.id, user.email, profile?.email_verified === true);
         void logSecurity("login", { userId: user.id, detail: { ok: true } });
       },
     },

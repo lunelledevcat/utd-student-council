@@ -9,6 +9,7 @@
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
   "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "utd-student-council" }],
   "observability": { "enabled": true },
+  "dev": { "port": 8790 }, // 8787 is often taken locally
 
   "d1_databases": [
     // id: Cloudflare dashboard -> Storage & Databases -> D1 -> utd-council -> Database ID

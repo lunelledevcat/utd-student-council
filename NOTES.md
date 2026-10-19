@@ -332,3 +332,21 @@ Data to move: live DB has 1 academic year, 1 profile, 0 content rows; storage ho
 ### Steps (one commit each)
 1 hosting scaffold · 2 D1 schema + data layer + tests · 3 Auth.js · 4 app on D1 · 5 R2 uploads · 6 rate limit/KV ·
 7 env/docs/setup page · 8 e2e + security:check · 9 deploy to workers.dev (owner) · 10 ask before merge / switching off.
+
+## Cloudflare migration — done on the branch (2026-10-19)
+- Steps 1–8 done (commits on `cloudflare-migration`); not merged, Vercel + Supabase untouched and still serving `main`.
+- Verified: `npm run cf:build` + `npm run preview` (workerd); unit 18/18 (data-layer rules on real D1); Playwright on
+  workerd 22 (backoffice 8, features 5, lang 2, security 7 — incl. sign-in redirect, sign out everywhere, anon/pending);
+  `npm run security:check` all pass.
+- Deviations from the brief, with reasons:
+  - Upload fallback `/api/upload` (HMAC-signed, same 5-min/key/type/size limits) next to presigned R2: the local R2 has
+    no S3 endpoint, so tests need it; production also works without R2 S3 keys (uploads then pass through the Worker).
+  - No Cloudflare Images transformations: three pre-made sizes (1920/960/480) as the brief allows.
+  - Rate limits page 600/min, API 60/min per IP (was 60/20): school NAT = one IP; the e2e suite alone hit 60. The WAF
+    rate-limiting rules (README) are the real flood guard. Sign-in limit counts sign-in attempts, not /login views.
+  - `NEXT_PUBLIC_*` vars are read at runtime by computed name (Next inlines literal reads at build), so changing them in
+    wrangler vars needs no rebuild; the Turnstile key reaches the form as a prop.
+  - Banner photos: a D1 migration (drizzle/0001) registers them as approved hero photos (Supabase never had the rows).
+  - Login page view no longer counts toward the 5/15 min limit; `/auth/google` + `/api/auth/signin|callback` do.
+- Not done (needs the owner): create D1/R2/KV, secrets, Google redirect URI, Turnstile hostname, deploy to workers.dev,
+  merge, switching Vercel/Supabase off. `supabase/` + `scripts/db-migrate.mjs` stay until Supabase is retired.

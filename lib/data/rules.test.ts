@@ -197,7 +197,7 @@ describe("members contacts + admin", () => {
 
     const { role_invites } = await import("@/lib/db/schema");
     await db.insert(role_invites).values({ email: "student@utd.ac.th", role: "council" });
-    await adm.onSignIn(db, "s", "student@utd.ac.th");
+    await adm.onSignIn(db, "s", "student@utd.ac.th", true);
     expect((await adm.actorFor(db, "s"))?.role).toBe("council");
   });
 

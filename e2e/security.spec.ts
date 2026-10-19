@@ -119,3 +119,20 @@ test("sign-in starts at Google with the Auth.js callback; sign out everywhere en
   await page.goto("/th/dashboard");
   await expect(page).toHaveURL(/\/th\/login/);
 });
+
+test("anonymous visitors never see unapproved rows or files", async ({ page, request }) => {
+  const id = crypto.randomUUID();
+  const title = `[E2E] pending-only ${id.slice(0, 8)}`;
+  await sql("INSERT INTO announcements (id, year, title, published_on, author_id, status) VALUES (?, (SELECT year FROM academic_years WHERE is_current = 1), ?, ?, ?, 'pending')", id, title, today(), ADMIN_ID);
+  try {
+    await page.goto("/th");
+    await expect(page.getByText(title)).toHaveCount(0);
+    expect(await (await request.get("/sitemap.xml")).text()).not.toContain(id);
+    // files waiting for review: no public URL, and the preview URL needs a valid signature
+    expect((await request.get(`/media/pending/${ADMIN_ID}/${id}/480.webp`)).status()).toBe(403);
+    expect((await request.get(`/media/public/photos/${id}/480.webp`)).status()).toBe(404);
+    expect((await request.get(`/media/../.dev.vars`)).status()).toBeGreaterThanOrEqual(400);
+  } finally {
+    await sql("DELETE FROM announcements WHERE id = ?", id);
+  }
+});

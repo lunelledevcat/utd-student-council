@@ -1,97 +1,97 @@
 # Security
 
 How this site is protected, and how to check it. Run **`npm run security:check`** before every release
-(it builds, starts the app on :3100, and needs `.env.local`; `--no-e2e` runs only the database and bundle checks).
+(it builds, runs the app on workerd with local D1/R2/KV, and needs no production access; `--no-e2e` skips the browser part).
 
 Report a problem privately to the council's administrator. Do not open a public issue with details.
+
+Platform: Cloudflare Workers (OpenNext) + D1 + R2 + KV + Auth.js. Cloudflare-side settings (WAF, bots, rate-limit rules)
+are listed step by step in README → "Cloudflare security settings".
 
 ## 1. Who can do what
 
 | Layer | Rule |
 |---|---|
-| Sign-in | Google only, `@utd.ac.th` with Google's verified-email claim (`lib/env.ts canSignIn`). 5 attempts / 15 min per IP (`lib/ratelimit.ts`, bucket `login`). |
-| Roles | `admin` = listed in `ADMIN_EMAILS` (re-checked on every request, synced to `profiles.role`); `teacher` / `council` = `profiles.role`. |
+| Sign-in | Google only (Auth.js), Google-verified address on `@utd.ac.th` or listed in `ADMIN_EMAILS` (`lib/env.ts canSignIn`, checked in the Auth.js `signIn` callback and again on every request). 5 sign-in attempts / 15 min per IP (D1 counter). |
+| Sessions | Database sessions in D1 (`sessions`): revocable. Cookie `__Secure-authjs.session-token`, HttpOnly, Secure on https, SameSite=Lax. PKCE + state on the Google redirect. |
+| Roles | `admin` = `ADMIN_EMAILS` (re-read every request; stored role follows it, promote/demote audited); `teacher` / `council` = `users.role` (invites in `role_invites`). No role → `/pending-access`. |
 | Pages | `requireRole()` in every back-office page/layout (`lib/auth.ts`). |
-| Server Actions / route handlers | `authorize()` — the one check, run first in every action (`app/[locale]/dashboard/actions.ts`). The UI is never trusted. Denials are logged. |
-| Proxy | Private paths need a session; a write (POST) without one gets **401**, a page view is sent to sign-in. |
-| Database | RLS on **every** table (checked by `security:check`). Council writes go through the user's own session, so RLS + the `lock_review_columns` trigger decide (council rows are always `pending`; only staff can approve). The service role is used only after `authorize()`. |
-| IDOR | Rows: RLS limits council to their own rows (another's row = 404, nothing reveals that it exists). Photos: a council member can attach only their own uploads or photos already on that row (approved photos are public, so "can read" is not enough). |
-| Role changes | Every change of `profiles.role` is written to `audit_logs` by a database trigger (`role.change`), whoever makes it — app, SQL editor or dashboard. Shown in `/admin/security`. |
+| Server Actions / route handlers | `authorize()` first in every action. Denials are logged. |
+| Proxy | Private paths need a session cookie; a write (POST) without one gets **401**. The token itself is verified against D1 by the page/action. |
+| Database | D1 has no RLS, so **every query goes through `lib/data/*`**, which applies `lib/data/rules.ts` (public: approved only; council: create as self + pending, edit own pending/rejected only — back to pending, delete own pending; staff: review; admin: years/security). `security:check` fails if any other file builds queries. The rules are unit-tested against a real D1 (`lib/data/rules.test.ts`). |
+| IDOR | Rows: another's row = 404 (no existence leak). Photos: a council member can attach only their own uploads or photos already on that row. |
+| Role changes | Every change is written to `audit_logs` (`role.change`) by the data layer; shown in `/admin/security`. |
 
 ## 2. Input and output
 
-- All form input is validated on the server with **zod** (`lib/admin/validate.ts`): lengths, ISO dates, enum choices,
-  UUIDs, `https://` URLs only (`javascript:`, `data:`, `http:` refused), NUL bytes stripped.
-- Content is stored and rendered as **plain text**. React escapes it, and the codebase has no `dangerouslySetInnerHTML`.
-  A `<script>` in a title shows as text (tested). DOMPurify is not installed because no user HTML is ever rendered.
-  Add it before any rich-text/HTML feature.
-- External links: `target="_blank" rel="noopener noreferrer nofollow"`.
+- Form input is validated on the server with **zod** (`lib/admin/validate.ts`): lengths, ISO dates, enum choices, UUIDs,
+  `https://` URLs only, NUL bytes stripped.
+- Content is stored and rendered as **plain text** (React escapes it; no `dangerouslySetInnerHTML` anywhere). Tested with a
+  `<script>`/`onerror` payload. DOMPurify is not installed because no user HTML is rendered — add it with any rich-text feature.
+- External links: `rel="noopener noreferrer nofollow"`.
 
-## 3. Uploads
+## 3. Uploads (R2 bucket `utd-council-media`, private)
 
-- The browser checks the file's magic bytes (JPEG/PNG/WebP only; SVG, HTML and renamed files are refused) and converts the image to WebP.
-  It then PUTs it straight to Storage using a **one-time signed URL**. That URL is issued only after `authorize()` and only for `incoming/<own user id>/<random uuid>.webp`.
-- Server, before registering the photo: the file exists, is ≤ 10 MB, the **magic bytes say WebP** and sharp can decode it (≤ 60 MP).
-  Otherwise the file is deleted, the event is logged and the user sees "not a supported image".
-- The bucket `pending` is private and accepts `image/webp` only (≤ 10 MB). Variants are re-encoded with sharp, which strips EXIF/GPS.
-- Previews of unapproved photos use signed URLs valid for **10 minutes**, and only for rows the user can open.
-  Approved photos are copied to the public bucket.
+- The browser checks magic bytes (JPEG/PNG/WebP only), then makes the WebP sizes 1920/960 (watermarked) + 480 + a blur
+  placeholder. Re-encoding drops EXIF/GPS.
+- Upload URLs are issued only after `authorize()`. They are valid **5 minutes** and bound to one key `pending/<own user id>/<random uuid>/<w>.webp`, type `image/webp` and the exact byte size (≤ 10 MB).
+  In production they are presigned R2 S3 URLs (aws4fetch). Without R2 keys, the browser uploads to `/api/upload` with an HMAC-signed query carrying the same limits.
+- Finalize (server) checks all three files: they exist, are ≤ 10 MB, the **magic bytes and WebP header** are valid, and the size matches what was declared.
+  Otherwise the files are deleted, the event is logged and the user sees "not a supported image".
+- Approval **moves** files `pending/` → `public/`; deleting removes them from R2. Public files are served only by the Worker at `/media/public/photos/<uuid>/<w>.webp` (strict path pattern, `nosniff`).
+  Unapproved files are served only with a 10-minute HMAC signature that is issued just for rows the caller may open.
 
-## 4. Sessions and requests
+## 4. Requests
 
-- Auth cookies are **HttpOnly**, `Secure` in production and `SameSite=Lax` (`lib/supabase/proxy.ts AUTH_COOKIE`). No browser code
-  talks to Supabase, so no script can read the session.
-- Every session is verified with the Auth server (`getUser()`), never trusted from the cookie alone.
-- CSRF: Server Actions reject cross-origin posts (Next.js compares `Origin` with `Host`). Route handlers that change state check
-  the same origin (`isSameOrigin`), and the public voice form also needs a short-lived HMAC token (`/api/token`) and Turnstile.
-- **Sign out on every device**: `/admin/security` posts `scope=global` to `/auth/signout`, which revokes all of the account's sessions.
+- CSRF: Server Actions reject cross-origin posts (Next.js `Origin` check). Route handlers that change state check the same
+  origin. Auth.js uses its own CSRF token. The voice form needs a short-lived HMAC token and Turnstile.
+- Client IP = `cf-connecting-ip` (set by Cloudflare; `x-forwarded-for` is ignored).
+- Rate limits: pages 600/min and API 60/min per IP (Workers Rate Limiting binding; generous because a school shares one NAT address);
+  sign-in 5/15 min, voice 3/10 min and uploads 60/10 min (D1 counter). Honeypot/scanner paths ban the IP for 1 h (KV TTL).
+- **Sign out on every device**: `/admin/security` → deletes all of the account's sessions in D1.
 
 ## 5. Headers (`proxy.ts`, `next.config.ts`)
 
 | Header | Value |
 |---|---|
-| Content-Security-Policy | per-request **nonce**, `'strict-dynamic'`; no `unsafe-inline` / `unsafe-eval` for scripts in production; `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'` |
+| Content-Security-Policy | per-request **nonce**, `'strict-dynamic'`; no `unsafe-inline` / `unsafe-eval` for scripts; `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`; `connect-src` adds the R2 S3 origin only when presigned uploads are on |
 | Strict-Transport-Security | `max-age=63072000; includeSubDomains; preload` |
 | X-Content-Type-Options | `nosniff` |
 | Referrer-Policy | `strict-origin-when-cross-origin` |
 | Permissions-Policy | camera, microphone, geolocation, interest-cohort off |
 | Cross-Origin-Opener-Policy / -Resource-Policy | `same-origin` / `same-origin` |
-| X-Frame-Options | `DENY` (old browsers) |
+| X-Frame-Options | `DENY` |
 
-Known exception: `style-src-attr 'unsafe-inline'`. The animation library writes `style=""` attributes. This permits inline
-*style attributes* only, not `<style>` blocks or any script.
+Known exception: `style-src-attr 'unsafe-inline'`. The animation library writes `style=""` attributes; it allows no `<style>` and no script.
 
 ## 6. Errors and monitoring
 
-- Production errors show a generic message plus a **reference code** (the Next.js `digest`). The server log has the full
-  error under the same code. Action errors are translated message keys, never raw database text.
-- `public.security_events` is written only by the server and hidden from every token by RLS. It records:
-  trap paths, blocked tools/bots, rate limits, unauthenticated writes, denied actions, rejected uploads, global sign-outs.
+- Production errors show a generic message plus a **reference code** (Next.js `digest`, also in the Worker log —
+  `observability` is on in `wrangler.jsonc`, view under Workers → utd-student-council → Logs).
+- `security_events` (D1) records:
+  - trap paths, blocked tools/bots and rate limits
+  - unauthenticated writes, denied actions and rejected uploads
+  - sign-ins (allowed/refused by domain) and global sign-outs
+
   IPs are stored only as salted hashes, and the same event is stored at most once a minute per source.
-- `/admin/security` (admin only) shows the 7-day summary, recent events and role changes.
+- `/admin/security` (admin only): 7-day summary, recent events, role changes.
 
 ## 7. Secrets and dependencies
 
-- Real values exist only in `.env.local` (gitignored) and in Vercel. `.env.example` has no values. The Google client secret is set only
-  in Supabase.
-- `scripts/secret-scan.mjs` runs as a **pre-commit hook** (`.githooks/pre-commit`, enabled by `npm install`). It blocks key-shaped
-  strings, `.env` files and any value from `.env.local`. `--build` mode checks that no server key reached `.next/static`.
-- GitHub secret scanning + push protection stay **on**.
-- Dependabot (`.github/dependabot.yml`) checks npm weekly and GitHub Actions monthly.
-- `npm audit --omit=dev --audit-level=high` must be clean (it is). The one open advisory (`braces` ≤ 3.0.3 via
-  `eslint-config-next`) is lint tooling only, is never shipped, and has no patched release. npm's suggested "fix" downgrades Next 16 → 14, so it is not applied.
-- `SUPABASE_ACCESS_TOKEN` (used only by `db:migrate` / `security:check`): revoke it in Supabase after use.
+- Secrets live only in Cloudflare (`npx wrangler secret put`) and locally in `.dev.vars` (gitignored). `wrangler.jsonc` `vars` hold public
+  values only (checked by `security:check`). `.env.example` has no real values.
+- Pre-commit hook `scripts/secret-scan.mjs` (enabled by `npm install`) blocks key-shaped strings, env files and known values. `--build` mode scans the browser bundle.
+- GitHub secret scanning + push protection stay **on**. Dependabot: npm weekly, GitHub Actions monthly.
+- `npm audit --omit=dev --audit-level=high` must be clean. It is, after an override pins `glob` ≥ 10.5 inside OpenNext's minifier.
+  Dev-only advisories (lint/test tooling, never shipped) are listed by `security:check`.
 
 ## 8. What `security:check` proves
 
 | Check | How |
 |---|---|
-| RLS on every table, private WebP-only bucket | Management API query (`SUPABASE_ACCESS_TOKEN`) |
-| anon key reads pending/hidden rows → 0; private tables → nothing; insert/approve refused; private storage not listable | REST calls with the public key |
-| headers (curl -I) | `e2e/security.spec.ts` |
-| unauthenticated admin action → 401 | POST with a `Next-Action` header, no session |
-| council opens another's row → refused (404) | council session |
-| `<script>` shown as text | approved row with a script/onerror payload; no script runs |
-| `.html` renamed `.jpg` rejected | browser check, then HTML bytes forced into storage → server rejects, no row created |
-| no secret in the browser bundle | `secret-scan.mjs --build` |
+| only the data layer queries D1 | static scan of app/lib/components/proxy |
+| every access rule (public/council/staff/admin, IDOR, review, roles, sessions, rate window) | vitest on a real D1 |
+| headers, 401 without session, another's row → 404, anonymous sees no pending rows/files, `<script>` as text, `.html`→`.jpg` rejected (browser + server), sign-in redirect + cookie flags, sign out everywhere | Playwright on workerd |
+| public-only wrangler vars, `.dev.vars` gitignored | config check |
+| no secret in `.next/static` / `.open-next/assets` | bundle scan |
 | dependencies | `npm audit` |

@@ -32,8 +32,12 @@ export async function actorFor(db: Db, userId: string): Promise<Actor> {
   return { id: u.id, email, role };
 }
 
-/** After a successful Google sign-in: apply a pending invite, stamp the login. */
-export async function onSignIn(db: Db, userId: string, email: string) {
+/**
+ * After a successful Google sign-in: store that Google verified the address (the Auth.js adapter does not for OAuth
+ * users), apply a pending invite, stamp the login.
+ */
+export async function onSignIn(db: Db, userId: string, email: string, googleVerified: boolean) {
+  if (googleVerified) await db.update(users).set({ emailVerified: new Date() }).where(eq(users.id, userId));
   const [u] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
   const e = email.toLowerCase();
   if (!u?.role && !adminEmails().includes(e)) {
