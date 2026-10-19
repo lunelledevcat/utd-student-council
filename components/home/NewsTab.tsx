@@ -109,7 +109,7 @@ export function NewsTab({ announcements, activities, query, onClear }: {
                 <a
                   href={ann.link}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener noreferrer nofollow"
                   className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-brand-mid px-5 py-3 font-display font-semibold text-brand-mid transition hover:-translate-y-0.5 hover:bg-brand-mid hover:text-white hover:shadow-lift"
                 >
                   <IconExternal width={18} height={18} /> {t("openLink")}

@@ -49,7 +49,7 @@ export default async function SetupPage({ params }: { params: Promise<{ locale: 
         <dt className="font-medium text-muted">{t("labels.where")}</dt>
         <dd className="break-words">
           {t.raw(`vars.${name}.where`) as string}
-          {url && <> — <a href={url} target="_blank" rel="noopener noreferrer" className="font-medium text-pink-ink underline-offset-4 hover:underline">{t("labels.open")} ↗</a></>}
+          {url && <> — <a href={url} target="_blank" rel="noopener noreferrer nofollow" className="font-medium text-pink-ink underline-offset-4 hover:underline">{t("labels.open")} ↗</a></>}
         </dd>
         {status !== "set" && (
           <>

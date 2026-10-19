@@ -6,6 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { flushSync } from "react-dom";
 import type { L } from "@/lib/content";
 import type { Locale } from "@/i18n/routing";
+import { Icon } from "@/components/icons/Icon";
 import { cn } from "@/lib/utils";
 
 type Messages = Record<Locale, Record<string, unknown>>;
@@ -22,23 +23,24 @@ const visible = (el: HTMLElement) => {
   const r = el.getBoundingClientRect();
   return r.bottom > 0 && r.top < innerHeight && r.width > 0;
 };
+const frame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
+const done = (a: Animation) => a.finished.then(() => undefined, () => undefined);
 
-/** Blur + fade + small rise on every visible [data-swap] block, staggered top to bottom. Resolves when done. */
-function animateBlocks(phase: "out" | "in", els: HTMLElement[], reduce: boolean) {
-  const kf: Keyframe[] = reduce
-    ? [{ opacity: phase === "out" ? 1 : 0 }, { opacity: phase === "out" ? 0 : 1 }]
-    : phase === "out"
-      ? [{ opacity: 1, filter: "blur(0px)", transform: "translateY(0)" }, { opacity: 0, filter: "blur(4px)", transform: "translateY(-4px)" }]
-      : [{ opacity: 0, filter: "blur(4px)", transform: "translateY(6px)" }, { opacity: 1, filter: "blur(0px)", transform: "translateY(0)" }];
-  const anims = els.map((el, i) =>
-    el.animate(kf, { duration: phase === "out" ? 140 : 220, delay: Math.min(i, 12) * 18, easing: phase === "out" ? "ease-in" : "cubic-bezier(.22,1,.36,1)", fill: "both" }),
-  );
-  return Promise.all(anims.map((a) => a.finished.catch(() => undefined))).then(() => anims);
-}
-
+/**
+ * Language switch, ~900 ms:
+ * 1. navy overlay (#050D24, 85 %) + slight blur fades in (250 ms); the globe spins once and "Switching to …" rises
+ * 2. while covered: the locale is swapped in place (both bundles are already loaded) and the URL updated with
+ *    history.replaceState — tab, year, scroll position and an open popup all stay
+ * 3. waits until the new text is really painted (fonts ready + two frames), not a guessed delay
+ * 4. overlay fades out (300 ms) while the page's text blocks ([data-swap]) rise 8 px and fade in, top to bottom
+ * Reduced motion: a short overlay fade only. Clicks during a switch are ignored.
+ * Server-rendered pages (back office, sign-in) navigate to the other locale behind the overlay instead.
+ */
 export function LocaleProvider({ initial, messages, children }: { initial: Locale; messages: Messages; children: React.ReactNode }) {
   const [locale, setLocale] = useState<Locale>(initial);
   const [switching, setSwitching] = useState(false);
+  const [target, setTarget] = useState<Locale | null>(null);
+  const overlay = useRef<HTMLDivElement>(null);
   const busy = useRef(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -57,38 +59,76 @@ export function LocaleProvider({ initial, messages, children }: { initial: Local
   const switchLocale = useCallback(
     async (next: Locale) => {
       if (next === locale || busy.current) return;
-      const path = window.location.pathname.replace(/^\/(th|en)(?=\/|$)/, `/${next}`);
-      const url = path + window.location.search + window.location.hash;
-      document.cookie = `${COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
-      if (SERVER_RENDERED.test(pathname)) {
-        router.replace(url, { scroll: false });
-        return;
-      }
       busy.current = true;
       setSwitching(true);
       const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const els = Array.from(document.querySelectorAll<HTMLElement>("[data-swap]")).filter(visible).sort(
-        (a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top || a.getBoundingClientRect().left - b.getBoundingClientRect().left,
-      );
-      const out = await animateBlocks("out", els, reduce);
+      const path = window.location.pathname.replace(/^\/(th|en)(?=\/|$)/, `/${next}`);
+      const url = path + window.location.search + window.location.hash;
+      document.cookie = `${COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
+
+      // 1. cover
+      flushSync(() => setTarget(next));
+      const el = overlay.current!;
+      const spin = !reduce && el.querySelector<HTMLElement>("[data-globe]")?.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }], { duration: 650, easing: "cubic-bezier(.45,0,.2,1)" });
+      if (!reduce) el.querySelector<HTMLElement>("[data-msg]")?.animate([{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: 300, delay: 80, easing: "cubic-bezier(.22,1,.36,1)", fill: "both" });
+      await done(el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reduce ? 120 : 250, easing: "ease-out", fill: "both" }));
+
+      if (SERVER_RENDERED.test(pathname)) {
+        router.replace(url, { scroll: false }); // the new page replaces this provider (and the overlay)
+        return;
+      }
+
+      // 2. swap behind the overlay
       const oldTitle = (messages[locale].meta as Record<string, string>).title;
       const newTitle = (messages[next].meta as Record<string, string>).title;
       flushSync(() => setLocale(next));
       window.history.replaceState(window.history.state, "", url);
       document.title = document.title.replace(oldTitle, newTitle);
-      const back = await animateBlocks("in", els, reduce);
-      [...out, ...back].forEach((a) => a.cancel());
+
+      // 3. new text painted for real
+      await document.fonts.ready;
+      await frame();
+      await frame();
+      if (spin) await done(spin);
+
+      // 4. reveal: overlay out, text blocks rise in top to bottom
+      const blocks = reduce ? [] : Array.from(document.querySelectorAll<HTMLElement>("[data-swap]")).filter(visible).sort(
+        (a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top || a.getBoundingClientRect().left - b.getBoundingClientRect().left,
+      );
+      const rise = blocks.map((b, i) => b.animate(
+        [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "translateY(0)" }],
+        { duration: 320, delay: 90 + Math.min(i, 14) * 22, easing: "cubic-bezier(.22,1,.36,1)", fill: "both" },
+      ));
+      await Promise.all([done(el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reduce ? 120 : 300, easing: "ease-in", fill: "both" })), ...rise.map(done)]);
+      rise.forEach((a) => a.cancel());
+      setTarget(null);
       busy.current = false;
       setSwitching(false);
     },
     [locale, messages, pathname, router],
   );
 
+  const to = target ? (messages[target].lang as Record<string, string>) : null;
   return (
     <LocaleCtx.Provider value={{ locale, switching, switchLocale }}>
       <NextIntlClientProvider locale={locale} messages={messages[locale]} timeZone="Asia/Bangkok">
         {children}
       </NextIntlClientProvider>
+      {target && to && (
+        <div
+          ref={overlay}
+          role="status"
+          aria-live="assertive"
+          className="fixed inset-0 z-[300] grid place-items-center bg-[rgb(5_13_36/0.85)] text-white opacity-0 backdrop-blur-[6px]"
+        >
+          <div className="flex flex-col items-center gap-4" lang={target}>
+            <span data-globe className="grid h-16 w-16 place-items-center rounded-full bg-white/10 shadow-[0_0_40px_rgb(242_122_168/0.35)]">
+              <Icon name="globe" size={36} className="text-white" />
+            </span>
+            <p data-msg className="font-display text-lg font-semibold tracking-wide">{to.switching}</p>
+          </div>
+        </div>
+      )}
     </LocaleCtx.Provider>
   );
 }

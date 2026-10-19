@@ -612,5 +612,14 @@
         "missingProd": "Sign-in button doesn't work"
       }
     }
+  },
+  "lang": {
+    "button": "Change language (now: {current})",
+    "menu": "Choose language",
+    "th": "ไทย",
+    "en": "English",
+    "switching": "Switching to English…",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   }
 }

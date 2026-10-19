@@ -1,9 +1,10 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useLocale, useTranslations } from "next-intl";
+import { useState } from "react";
 import { LocaleSwitch } from "@/components/i18n/LocaleSwitch";
-import { IconFacebook, IconInstagram } from "@/components/icons/Icon";
+import { Icon, IconFacebook, IconInstagram } from "@/components/icons/Icon";
 import { Link } from "@/i18n/navigation";
 import { SITE } from "@/lib/site";
 
@@ -32,9 +33,11 @@ const SOCIAL = [
 export function Navbar() {
   const t = useTranslations();
   const locale = useLocale();
+  const [menu, setMenu] = useState(false);
   return (
-    <header className="relative z-30 overflow-hidden bg-gradient-to-r from-brand-deep via-[#0a1a40] to-[#0e2a66] text-on-brand shadow-[0_6px_24px_-8px_rgb(5_13_36/0.6)]">
-      <span aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-pink/20 blur-3xl" />
+    // no overflow-hidden here: the language menu drops below the header; only the glow is clipped
+    <header className="relative z-30 bg-gradient-to-r from-brand-deep via-[#0a1a40] to-[#0e2a66] text-on-brand shadow-[0_6px_24px_-8px_rgb(5_13_36/0.6)]">
+      <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden"><span className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-pink/20 blur-3xl" /></span>
       <nav aria-label={t("header.nav")} className="relative mx-auto flex max-w-[1320px] items-center justify-between gap-3 px-4 py-3 md:py-4">
         <Link href="/" className="flex min-w-0 items-center gap-2.5 md:gap-3" aria-label={t("header.home", { name: t("site.name") })}>
           <LogoSlot label={t("header.schoolLogoLabel")} text={t("header.schoolLogo")} delay={0.05} />
@@ -50,13 +53,13 @@ export function Navbar() {
           </span>
         </Link>
 
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <div className="hidden shrink-0 items-center gap-2 sm:flex">
           {SOCIAL.map(({ label, href, Icon }) => (
             <a
               key={label}
               href={href}
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener noreferrer nofollow"
               aria-label={label}
               className="inline-flex h-9 items-center gap-2 rounded-full border border-white/20 bg-white/5 px-2.5 text-sm font-medium transition duration-300 hover:-translate-y-0.5 hover:border-pink-400/70 hover:bg-white/10 hover:shadow-glow sm:h-10 sm:px-3 md:px-4"
             >
@@ -66,7 +69,38 @@ export function Navbar() {
           ))}
           <LocaleSwitch />
         </div>
+        {/* phones: one menu button holding the socials and the language choice */}
+        <button
+          type="button"
+          onClick={() => setMenu((m) => !m)}
+          aria-expanded={menu}
+          aria-controls="phone-menu"
+          aria-label={t(menu ? "lang.closeMenu" : "lang.openMenu")}
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/25 bg-white/10 sm:hidden"
+        >
+          <Icon name={menu ? "close" : "menu"} size={20} className="text-white" />
+        </button>
       </nav>
+      <AnimatePresence>
+        {menu && (
+          <motion.div
+            id="phone-menu"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="absolute inset-x-0 top-full z-40 space-y-3 border-t border-white/10 bg-brand-deep/95 p-4 backdrop-blur-md sm:hidden"
+          >
+            <LocaleSwitch variant="row" />
+            <div className="grid grid-cols-2 gap-2">
+              {SOCIAL.map(({ label, href, Icon: I }) => (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer nofollow" className="flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 py-2.5 text-sm font-medium">
+                  <I width={17} /> {label}
+                </a>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

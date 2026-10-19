@@ -27,3 +27,9 @@ set visually consistent with the mandapa / Kae Farang motifs.
 | simple-icons 16 | Facebook and Instagram marks | CC0 1.0 — https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md |
 
 Brand marks remain trademarks of their owners and are used only to link to the council's own pages.
+
+## Flags (public/flags)
+
+| File | Source | Licence |
+|---|---|---|
+| th.svg, gb.svg | flag-icons 7.6 (lipis/flag-icons), 4x3 set, SVGO-optimised | MIT — https://github.com/lipis/flag-icons/blob/main/LICENSE |

@@ -172,7 +172,7 @@ function PersonDetail({ p }: { p: Person }) {
                 <a
                   href={`https://www.instagram.com/${encodeURIComponent(ig)}/`}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener noreferrer nofollow"
                   className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-glow"
                 >
                   <IconInstagram width={17} height={17} /> @{ig}

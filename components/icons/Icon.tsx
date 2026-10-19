@@ -3,7 +3,7 @@
 // navy/white + pink everywhere. Uses the `ssr` entry (no React context) so it renders in server and client components.
 import {
   ArrowCounterClockwise, ArrowLeft, ArrowSquareOut, ArrowUp, ArrowsOut, CalendarBlank, CaretDown, CaretLeft, CaretRight,
-  ChalkboardTeacher, Crown, Flag, Image as ImageIcon, Images, Info, LinkSimple, MagnifyingGlass, Medal, Megaphone, PushPin,
+  ChalkboardTeacher, Check, Crown, Flag, Globe, List, Image as ImageIcon, Images, Info, LinkSimple, MagnifyingGlass, Medal, Megaphone, PushPin,
   Star, User, UsersThree, X,
 } from "@phosphor-icons/react/ssr";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
@@ -15,6 +15,7 @@ const GLYPHS = {
   chevronLeft: CaretLeft, chevronRight: CaretRight, chevronDown: CaretDown, arrowUp: ArrowUp, arrowLeft: ArrowLeft,
   crown: Crown, medal: Medal, star: Star, pin: PushPin, megaphone: Megaphone, images: Images, image: ImageIcon, flag: Flag,
   users: UsersThree, teacher: ChalkboardTeacher, info: Info, expand: ArrowsOut, reset: ArrowCounterClockwise, user: User,
+  globe: Globe, check: Check, menu: List,
 } satisfies Record<string, PhosphorIcon>;
 const BRANDS = { facebook: siFacebook, instagram: siInstagram };
 

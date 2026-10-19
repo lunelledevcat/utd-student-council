@@ -115,7 +115,7 @@ export function Modal({
           {icon && <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/12 text-pink-400">{icon}</span>}
           <h2 data-swap id={titleId} className="min-w-0 flex-1 truncate text-[1.05rem] font-semibold sm:text-lg">{title}</h2>
           {/* the page header is behind the backdrop: switch language from here; the popup re-renders in place */}
-          <LocaleSwitch className="h-8 shrink-0 sm:h-9" />
+          <LocaleSwitch variant="row" compact className="shrink-0" />
           <button
             ref={closeBtn}
             type="button"

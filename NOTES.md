@@ -252,3 +252,21 @@ Timing before speed work (local, 10 × 2400×1500 JPEG): upload 10 photos 56.7 s
 - Timing (local `next start`, 10 × 2400×1500 JPEG, same machine/network):
   upload 10 photos **56.7 s -> 25.9 s**; save until the server confirms **5.6 s -> 2.5 s** (the list shows the item
   immediately). Screenshots: `C:\dev\utd-shots\compare\backoffice`.
+
+## Language menu + covered switch (2026-10-19)
+- Globe button (Phosphor Globe duotone, 40 px glass) + current code (TH/EN) opens a menu (scale + fade from the
+  corner): flag (flag-icons, MIT, inlined SVG so it never waits for an image) + name + code; current one ticked on
+  light pink; hover light-blue gradient; ↑/↓, Enter, ESC; aria-haspopup / aria-expanded / menuitemradio.
+  Phones: a menu button in the header holds the two language choices + socials. Popups: a compact TH/EN choice in
+  their header (the panel clips overflowing menus).
+- Switch (~900 ms): navy overlay 85 % + blur fades in (250 ms), globe spins once, "Switching to English…" /
+  "กำลังเปลี่ยนเป็นภาษาไทย…" (in the target language); behind it the locale is swapped in place and the URL updated
+  with history.replaceState; then it waits for the new text to be painted (document.fonts.ready + 2 frames — not a timer),
+  fades out (300 ms) while [data-swap] blocks rise 8 px, top to bottom. Reduced motion: short overlay fade only.
+  Clicks during a switch are ignored (button disabled).
+- Deliberate deviation: the brief says `router.replace`; a real navigation to /en remounts everything under [locale],
+  which would close an open popup and reset scroll — both of which the same brief requires to survive. The in-place swap
+  + replaceState gives the same URL and history entry without that. Back office / sign-in pages (server-rendered) still
+  navigate (behind the overlay).
+- Header no longer clips its children (only the decorative glow is clipped), so the menu can drop below it.
+- All external links: rel="noopener noreferrer nofollow".
