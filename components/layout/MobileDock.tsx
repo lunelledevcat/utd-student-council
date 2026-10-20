@@ -48,11 +48,13 @@ export function MobileDock() {
 
   useEffect(() => {
     if (!open) return;
-    firstItem.current?.focus();
+    firstItem.current?.focus({ preventScroll: true });
     const outside = (e: PointerEvent) => wrap.current && !wrap.current.contains(e.target as Node) && close();
-    const scroll = () => close();
+    // close when the page is really scrolled (focus / layout can fire a scroll event without moving)
+    const startY = window.scrollY;
+    const scroll = () => Math.abs(window.scrollY - startY) > 40 && close();
     document.addEventListener("pointerdown", outside);
-    window.addEventListener("scroll", scroll, { passive: true, once: true });
+    window.addEventListener("scroll", scroll, { passive: true });
     return () => {
       document.removeEventListener("pointerdown", outside);
       window.removeEventListener("scroll", scroll);

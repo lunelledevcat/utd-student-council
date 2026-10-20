@@ -27,10 +27,10 @@ test("globe menu: keyboard, overlay switch keeps tab + scroll + open popup", asy
   // open a profile popup, scroll a bit, then switch from inside the popup (its header has the TH/EN choice)
   await page.mouse.wheel(0, 500);
   await page.waitForTimeout(300);
-  const scrollBefore = await page.evaluate(() => scrollY);
-  await page.locator("#tab-panel ul button[aria-haspopup]").first().click();
+  await page.locator("#tab-panel ul button[aria-haspopup]").first().click(); // (scrolls the card into view)
   const dialog = page.getByRole("dialog");
   await expect(dialog).toContainText("ข้อมูลแนะนำรายบุคคล");
+  const scrollBefore = await page.evaluate(() => scrollY);
   await dialog.getByRole("radio", { name: /EN/ }).click();
   await page.waitForTimeout(180);
   await page.screenshot({ path: `${SHOTS}/3-overlay.png` });
@@ -44,7 +44,7 @@ test("globe menu: keyboard, overlay switch keeps tab + scroll + open popup", asy
   await db().from("members").delete().eq("id", m!.id);
 });
 
-test("double click during a switch does not stack; mobile menu has the language row", async ({ page }) => {
+test("double click during a switch does not stack; phone dock switches language", async ({ page }) => {
   await page.goto("/th");
   const button = page.getByRole("button", { name: /เปลี่ยนภาษา/ });
   await button.click();
@@ -55,10 +55,10 @@ test("double click during a switch does not stack; mobile menu has the language 
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: "Open menu" }).click();
-  const row = page.getByRole("radiogroup", { name: "Choose language" });
-  await expect(row.getByRole("radio")).toHaveCount(2);
-  await page.waitForTimeout(400); // let the menu finish fading in
+  const dock = page.locator("#contact-dock");
+  await dock.getByRole("button", { name: "Change language", exact: true }).click();
+  await page.waitForTimeout(400); // let the capsule finish opening
   await page.screenshot({ path: `${SHOTS}/5-mobile-menu.png` });
-  await row.getByRole("radio", { name: /ไทย/ }).click();
+  await dock.getByRole("button", { name: "ไทย", exact: true }).click();
   await expect(page).toHaveURL(/\/th/);
 });

@@ -9,13 +9,23 @@ const adminId = async () => (await db().from("profiles").select("id").eq("email"
 const today = () => new Date().toISOString().slice(0, 10);
 
 test("response headers (curl -I)", async ({ request }) => {
+  // sign-in / back office: per-request nonce, nothing inline allowed, never cached
+  const login = await request.get("/th/login");
+  const lcsp = login.headers()["content-security-policy"] ?? "";
+  const lscript = lcsp.split(";").find((d) => d.trim().startsWith("script-src")) ?? "";
+  expect(lscript).toMatch(/'nonce-[A-Za-z0-9+/=]+'/);
+  expect(lscript).not.toContain("unsafe-inline");
+  expect(lscript).not.toContain("unsafe-eval");
+  expect(login.headers()["cache-control"]).toContain("no-store");
+  // public pages: static (cacheable) CSP without a nonce, still no eval, no framing, no plugins; no Set-Cookie
   const r = await request.get("/th");
   const h = r.headers();
   const csp = h["content-security-policy"] ?? "";
   const script = csp.split(";").find((d) => d.trim().startsWith("script-src")) ?? "";
-  expect(script).toMatch(/'nonce-[A-Za-z0-9+/=]+'/);
-  expect(script).not.toContain("unsafe-inline");
+  expect(script).not.toContain("nonce-");
   expect(script).not.toContain("unsafe-eval");
+  expect(h["set-cookie"]).toBeUndefined();
+  expect(h["cache-control"]).toContain("s-maxage=600");
   expect(csp).toContain("frame-ancestors 'none'");
   expect(csp).toContain("object-src 'none'");
   expect(h["strict-transport-security"]).toContain("preload");
@@ -63,7 +73,9 @@ test("<script> in content is shown as text, never run", async ({ page }) => {
   try {
     let dialog = false;
     page.on("dialog", (d) => { dialog = true; void d.dismiss(); });
-    await page.goto("/th");
+    // public pages are cached (ISR); a row written straight into the database shows on a view not rendered yet
+    const { data: y } = await db().from("academic_years").select("year").eq("is_current", true).single();
+    await page.goto(`/th?year=${y!.year}&tab=news`);
     await expect(page.getByText("<script>window.__xss=1</script>", { exact: false }).first()).toBeVisible();
     expect(await page.evaluate(() => (window as unknown as { __xss?: number }).__xss)).toBeUndefined();
     expect(await page.locator('img[src="x"]').count()).toBe(0);
