@@ -47,6 +47,8 @@ export type Photo = {
   plain: boolean;
   /** CSS object-position used when the photo is cropped to the frame, e.g. "50% 35%" */
   focal: string | null;
+  /** seconds on screen (artwork with text stays longer); null = the slider default */
+  seconds: number | null;
 };
 
 const paragraphs = (s: string | null | undefined) => (s ?? "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
@@ -228,15 +230,15 @@ export async function getHeroPhotos(): Promise<Photo[]> {
   if (!supabaseConfigured()) return banner.map((b) => staticSlide(b.id, `/banner/${b.file}`, b.w, b.h, b.blur, "", null, "school"));
   const today = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
   const { data } = await publicClient()
-    .from("photos").select(`${IMG_COLS},caption,static_path,credit,alt_th,alt_en,focal`).eq("is_hero", true)
+    .from("photos").select(`${IMG_COLS},caption,static_path,credit,alt_th,alt_en,focal,hero_seconds`).eq("is_hero", true)
     .or(`hero_start.is.null,hero_start.lte.${today}`).or(`hero_end.is.null,hero_end.gte.${today}`)
     .order("hero_order", { ascending: true });
   return (data ?? []).map((r) => {
     const credit = r.credit === "school" || r.credit === "council" ? r.credit : null;
     const alt = r.alt_th ? l(r.alt_th, r.alt_en) : null;
-    if (r.static_path) return { ...staticSlide(r.id, r.static_path, r.width, r.height, r.blur, r.caption, alt, credit), focal: r.focal ?? null };
+    if (r.static_path) return { ...staticSlide(r.id, r.static_path, r.width, r.height, r.blur, r.caption, alt, credit), focal: r.focal ?? null, seconds: r.hero_seconds ?? null };
     const img = toImg(r as PhotoRow) as Img;
-    return { id: img.id, w: img.w, h: img.h, blur: img.blur, src: img.src[1920], srcSet: `${img.src[480]} 480w, ${img.src[960]} 960w, ${img.src[1920]} 1920w`, avifSet: null, caption: r.caption, alt, credit, plain: false, focal: r.focal ?? null };
+    return { id: img.id, w: img.w, h: img.h, blur: img.blur, src: img.src[1920], srcSet: `${img.src[480]} 480w, ${img.src[960]} 960w, ${img.src[1920]} 1920w`, avifSet: null, caption: r.caption, alt, credit, plain: false, focal: r.focal ?? null, seconds: r.hero_seconds ?? null };
   });
 }
 
@@ -248,5 +250,5 @@ function staticSlide(id: string, path: string, w: number, h: number, blur: strin
   // a source narrower than a width gives the same file size twice: keep one candidate per real width
   const real = widths.filter((x, i) => i === 0 || Math.min(x, w) > Math.min(widths[i - 1], w));
   const set = (ext: string) => real.map((x) => `${path}-${x}.${ext} ${Math.min(x, w)}w`).join(", ");
-  return { id, w, h, blur, caption, alt, credit, src: `${path}-${banner ? 2048 : 1920}.webp`, srcSet: set("webp"), avifSet: banner ? set("avif") : null, plain: banner, focal: null };
+  return { id, w, h, blur, caption, alt, credit, src: `${path}-${real[real.length - 1]}.webp`, srcSet: set("webp"), avifSet: banner ? set("avif") : null, plain: banner, focal: null, seconds: null };
 }

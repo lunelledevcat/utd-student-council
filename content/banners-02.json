@@ -1,23 +1,23 @@
 [
   {
     "name": "banner-02-1",
-    "source": "IMG_6115.pdf",
-    "w": 2048,
-    "h": 1365,
-    "blur": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAACwAQCdASoQAAsAA4BaJbACsAEGRDnAAP7iklYvmfQ1LJyBKuiQdAMW5YGW+VY8frWdrc1iAVq0CcVURTbhuYSqrE3LJ1QDkw2+DtIk+ynEA1MvZmAAAA=="
+    "source": "banner-02-01.jpg",
+    "w": 1920,
+    "h": 834,
+    "blur": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAADwAQCdASoQAAcAA4BaJbACdAC3zdqR9YAA/ZUNJ4TeHW+8XuIYL+cnkChnGrAXWbxYOqT1x9q3/lR1dFTT8EZBrYNvSWDdI2mAAA=="
   },
   {
     "name": "banner-02-2",
-    "source": "IMG_6116.pdf",
-    "w": 1574,
-    "h": 1040,
-    "blur": "data:image/webp;base64,UklGRlgAAABXRUJQVlA4IEwAAADwAQCdASoQAAsAA4BaJZQAAujfPd9ywgAA/vVOABw3bCiTpcbi/QVqnVuDN+nIN4GHqIBToHZbkxLDRtuUlSV7IPDrIdMXtNsjIUwA"
+    "source": "banner-02-02.jpg",
+    "w": 1920,
+    "h": 834,
+    "blur": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADwAQCdASoQAAcAA4BaJaQAArCrjeJLGgAA/vlRmgXLK6mu6PdCBkakbUyUyJ4Mva7TxCKDVyieK9tyhfTqorewY/cTOgAA"
   },
   {
     "name": "banner-02-3",
-    "source": "IMG_6118.pdf",
-    "w": 2048,
-    "h": 1365,
-    "blur": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAAAwAgCdASoQAAsAA4BaJbAC7AEfTepVKJCAAAD+t/OcC9THc5AG5LTfMbeIZoqJ9Cu8B4AEAmehieWVmMRgNZaiC6nAJ2uRJ6MsjuJ2xNfKB72MQUAAAA=="
+    "source": "banner-02-03.jpg",
+    "w": 1920,
+    "h": 834,
+    "blur": "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAADwAQCdASoQAAcAA4BaJaQAD42NtavZT6AA/rXlZu9iXu+7dlTQ3wvdzL9TlLyHogX+xhaHzWsw0W9ayYrtRO0Dd9S8sCYOQSAAAA=="
   }
 ]

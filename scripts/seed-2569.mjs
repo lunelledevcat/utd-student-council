@@ -62,19 +62,36 @@ for (const m of data.members) {
 }
 console.log(`members ${Y}:`, res);
 
-// banner 02 — the three images as delivered; off until staff turn them on (dashboard -> hero). Order 1 = banner 01 (to come).
-const ALT = [
+// Hero slides. Order 1 is kept for banner 01 (to come).
+// banner 02 = the council's artwork (SCUTD 2026 + two memorial banners): shown whole (the frame has their ratio),
+// nothing drawn over them, 9 s each because they carry text. New rows start ON (orders 2-4); re-runs never touch
+// on/off, order or dates.
+const BANNER_ALT = [
+  ["SCUTD 2026 สภานักเรียนโรงเรียนอุตรดิตถ์ ปีการศึกษา 2569", "SCUTD 2026 — Uttaradit School Student Council, academic year 2569"],
+  ["น้อมรำลึกในพระมหากรุณาธิคุณ สมเด็จพระนางเจ้าสิริกิติ์ พระบรมราชินีนาถ พระบรมราชชนนีพันปีหลวง", "In remembrance of the boundless grace of Her Majesty Queen Sirikit The Queen Mother"],
+  ["น้อมเสด็จสู่ทิพยสถาน สมเด็จพระเจ้าลูกเธอ เจ้าฟ้าพัชรกิติยาภา นเรนทิราเทพยวดี กรมหลวงราชสาริณีสิริพัชร มหาวัชรราชธิดา", "In remembrance of Her Royal Highness Princess Bajrakitiyabha Narendiradebyavati, Krom Luang Rajasarini Siribajra Mahavajra Rajadhita"],
+];
+for (const [i, b] of JSON.parse(readFileSync("content/banners-02.json", "utf8")).entries()) {
+  const r = await insertOrUpdate("photos", uuid(`utd-banner02-${i + 1}`), {
+    static_path: `/banners/${b.name}`, width: b.w, height: b.h, blur: b.blur, credit: "council", caption: "",
+    alt_th: BANNER_ALT[i][0], alt_en: BANNER_ALT[i][1], focal: null, hero_seconds: 9, status: "approved",
+  }, { is_hero: true, hero_order: i + 2 });
+  console.log(`${b.name}: ${r}`);
+}
+
+// brander = three council group photos (from brander/*.pdf): extra slides, OFF until the admin picks them.
+// (These rows were first registered as banner-02-N; migration 0012 moved them, ids kept.)
+const BRANDER_ALT = [
   ["คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์ ถ่ายภาพหมู่หน้าอาคารเรียน", "Uttaradit School Student Council group photo in front of a school building"],
   ["คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์ ในชุดสูทสภานักเรียน ถ่ายภาพหมู่", "Uttaradit School Student Council members in council blazers, group photo"],
   ["คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์ ในเสื้อสภานักเรียนสีม่วง ถ่ายภาพหมู่ที่สนาม", "Uttaradit School Student Council members in purple council shirts, group photo on the field"],
 ];
-// focal point for filling the banner frame (object-position), chosen so every face stays in view at 16:7 and 4:3
+// focal point when the photo (≈1.5:1) is cropped to the banner frame, chosen so every face stays in view
 const FOCAL = ["50% 64%", "50% 45%", "50% 53%"];
-const banners = JSON.parse(readFileSync("content/banners-02.json", "utf8"));
-for (const [i, b] of banners.entries()) {
-  const r = await insertOrUpdate("photos", uuid(`utd-banner-${b.name}`), {
+for (const [i, b] of JSON.parse(readFileSync("content/brander.json", "utf8")).entries()) {
+  const r = await insertOrUpdate("photos", uuid(`utd-banner-banner-02-${i + 1}`), {
     static_path: `/banners/${b.name}`, width: b.w, height: b.h, blur: b.blur, credit: "council", caption: "",
-    alt_th: ALT[i][0], alt_en: ALT[i][1], focal: FOCAL[i], status: "approved",
-  }, { is_hero: false, hero_order: i + 2 });
+    alt_th: BRANDER_ALT[i][0], alt_en: BRANDER_ALT[i][1], focal: FOCAL[i], hero_seconds: null, status: "approved",
+  }, { is_hero: false, hero_order: i + 10 });
   console.log(`${b.name}: ${r}`);
 }

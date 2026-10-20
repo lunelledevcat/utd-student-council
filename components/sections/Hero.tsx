@@ -2,7 +2,8 @@ import { HeroSlides } from "@/components/sections/HeroSlides";
 import { getHeroPhotos } from "@/lib/content";
 
 /**
- * Banner: rounded full-frame photo slider (16:7 ≈ 2.3:1 from tablets up, 4:3 phones) — photos, arrows and dots only;
+ * Banner: rounded full-frame slider in the council banners' own ratio (4860x2110 ≈ 2.3:1) on every screen, so the
+ * artwork is never cropped (photos of another ratio fill the frame around their focal point) — photos, arrows and dots only;
  * the council name lives in the header, the year in the control bar. A faint shadow at the bottom keeps the dots visible.
  * Slides = approved photos an admin ticked "is_hero"; none -> one gradient slide.
  */

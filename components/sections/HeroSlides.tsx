@@ -30,9 +30,9 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
 
   useEffect(() => {
     if (paused || n < 2) return;
-    const id = setTimeout(() => setI((x) => (x + 1) % n), INTERVAL);
+    const id = setTimeout(() => setI((x) => (x + 1) % n), (photos[i]?.seconds ?? INTERVAL / 1000) * 1000);
     return () => clearTimeout(id);
-  }, [i, paused, n]);
+  }, [i, paused, n, photos]);
 
   const go = (d: number) => setI((x) => (x + d + n) % n);
   const onDragEnd = (_: unknown, info: PanInfo) => {
@@ -48,7 +48,7 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
     <>
     <section
       aria-label={t("label")}
-      className="relative isolate aspect-[4/3] overflow-hidden rounded-[20px] bg-gradient-to-br from-brand-deep via-[#0b1f4d] to-brand-mid text-on-brand shadow-soft sm:aspect-[16/7]"
+      className="relative isolate aspect-[4860/2110] overflow-hidden rounded-[20px] bg-gradient-to-br from-brand-deep via-[#0b1f4d] to-brand-mid text-on-brand shadow-soft"
     >
     <div
       className="group absolute inset-0 outline-none"
@@ -99,6 +99,7 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
                   height={p.h}
                   draggable={false}
                   fetchPriority={i === 0 ? "high" : "auto"}
+                  loading={i === 0 ? "eager" : "lazy"}
                   className="no-select absolute inset-0 h-full w-full object-cover"
                   style={{ objectPosition: p.focal ?? "50% 50%", transformOrigin: ORIGINS[i % ORIGINS.length], backgroundImage: p.blur ? `url(${p.blur})` : undefined, backgroundSize: "cover" }}
                   initial={{ scale: 1 }}
@@ -131,33 +132,39 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
                 aria-label={t(side === "left" ? "prev" : "next")}
                 onClick={() => go(side === "left" ? -1 : 1)}
                 className={cn(
-                  "absolute bottom-2 z-20 grid h-8 w-8 place-items-center md:bottom-auto md:top-1/2 md:-translate-y-1/2 rounded-full border border-white/30 bg-white/15 text-white shadow-lg backdrop-blur-md transition duration-300 hover:scale-110 hover:bg-white/30 md:h-12 md:w-12 md:opacity-0 md:group-hover:opacity-100 md:group-focus-visible:opacity-100",
-                  side === "left" ? "left-3 md:left-4" : "right-3 md:right-4",
+                  // arrows: desktop only, shown on hover/focus (phones swipe) — nothing sits on the artwork at rest
+                  "absolute top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-white/15 text-white opacity-0 shadow-lg backdrop-blur-md transition duration-300 hover:scale-110 hover:bg-white/30 group-hover:opacity-100 group-focus-visible:opacity-100 md:grid",
+                  side === "left" ? "left-4" : "right-4",
                 )}
               >
                 <Icon width={20} height={20} />
               </button>
             );
           })}
-          <div className="absolute inset-x-0 bottom-3 z-20 flex justify-center gap-2 md:bottom-4" role="group" aria-label={t("pick")}>
-            {photos.map((ph, k) => (
-              <button
-                key={ph.id}
-                type="button"
-                tabIndex={-1}
-                aria-label={t("slide", { n: k + 1 })}
-                aria-current={k === i}
-                onClick={() => setI(k)}
-                className={cn("h-2 rounded-full transition-all duration-500", k === i ? "w-8 bg-pink shadow-glow" : "w-2 bg-white/60 hover:bg-white")}
-              />
-            ))}
-          </div>
         </>
       )}
     </div>
     </section>
-    {/* banner credit sits under the frame (nothing is drawn over banner artwork); fixed height = no layout shift */}
-    <p className="mt-1.5 h-4 text-right text-[0.7rem] leading-4 text-muted" aria-live="off">{p?.plain && p.credit ? t(`credit.${p.credit}`) : ""}</p>
+    {/* under the frame (nothing is drawn over banner artwork): slide dots + credit; fixed height = no layout shift */}
+    <div className="mt-2 flex h-5 items-center justify-between gap-3">
+      {n > 1 ? (
+        <div className="flex gap-2" role="group" aria-label={t("pick")}>
+          {photos.map((ph, k) => (
+            <button
+              key={ph.id}
+              type="button"
+              aria-label={t("slide", { n: k + 1 })}
+              aria-current={k === i}
+              onClick={() => setI(k)}
+              className="grid h-5 place-items-center"
+            >
+              <span className={cn("block h-2 rounded-full transition-all duration-500", k === i ? "w-8 bg-pink shadow-glow" : "w-2 bg-brand/25 hover:bg-brand/50")} />
+            </button>
+          ))}
+        </div>
+      ) : <span />}
+      <p className="text-right text-[0.7rem] leading-4 text-muted" aria-live="off">{p?.plain && p.credit ? t(`credit.${p.credit}`) : ""}</p>
+    </div>
     </>
   );
 }

@@ -1,5 +1,6 @@
 // One-time import of the 2569 material placed in _import/ (gitignored — source files are never committed).
 //   node scripts/import-2569.mjs assets     logos, favicon, og:image, banner 02 slides -> public/ + app/
+//   node scripts/import-2569.mjs banners    banner 02 (SCUTD 2026 + 2 memorial banners) -> public/banners/
 //   node scripts/import-2569.mjs credits    footer credit avatar -> public/credits/
 //   node scripts/import-2569.mjs members    portrait card + full poster per member -> Supabase Storage "pending"
 //                                           (private; copied to the public bucket only when photo consent is on)
@@ -85,18 +86,22 @@ async function assets() {
     offset += png.length;
   });
   writeFileSync("app/favicon.ico", Buffer.concat([head, ...icons]));
+  // web app manifest icons (app/manifest.ts)
+  for (const n of [192, 512]) {
+    await sharp(council).resize(n, n, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } }).png({ palette: true, quality: 90 }).toFile(`public/brand/icon-${n}.png`);
+  }
   await sharp(council).resize(180, 180, { fit: "contain", background: "#0b1f4d" }).flatten({ background: "#0b1f4d" }).png().toFile("app/apple-icon.png");
   const lg = async (b) => sharp(b).resize(360, 360, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
   await sharp({ create: { width: 1200, height: 630, channels: 4, background: "#0b1f4d" } })
     .composite([{ input: await lg(school), left: 200, top: 135 }, { input: await lg(council), left: 640, top: 135 }])
     .png({ palette: true, quality: 90 }).toFile("app/[locale]/opengraph-image.png");
 
-  // banner 02: the three images exactly as delivered (no crop, no edit), up to 2K (2048 px) — never upscaled
+  // brander/*.pdf: three council group photos (not banners) — extra hero slides, off by default; up to 2K, never upscaled
   const files = ["IMG_6115", "IMG_6116", "IMG_6118"];
   const meta = [];
   for (const [i, f] of files.entries()) {
     const [img] = pdfImages(`${SRC}/brander/${f}.pdf`);
-    const name = `banner-02-${i + 1}`;
+    const name = `brander-${i + 1}`;
     for (const w of [640, 1280, 1920, 2048]) {
       const r = load(img).rotate().resize({ width: w, withoutEnlargement: true });
       await r.clone().avif({ quality: 55 }).toFile(`public/banners/${name}-${w}.avif`);
@@ -106,7 +111,7 @@ async function assets() {
     const blur = await load(img).rotate().resize(16).webp({ quality: 40 }).toBuffer();
     meta.push({ name, source: `${f}.pdf`, w: m.info.width, h: m.info.height, blur: `data:image/webp;base64,${blur.toString("base64")}` });
   }
-  writeFileSync("content/banners-02.json", JSON.stringify(meta, null, 2) + "\n");
+  writeFileSync("content/brander.json", JSON.stringify(meta, null, 2) + "\n");
   console.log("assets done:", meta.map((m) => `${m.name} ${m.w}x${m.h}`).join(", "));
 }
 
@@ -155,6 +160,27 @@ async function members() {
   }
 }
 
+// banner 02: _import/banner-02/banner-02-0N.jpg (4860x2110, artwork with text) exactly as delivered — no crop,
+// no edit, nothing drawn over it — as AVIF + WebP 640 / 1280 / 1920 + a 16 px blur placeholder
+async function banners() {
+  mkdirSync("public/banners", { recursive: true });
+  const meta = [];
+  for (const n of [1, 2, 3]) {
+    const src = `${SRC}/banner-02/banner-02-0${n}.jpg`;
+    const name = `banner-02-${n}`;
+    for (const w of [640, 1280, 1920]) {
+      const r = sharp(src).rotate().resize({ width: w, withoutEnlargement: true });
+      await r.clone().avif({ quality: 60 }).toFile(`public/banners/${name}-${w}.avif`);
+      await r.clone().webp({ quality: 82 }).toFile(`public/banners/${name}-${w}.webp`);
+    }
+    const m = await sharp(src).rotate().resize({ width: 1920, withoutEnlargement: true }).toBuffer({ resolveWithObject: true });
+    const blur = await sharp(src).rotate().resize(16).webp({ quality: 40 }).toBuffer();
+    meta.push({ name, source: `banner-02-0${n}.jpg`, w: m.info.width, h: m.info.height, blur: `data:image/webp;base64,${blur.toString("base64")}` });
+  }
+  writeFileSync("content/banners-02.json", JSON.stringify(meta, null, 2) + "\n");
+  console.log("banners done:", meta.map((m) => `${m.name} ${m.w}x${m.h}`).join(", "));
+}
+
 // footer credit avatar: _import/lunelle.png -> public/credits/lunelle-{96,192}.{avif,webp}
 async function credits() {
   mkdirSync("public/credits", { recursive: true });
@@ -168,5 +194,6 @@ async function credits() {
 
 if (step === "assets") await assets();
 else if (step === "credits") await credits();
+else if (step === "banners") await banners();
 else if (step === "members") await members();
-else console.log("usage: node scripts/import-2569.mjs assets|members|credits");
+else console.log("usage: node scripts/import-2569.mjs assets|banners|members|credits");
