@@ -9,7 +9,7 @@ Report a problem privately to the council's administrator. Do not open a public 
 
 | Layer | Rule |
 |---|---|
-| Sign-in | Google only, `@utd.ac.th` with Google's verified-email claim (`lib/env.ts canSignIn`). 5 attempts / 15 min per IP (`lib/ratelimit.ts`, bucket `login`). |
+| Sign-in | Google only, Google-verified address; `lib/env.ts decideAccess`: ADMIN_EMAILS -> admin, active `allowed_users` row -> its role, other `@utd.ac.th` -> pending, else refused. Rate limits per real client IP: start (`/auth/google`) 20 / 10 min, callback + other `/auth/*` 40 / 10 min, own key prefixes, fail-open only for these if Upstash is down. |
 | Roles | `admin` = listed in `ADMIN_EMAILS` (re-checked on every request, synced to `profiles.role`); `teacher` / `council` = `profiles.role`. |
 | Pages | `requireRole()` in every back-office page/layout (`lib/auth.ts`). |
 | Server Actions / route handlers | `authorize()` — the one check, run first in every action (`app/[locale]/dashboard/actions.ts`). The UI is never trusted. Denials are logged. |
@@ -22,7 +22,8 @@ Report a problem privately to the council's administrator. Do not open a public 
 
 - All form input is validated on the server with **zod** (`lib/admin/validate.ts`): lengths, ISO dates, enum choices,
   UUIDs, `https://` URLs only (`javascript:`, `data:`, `http:` refused), NUL bytes stripped.
-- Content is stored and rendered as **plain text**. React escapes it, and the codebase has no `dangerouslySetInnerHTML`.
+- Content is stored and rendered as **plain text**. React escapes it. The only `dangerouslySetInnerHTML` is the static
+  schema.org JSON-LD in the site layout (config from `lib/school-info.ts`, `<` escaped, no user data).
   A `<script>` in a title shows as text (tested). DOMPurify is not installed because no user HTML is ever rendered.
   Add it before any rich-text/HTML feature.
 - External links: `target="_blank" rel="noopener noreferrer nofollow"`.
@@ -45,6 +46,19 @@ Report a problem privately to the council's administrator. Do not open a public 
 - CSRF: Server Actions reject cross-origin posts (Next.js compares `Origin` with `Host`). Route handlers that change state check
   the same origin (`isSameOrigin`), and the public voice form also needs a short-lived HMAC token (`/api/token`) and Turnstile.
 - **Sign out on every device**: `/admin/security` posts `scope=global` to `/auth/signout`, which revokes all of the account's sessions.
+
+## 4b. Real client IP and the admin rate-limit bypass
+
+- utdsc.com is proxied by Cloudflare in front of Vercel, so `x-forwarded-for` is a Cloudflare edge address. `lib/client-ip.ts`
+  trusts `cf-connecting-ip` only for Host utdsc.com / www.utdsc.com AND a connection from a published Cloudflare range;
+  otherwise `x-vercel-forwarded-for` -> first `x-forwarded-for`; a Cloudflare address is never used as a key. Rate limits,
+  honeypot bans, search-bot checks and IP hashes all use it.
+- `rl_bypass` cookie (ADMIN_EMAILS only): set by `/auth/callback` after Supabase verified the Google sign-in; value
+  base64url(email).exp.HMAC-SHA256(APP_SECRET, email|exp), httpOnly, Secure, SameSite=Lax, 12 h, paths `/auth`, `/th/admin`,
+  `/en/admin`. The proxy honours it only there and only for the app's rate limit (bot blocks, bans, CSP, Turnstile,
+  Cloudflare unaffected); the address is re-checked against ADMIN_EMAILS each time. Uses that let a would-be-blocked
+  request through are audited (`rl_bypass:used`, email + IP hash); issue / clear on sign-out are audited too.
+  Tests: `npm run test:rl`.
 
 ## 5. Headers (`proxy.ts`, `next.config.ts`)
 

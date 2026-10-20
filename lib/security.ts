@@ -1,5 +1,6 @@
 import "server-only";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { clientIp as realClientIp } from "@/lib/client-ip";
 
 function secret() {
   const s = process.env.APP_SECRET;
@@ -49,6 +50,7 @@ export function isSameOrigin(req: Request) {
   }
 }
 
+/** Visitor IP (lib/client-ip.ts: Cloudflare-aware, never a Cloudflare edge address). */
 export function clientIp(headers: Headers) {
-  return headers.get("x-forwarded-for")?.split(",")[0]?.trim() || headers.get("x-real-ip") || "unknown";
+  return realClientIp(headers);
 }

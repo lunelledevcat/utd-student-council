@@ -16,7 +16,8 @@
     "test:e2e": "node scripts/e2e.mjs",
     "prepare": "node -e \"try{require('child_process').execSync('git config core.hooksPath .githooks',{stdio:'ignore'})}catch{}\"",
     "secrets:scan": "node scripts/secret-scan.mjs",
-    "security:check": "node scripts/security-check.mjs"
+    "security:check": "node scripts/security-check.mjs",
+    "test:rl": "node --no-warnings scripts/test-rate-limit.mts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

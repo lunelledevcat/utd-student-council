@@ -4,7 +4,9 @@ import { routing } from "@/i18n/routing";
 import { TRAP_PATHS, isAiCrawler, isBlockedTool, verifySearchBot } from "@/lib/bots";
 import { SUPABASE_URL, supabaseConfigured } from "@/lib/env";
 import { ban, isBanned, limit } from "@/lib/ratelimit";
-import { logSecurity } from "@/lib/security-log";
+import { clientIp } from "@/lib/client-ip";
+import { RL_BYPASS_COOKIE, RL_BYPASS_SCOPE, verifyBypass } from "@/lib/rl-bypass";
+import { auditBypass, logSecurity } from "@/lib/security-log";
 import { refreshSession } from "@/lib/supabase/proxy";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -14,7 +16,6 @@ const SB_ORIGIN = SUPABASE_URL ? new URL(SUPABASE_URL).origin : "";
 // Page paths may carry a locale prefix (/th, /en); next-intl adds it when missing.
 const PRIVATE = /^(?:\/(?:th|en))?\/(dashboard|admin|pending-access)(\/|$)/;
 const NOINDEX = /^(?:\/(?:th|en))?\/(dashboard|admin|pending-access|login|auth)(\/|$)/;
-const LOGIN = /^(?:\/(?:th|en))?\/login$/;
 // Not pages: route handlers and files keep their unprefixed paths.
 const NOT_PAGE = /^\/(api|auth|_hp)(\/|$)|\.[a-z0-9]+$/i;
 const intl = createIntlMiddleware(routing);
@@ -44,7 +45,8 @@ function deny(status: number, body: string, extra?: Record<string, string>) {
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const ua = req.headers.get("user-agent") ?? "";
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "local";
+  // real visitor IP (Cloudflare sits in front of Vercel on utdsc.com) — see lib/client-ip.ts
+  const ip = clientIp(req.headers);
 
   // 1) honeypot / scanner paths -> temp ban
   if (TRAP_PATHS.test(pathname)) {
@@ -70,12 +72,19 @@ export async function proxy(req: NextRequest) {
   }
 
   // 3) rate limit (verified search bots are exempt)
+  //    Google sign-in has its own buckets (start 20 / callback 40 per 10 min per IP); viewing /login is a normal page.
   if (searchBot !== true) {
-    const bucket = LOGIN.test(pathname) || pathname.startsWith("/auth/google") ? "login" : pathname.startsWith("/api/") ? "api" : "page";
+    const bucket = pathname.startsWith("/auth/google") ? "authStart" : pathname.startsWith("/auth/") ? "authCallback" : pathname.startsWith("/api/") ? "api" : "page";
     const r = await limit(bucket, ip);
     if (!r.ok) {
-      void logSecurity("rate_limited", { ip, path: pathname, detail: { bucket } });
-      return deny(429, "Too Many Requests", { "retry-after": String(r.retryAfter) });
+      // an administrator's signed rl_bypass cookie skips the app's limit on /auth/* and the admin pages only
+      const admin = RL_BYPASS_SCOPE.test(pathname) ? verifyBypass(req.cookies.get(RL_BYPASS_COOKIE)?.value) : null;
+      if (admin) {
+        void auditBypass(admin, { ip, path: pathname, rule: bucket });
+      } else {
+        void logSecurity("rate_limited", { ip, path: pathname, detail: { rule: bucket } });
+        return deny(429, "Too Many Requests", { "retry-after": String(r.retryAfter) });
+      }
     }
   }
 

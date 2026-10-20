@@ -1,13 +1,16 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-export type Bucket = "page" | "api" | "form" | "login" | "upload";
+export type Bucket = "page" | "api" | "form" | "login" | "upload" | "authStart" | "authCallback";
 
 const RULES: Record<Bucket, { max: number; windowSec: number }> = {
   page: { max: 60, windowSec: 60 }, // 60 req/min
   api: { max: 20, windowSec: 60 }, // 20 req/min
   form: { max: 3, windowSec: 600 }, // 3 per 10 min (/voice)
-  login: { max: 5, windowSec: 900 }, // 5 per 15 min (/login, OAuth start)
+  login: { max: 5, windowSec: 900 }, // 5 per 15 min (password-style login forms; not used by the Google flow)
+  // Google sign-in, per real client IP (lib/client-ip.ts), sliding window, own key prefix (utd:authStart / utd:authCallback)
+  authStart: { max: 20, windowSec: 600 }, // GET /auth/google: 20 / 10 min
+  authCallback: { max: 40, windowSec: 600 }, // /auth/callback and the rest of /auth/*: 40 / 10 min
   upload: { max: 60, windowSec: 600 }, // 60 photos / 10 min per signed-in user (back office)
 };
 
@@ -30,11 +33,20 @@ const upstash = hasUpstash
 const hits = new Map<string, number[]>();
 const banned = new Map<string, number>();
 
+/** Sign-in buckets fail open: an Upstash outage must not lock everyone out of signing in (logged instead). */
+const FAIL_OPEN: Bucket[] = ["authStart", "authCallback"];
+
 export async function limit(bucket: Bucket, key: string): Promise<{ ok: boolean; retryAfter: number }> {
   const rule = RULES[bucket];
   if (upstash) {
-    const r = await (upstash as Record<Bucket, Ratelimit>)[bucket].limit(key);
-    return { ok: r.success, retryAfter: Math.max(1, Math.ceil((r.reset - Date.now()) / 1000)) };
+    try {
+      const r = await (upstash as Record<Bucket, Ratelimit>)[bucket].limit(key);
+      return { ok: r.success, retryAfter: Math.max(1, Math.ceil((r.reset - Date.now()) / 1000)) };
+    } catch (err) {
+      if (!FAIL_OPEN.includes(bucket)) throw err;
+      console.error(`[ratelimit] ${bucket} limiter unavailable — allowing (fail-open)`, (err as Error).message);
+      return { ok: true, retryAfter: 0 };
+    }
   }
   const now = Date.now();
   const k = `${bucket}:${key}`;

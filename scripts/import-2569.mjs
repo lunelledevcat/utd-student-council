@@ -1,5 +1,6 @@
 // One-time import of the 2569 material placed in _import/ (gitignored — source files are never committed).
 //   node scripts/import-2569.mjs assets     logos, favicon, og:image, banner 02 slides -> public/ + app/
+//   node scripts/import-2569.mjs credits    footer credit avatar -> public/credits/
 //   node scripts/import-2569.mjs members    portrait card + full poster per member -> Supabase Storage "pending"
 //                                           (private; copied to the public bucket only when photo consent is on)
 // Images are taken out of the PDFs as embedded (JPEG bytes / raw pixels) — never re-drawn, retouched or overlaid.
@@ -154,6 +155,18 @@ async function members() {
   }
 }
 
+// footer credit avatar: _import/lunelle.png -> public/credits/lunelle-{96,192}.{avif,webp}
+async function credits() {
+  mkdirSync("public/credits", { recursive: true });
+  for (const n of [96, 192]) {
+    const img = sharp(`${SRC}/lunelle.png`).resize(n, n, { fit: "cover" });
+    await img.clone().avif({ quality: 60 }).toFile(`public/credits/lunelle-${n}.avif`);
+    await img.clone().webp({ quality: 82 }).toFile(`public/credits/lunelle-${n}.webp`);
+  }
+  console.log("credits done");
+}
+
 if (step === "assets") await assets();
+else if (step === "credits") await credits();
 else if (step === "members") await members();
-else console.log("usage: node scripts/import-2569.mjs assets|members");
+else console.log("usage: node scripts/import-2569.mjs assets|members|credits");

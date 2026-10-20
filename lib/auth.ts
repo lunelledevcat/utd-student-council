@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { headers } from "next/headers";
 import { decideAccess, normalizeEmail, supabaseConfigured, type Access, type AllowedRow } from "@/lib/env";
-import { hashIp } from "@/lib/security";
+import { clientIp, hashIp } from "@/lib/security";
 import { adminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -94,8 +94,8 @@ export async function syncProfile(userId: string, email: string) {
 async function requestMeta() {
   try {
     const h = await headers();
-    const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "";
-    return { ip_hash: ip ? hashIp(ip) : null, ua: (h.get("user-agent") ?? "").slice(0, 200) };
+    const ip = clientIp(h);
+    return { ip_hash: ip !== "unknown" ? hashIp(ip) : null, ua: (h.get("user-agent") ?? "").slice(0, 200) };
   } catch {
     return {}; // outside a request
   }

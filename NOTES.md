@@ -353,3 +353,17 @@ Timing before speed work (local, 10 × 2400×1500 JPEG): upload 10 photos 56.7 s
   audit() now adds ip_hash + user agent to every entry (sign-in included). /admin/setup shows a "shared account" notice
   recommending Google 2-Step Verification while an active shared account exists.
 - e2e: the council test account is granted through allowed_users (created_by "e2e", removed in teardown).
+
+## Footer + /auth 429 fix (2026-10-20, main)
+- 429 at /auth/google: our own limiter (plain "Too Many Requests" from proxy.ts), not Cloudflare WAF / Supabase.
+  Cause: utdsc.com goes through Cloudflare (Server: cloudflare) to Vercel, and the proxy keyed limits on the first
+  x-forwarded-for = a Cloudflare edge IP, so everyone behind an edge shared one "login" bucket of 5 / 15 min — which
+  also counted views of /login. Same key also drove honeypot bans and search-bot checks.
+- Fix: lib/client-ip.ts (cf-connecting-ip only for utdsc.com/www + Cloudflare peer; never a CF address), buckets
+  authStart 20/10 min and authCallback 40/10 min (sliding, own prefixes, fail-open on Upstash errors), /login = normal
+  page, 429 log = rule + IP hash. Admin rl_bypass cookie (HMAC, 12 h, /auth + admin pages only), audited.
+  Verified locally against Upstash: 25 x /auth/google from one IP = 20 x 307 then 429; another IP unaffected.
+  Unit tests: npm run test:rl.
+- Footer: lib/school-info.ts + messages footer.school (TH/EN), council emblem left / details right (stacked on phones),
+  Phosphor icons, tel: link, schema.org EducationalOrganization JSON-LD (name, address, telephone only), creator credit
+  capsule (public/credits/lunelle-{96,192}.{avif,webp} from _import/lunelle.png).

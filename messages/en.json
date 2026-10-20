@@ -12,7 +12,6 @@
     "name": "Uttaradit School Student Council",
     "nameEn": "Uttaradit School Student Council",
     "school": "Uttaradit School",
-    "address": "15 Inchaimi-Prachanimit Rd, Tha It, Mueang, Uttaradit, Thailand",
     "dataNote": "[Data note — e.g. last updated / report a correction at ...]",
     "skip": "Skip to content",
     "nameTh": "คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์"
@@ -200,7 +199,23 @@
     "copyright": "© Student Council, {school}",
     "voice": "Voice to the Council",
     "login": "Staff sign-in",
-    "honeypot": "Member directory"
+    "honeypot": "Member directory",
+    "school": {
+      "council": "Student Council of Uttaradit School",
+      "address": "Uttaradit School, 15 Inchaimee Road, Tha It Subdistrict, Mueang Uttaradit District, Uttaradit 53000, Thailand",
+      "phone": "Tel.",
+      "fax": "Fax",
+      "callLabel": "Call the school {number}",
+      "affiliation": "Under",
+      "affiliations": [
+        "Secondary Educational Service Area Office Phitsanulok Uttaradit",
+        "Office of the Basic Education Commission",
+        "Ministry of Education"
+      ],
+      "logoAlt": "Uttaradit School Student Council emblem",
+      "creditAlt": "Profile picture of Lunelle, the site's developer",
+      "credit": "Powered by Lunelle · PPLX TEAM · Founder"
+    }
   },
   "notFound": {
     "title": "Page not found",
