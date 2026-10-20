@@ -48,7 +48,7 @@
     "eslint-config-next": "16.4.2",
     "svgo": "^4.1.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^7"
   },
   "engines": {
     "node": ">=22"
