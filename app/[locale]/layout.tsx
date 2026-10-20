@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import "../globals.css";
 import { LocaleProvider } from "@/components/i18n/LocaleProvider";
 import { routing } from "@/i18n/routing";
+import { SITE_URL } from "@/lib/site";
 import en from "@/messages/en.json";
 import th from "@/messages/th.json";
 
@@ -15,7 +16,6 @@ const kanit = Kanit({ variable: "--font-kanit", subsets: ["thai", "latin"], weig
 const plex = IBM_Plex_Sans_Thai({ variable: "--font-plex", subsets: ["thai", "latin"], weight: ["400", "500"], display: "swap" });
 const notoSerif = Noto_Serif_Thai({ variable: "--font-noto-serif", subsets: ["thai", "latin"], weight: ["400", "500", "700"], display: "swap" });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -25,15 +25,15 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     title: { default: t("title"), template: `%s · ${t("title")}` },
     description: t("description"),
     alternates: { canonical: `/${locale}`, languages: { th: "/th", en: "/en", "x-default": "/th" } },
-    openGraph: { type: "website", locale: locale === "th" ? "th_TH" : "en_US", siteName: t("title"), title: t("title"), description: t("description") },
+    openGraph: { type: "website", url: `${SITE_URL}/${locale}`, locale: locale === "th" ? "th_TH" : "en_US", siteName: t("title"), title: t("title"), description: t("description") },
     robots: { index: true, follow: true },
   };
 }
 
 export const viewport: Viewport = { themeColor: "#0b1f4d", colorScheme: "light" };
 
-// Per-request CSP nonce (set in proxy.ts) requires dynamic rendering.
-export const dynamic = "force-dynamic";
+// Public pages are static (ISR); sign-in / back office pages become dynamic by reading the session.
+export const generateStaticParams = () => routing.locales.map((locale) => ({ locale }));
 
 export default async function LocaleLayout({ children, params }: { children: React.ReactNode; params: Promise<{ locale: string }> }) {
   const { locale } = await params;

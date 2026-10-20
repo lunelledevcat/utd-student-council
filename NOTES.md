@@ -367,3 +367,22 @@ Timing before speed work (local, 10 × 2400×1500 JPEG): upload 10 photos 56.7 s
 - Footer: lib/school-info.ts + messages footer.school (TH/EN), council emblem left / details right (stacked on phones),
   Phosphor icons, tel: link, schema.org EducationalOrganization JSON-LD (name, address, telephone only), creator credit
   capsule (public/credits/lunelle-{96,192}.{avif,webp} from _import/lunelle.png).
+
+## Domain, real banners, caching (2026-10-20, main)
+- Domain: lib/site.ts SITE_URL (NEXT_PUBLIC_SITE_URL || https://utdsc.com) for metadataBase, canonical, hreflang
+  (+x-default), og:url, sitemap, robots, JSON-LD and the Google redirect (never the Host header). proxy.ts: www -> 301;
+  *.vercel.app: sign-in / back office -> 308 to utdsc.com, public pages noindex; unknown hosts -> 301; localhost as is.
+  /admin/setup flags NEXT_PUBLIC_SITE_URL other than https://utdsc.com.
+- Banners: _import/banner-02/*.jpg (4860x2110: SCUTD 2026, Queen Sirikit memorial, Princess Bajrakitiyabha memorial)
+  -> public/banners/banner-02-N-{640,1280,1920}.{avif,webp}; on, orders 2-4 (1 kept for banner 01), 9 s each. Hero frame
+  = their ratio on every screen (never cropped); dots + credit under the frame, arrows desktop-hover only.
+  brander/*.pdf = 3 council group photos (not banners) -> /banners/brander-N, off (migration 0012 moved the old rows).
+- Speed: public pages static + ISR 600 s (home, voice, policies, ?tab/?year views via rewrite to /[locale]/home/[y]/[t]);
+  no cookies/headers in their render; fixed CSP (no nonce) for them, nonce CSP for sign-in/back office/API (no-store);
+  no Redis / Supabase / DNS in the proxy for public paths; next-intl locale cookie off (no Set-Cookie on public pages,
+  "/" uses the NEXT_LOCALE cookie written by the language switch); CDN-Cache-Control / Cloudflare-CDN-Cache-Control
+  s-maxage=600 swr=86400 on public pages; static files max-age 1 day. Data edited outside the app shows within 10 min
+  (actions revalidate at once).
+- Not done on purpose: next/image for every picture (files are already pre-sized AVIF/WebP; the optimizer would
+  re-encode and add cost), GSAP not used, motion stays (used by the first screen), Turnstile already loads only on /voice
+  (the only form; the login page has no Turnstile). Logos as SVG: tracing a raster emblem would alter it.

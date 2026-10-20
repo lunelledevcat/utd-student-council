@@ -64,7 +64,7 @@ Report a problem privately to the council's administrator. Do not open a public 
 
 | Header | Value |
 |---|---|
-| Content-Security-Policy | per-request **nonce**, `'strict-dynamic'`; no `unsafe-inline` / `unsafe-eval` for scripts in production; `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'` |
+| Content-Security-Policy | sign-in / back office / API: per-request **nonce**, `'strict-dynamic'`, no `unsafe-inline` / `unsafe-eval`. Public pages (static, CDN-cached): fixed policy without nonce — `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com` (Next.js's inline bootstrap; no user HTML is rendered anywhere). All pages: `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'` |
 | Strict-Transport-Security | `max-age=63072000; includeSubDomains; preload` |
 | X-Content-Type-Options | `nosniff` |
 | Referrer-Policy | `strict-origin-when-cross-origin` |

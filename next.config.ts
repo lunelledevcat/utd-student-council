@@ -22,6 +22,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // ISR pages: Cache-Control s-maxage = revalidate (600 s), stale-while-revalidate up to 1 day
+  expireTime: 86400,
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
   reactStrictMode: true,
@@ -38,7 +40,17 @@ const nextConfig: NextConfig = {
     ]);
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    // public pages: also tell downstream CDNs (Cloudflare) they may keep them 10 min and serve stale for a day
+    const cdn = [
+      { key: "CDN-Cache-Control", value: "public, s-maxage=600, stale-while-revalidate=86400" },
+      { key: "Cloudflare-CDN-Cache-Control", value: "public, s-maxage=600, stale-while-revalidate=86400" },
+    ];
+    const files = [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      ...["/:locale(th|en)", "/:locale(th|en)/voice", "/:locale(th|en)/policies/:slug", "/:locale(th|en)/home/:year/:tab"].map((source) => ({ source, headers: cdn })),
+      ...["/banners/:file*", "/banner/:file*", "/brand/:file*", "/credits/:file*", "/illustrations/:file*", "/flags/:file*"].map((source) => ({ source, headers: files })),
+    ];
   },
   turbopack: {
     rules: {

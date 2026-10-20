@@ -3,6 +3,7 @@ import { audit } from "@/lib/auth";
 import { supabaseConfigured } from "@/lib/env";
 import { RL_BYPASS_COOKIE, RL_BYPASS_PATHS, verifyBypass } from "@/lib/rl-bypass";
 import { isSameOrigin } from "@/lib/security";
+import { SITE_URL } from "@/lib/site";
 import { logSecurity } from "@/lib/security-log";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
     if (global && data.user) await logSecurity("logout_all", { userId: data.user.id });
     if (bypassEmail && data.user) await audit({ id: data.user.id, email: bypassEmail }, "rl_bypass:clear");
   }
-  const res = NextResponse.redirect(`${req.nextUrl.origin}/`, { status: 303 });
+  const res = NextResponse.redirect(`${SITE_URL}/`, { status: 303 });
   for (const path of RL_BYPASS_PATHS) res.cookies.set(RL_BYPASS_COOKIE, "", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path, maxAge: 0 });
   return res;
 }

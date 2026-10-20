@@ -4,7 +4,9 @@ export const routing = defineRouting({
   locales: ["th", "en"],
   defaultLocale: "th",
   localePrefix: "always", // "/" -> "/th"
-  localeCookie: { name: "NEXT_LOCALE", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" },
+  // no Set-Cookie from the middleware: public pages are cached by the CDN. The language switch writes NEXT_LOCALE
+  // in the browser, and proxy.ts uses it for "/".
+  localeCookie: false,
 });
 
 export type Locale = (typeof routing.locales)[number];

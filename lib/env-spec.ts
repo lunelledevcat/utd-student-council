@@ -22,7 +22,7 @@ const TURNSTILE_TEST_SECRET = /^[123]x0{31}AA$/;
 
 export const ENV_VARS: EnvVar[] = [
   { name: "APP_SECRET", need: "required", public: false, url: "https://nodejs.org/api/crypto.html#cryptorandombytessize-callback", isTest: (v) => v.length < 32 },
-  { name: "NEXT_PUBLIC_SITE_URL", need: "required", public: true, url: "https://vercel.com/docs/projects/domains", isTest: (v) => /localhost|127\.0\.0\.1|example\.com/.test(v) },
+  { name: "NEXT_PUBLIC_SITE_URL", need: "required", public: true, url: "https://vercel.com/docs/projects/domains", isTest: (v) => v.replace(/\/+$/, "") !== "https://utdsc.com" || /localhost|127\.0\.0\.1|example\.com/.test(v) },
   { name: "NEXT_PUBLIC_SUPABASE_URL", need: "required", public: true, url: "https://supabase.com/dashboard/project/_/settings/api", isTest: (v) => !/^https:\/\/[a-z0-9]+\.supabase\.co\/?$/.test(v) },
   { name: "NEXT_PUBLIC_SUPABASE_ANON_KEY", need: "required", public: true, url: "https://supabase.com/dashboard/project/_/settings/api-keys" },
   { name: "SUPABASE_SERVICE_ROLE_KEY", need: "required", public: false, url: "https://supabase.com/dashboard/project/_/settings/api-keys" },

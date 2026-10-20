@@ -645,7 +645,7 @@
       },
       "NEXT_PUBLIC_SITE_URL": {
         "purpose": "The site's public address, used for the sitemap, hreflang links and Open Graph",
-        "where": "Your deployed domain, e.g. https://council.utd.ac.th (Vercel → Project → Settings → Domains), no trailing /",
+        "where": "Your deployed domain, e.g. https://council.utd.ac.th (Vercel → Project → Settings → Domains), no trailing / — Should be https://utdsc.com (the primary domain); anything else shows a warning",
         "missingDev": "Uses http://localhost:3000",
         "missingProd": "Sitemap / share links point to localhost"
       },

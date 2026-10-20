@@ -1,11 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { audit, googleVerified, resolveAccess, syncProfile } from "@/lib/auth";
 import { normalizeEmail } from "@/lib/env";
+import { SITE_URL } from "@/lib/site";
 import { RL_BYPASS_COOKIE, RL_BYPASS_PATHS, RL_BYPASS_TTL_SEC, issueBypass } from "@/lib/rl-bypass";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(req: NextRequest) {
-  const { origin, searchParams } = req.nextUrl;
+  const { searchParams } = req.nextUrl;
+  const origin = SITE_URL; // redirects always go to the site address, never the request's Host
   const code = searchParams.get("code");
   if (!code) return NextResponse.redirect(`${origin}/login?error=oauth`);
 

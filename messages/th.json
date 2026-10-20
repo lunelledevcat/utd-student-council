@@ -645,7 +645,7 @@
       },
       "NEXT_PUBLIC_SITE_URL": {
         "purpose": "ที่อยู่เว็บจริง ใช้ทำ sitemap, ลิงก์ hreflang และ Open Graph",
-        "where": "โดเมนของเว็บที่ deploy แล้ว เช่น https://council.utd.ac.th (Vercel → Project → Settings → Domains) ไม่ต้องมี / ท้าย",
+        "where": "โดเมนของเว็บที่ deploy แล้ว เช่น https://council.utd.ac.th (Vercel → Project → Settings → Domains) ไม่ต้องมี / ท้าย — ควรเป็น https://utdsc.com (โดเมนหลัก) ค่าอื่นจะขึ้นเตือน",
         "missingDev": "ใช้ http://localhost:3000",
         "missingProd": "ลิงก์ใน sitemap/แชร์ชี้ไป localhost — ผิด"
       },

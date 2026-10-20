@@ -4,6 +4,10 @@ import { notFound } from "next/navigation";
 import { PolicyView } from "@/components/policy/PolicyView";
 import { getPolicyBySlug, getYears } from "@/lib/content";
 
+// static + ISR (10 min); unknown slugs are rendered on first request, then cached
+export const revalidate = 600;
+export const generateStaticParams = () => [];
+
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -14,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: (en && p.title.en) || p.title.th,
     description: (en && p.summary.en) || p.summary.th,
-    alternates: { canonical: `/${locale}/policies/${slug}`, languages: { th: `/th/policies/${slug}`, en: `/en/policies/${slug}` } },
+    alternates: { canonical: `/${locale}/policies/${slug}`, languages: { th: `/th/policies/${slug}`, en: `/en/policies/${slug}`, "x-default": `/th/policies/${slug}` } },
   };
 }
 
