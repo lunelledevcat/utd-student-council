@@ -48,7 +48,7 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
     <>
     <section
       aria-label={t("label")}
-      className="relative isolate aspect-[4/3] overflow-hidden rounded-[20px] bg-gradient-to-br from-brand-deep via-[#0b1f4d] to-brand-mid text-on-brand shadow-soft sm:aspect-[16/7] lg:aspect-[16/5]"
+      className="relative isolate aspect-[4/3] overflow-hidden rounded-[20px] bg-gradient-to-br from-brand-deep via-[#0b1f4d] to-brand-mid text-on-brand shadow-soft sm:aspect-[16/7]"
     >
     <div
       className="group absolute inset-0 outline-none"
@@ -87,9 +87,7 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
               exit={{ opacity: 0 }}
               transition={{ duration: reduce ? 0.3 : 1.2 }}
             >
-              {/* banner artwork (plain): whole image visible, exactly as delivered — no zoom, nothing drawn over it;
-                  the frame around it is filled with its own blurred placeholder */}
-              {p.plain && p.blur && <div aria-hidden className="absolute inset-0 scale-110 bg-cover bg-center blur-2xl" style={{ backgroundImage: `url(${p.blur})` }} />}
+              {/* council banner (plain): fills the frame (cropped around its focal point), no zoom, nothing drawn over it */}
               <picture className="contents">
                 {p.avifSet && <source type="image/avif" srcSet={p.avifSet} sizes="(max-width: 1320px) 100vw, 1320px" />}
                 <motion.img
@@ -101,8 +99,8 @@ export function HeroSlides({ photos, children }: { photos: Photo[]; children: Re
                   height={p.h}
                   draggable={false}
                   fetchPriority={i === 0 ? "high" : "auto"}
-                  className={cn("no-select absolute inset-0 h-full w-full", p.plain ? "object-contain" : "object-cover")}
-                  style={{ transformOrigin: ORIGINS[i % ORIGINS.length], backgroundImage: !p.plain && p.blur ? `url(${p.blur})` : undefined, backgroundSize: "cover" }}
+                  className="no-select absolute inset-0 h-full w-full object-cover"
+                  style={{ objectPosition: p.focal ?? "50% 50%", transformOrigin: ORIGINS[i % ORIGINS.length], backgroundImage: p.blur ? `url(${p.blur})` : undefined, backgroundSize: "cover" }}
                   initial={{ scale: 1 }}
                   animate={{ scale: reduce || p.plain ? 1 : 1.08 }}
                   transition={{ scale: { duration: (INTERVAL + 1200) / 1000, ease: "linear" } }}

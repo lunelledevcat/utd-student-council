@@ -43,8 +43,10 @@ export type YearContent = {
 export type Photo = {
   id: string; w: number; h: number; blur: string | null; src: string; srcSet: string; avifSet: string | null;
   caption: string; alt: L | null; credit: "school" | "council" | null;
-  /** banner artwork shown exactly as delivered: no zoom, no overlay, whole image visible */
+  /** council banner: no zoom, nothing drawn over it; fills the frame, cropped around `focal` */
   plain: boolean;
+  /** CSS object-position used when the photo is cropped to the frame, e.g. "50% 35%" */
+  focal: string | null;
 };
 
 const paragraphs = (s: string | null | undefined) => (s ?? "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
@@ -66,10 +68,13 @@ const sortedImgs = (rows: PhotoRow[] | null | undefined) =>
   [...(rows ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map(toImg).filter((x): x is Img => !!x);
 
 /** Only consented contacts leave the server. `@handle` is stripped to a bare IG handle. */
+/** A valid Instagram handle (spaces and a leading @ removed) or null — the link is built only from this. */
+export const igHandle = (v: string | null | undefined) => {
+  const h = (v ?? "").replace(/\s+/g, "").replace(/^@/, "");
+  return /^[A-Za-z0-9._]{1,30}$/.test(h) ? h : null;
+};
 const contactOf = (consent: boolean, instagram: string | null | undefined, contact: string | null | undefined): Contact =>
-  consent
-    ? { instagram: instagram?.trim().replace(/^@/, "") || null, contact: contact?.trim() || null }
-    : { instagram: null, contact: null };
+  consent ? { instagram: igHandle(instagram), contact: contact?.trim() || null } : { instagram: null, contact: null };
 
 // ───────────────────────── row -> view model (shared by seed and DB) ─────────────────────────
 
@@ -223,23 +228,25 @@ export async function getHeroPhotos(): Promise<Photo[]> {
   if (!supabaseConfigured()) return banner.map((b) => staticSlide(b.id, `/banner/${b.file}`, b.w, b.h, b.blur, "", null, "school"));
   const today = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
   const { data } = await publicClient()
-    .from("photos").select(`${IMG_COLS},caption,static_path,credit,alt_th,alt_en`).eq("is_hero", true)
+    .from("photos").select(`${IMG_COLS},caption,static_path,credit,alt_th,alt_en,focal`).eq("is_hero", true)
     .or(`hero_start.is.null,hero_start.lte.${today}`).or(`hero_end.is.null,hero_end.gte.${today}`)
     .order("hero_order", { ascending: true });
   return (data ?? []).map((r) => {
     const credit = r.credit === "school" || r.credit === "council" ? r.credit : null;
     const alt = r.alt_th ? l(r.alt_th, r.alt_en) : null;
-    if (r.static_path) return staticSlide(r.id, r.static_path, r.width, r.height, r.blur, r.caption, alt, credit);
+    if (r.static_path) return { ...staticSlide(r.id, r.static_path, r.width, r.height, r.blur, r.caption, alt, credit), focal: r.focal ?? null };
     const img = toImg(r as PhotoRow) as Img;
-    return { id: img.id, w: img.w, h: img.h, blur: img.blur, src: img.src[1920], srcSet: `${img.src[480]} 480w, ${img.src[960]} 960w, ${img.src[1920]} 1920w`, avifSet: null, caption: r.caption, alt, credit, plain: false };
+    return { id: img.id, w: img.w, h: img.h, blur: img.blur, src: img.src[1920], srcSet: `${img.src[480]} 480w, ${img.src[960]} 960w, ${img.src[1920]} 1920w`, avifSet: null, caption: r.caption, alt, credit, plain: false, focal: r.focal ?? null };
   });
 }
 
-/** Files shipped in public/: /banner/<name>-{768,1280,1920}.webp (school photos) or /banners/<name>-{640,1280,1920}.{avif,webp}
+/** Files shipped in public/: /banner/<name>-{768,1280,1920}.webp (school photos) or /banners/<name>-{640,1280,1920,2048}.{avif,webp}
  *  (council banners, shown as delivered). A file never wider than its source: the largest width is capped at w. */
 function staticSlide(id: string, path: string, w: number, h: number, blur: string | null, caption: string, alt: L | null, credit: Photo["credit"]): Photo {
   const banner = path.startsWith("/banners/");
-  const widths = banner ? [640, 1280, 1920] : [768, 1280, 1920];
-  const set = (ext: string) => widths.map((x) => `${path}-${x}.${ext} ${Math.min(x, w)}w`).join(", ");
-  return { id, w, h, blur, caption, alt, credit, src: `${path}-1920.webp`, srcSet: set("webp"), avifSet: banner ? set("avif") : null, plain: banner };
+  const widths = banner ? [640, 1280, 1920, 2048] : [768, 1280, 1920];
+  // a source narrower than a width gives the same file size twice: keep one candidate per real width
+  const real = widths.filter((x, i) => i === 0 || Math.min(x, w) > Math.min(widths[i - 1], w));
+  const set = (ext: string) => real.map((x) => `${path}-${x}.${ext} ${Math.min(x, w)}w`).join(", ");
+  return { id, w, h, blur, caption, alt, credit, src: `${path}-${banner ? 2048 : 1920}.webp`, srcSet: set("webp"), avifSet: banner ? set("avif") : null, plain: banner, focal: null };
 }

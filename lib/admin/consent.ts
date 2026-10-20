@@ -9,12 +9,18 @@ const FILES = ["card.avif", "card.webp", "poster.avif", "poster.webp"];
 const paths = (key: string) => FILES.map((f) => `${key}-${f}`);
 
 export type ConsentValue = true | false | null;
-export type ConsentRow = { id: string; name: string; role: string; order: number; consent: ConsentValue; photoKey: string | null; preview: string | null };
+export type ConsentRow = {
+  id: string; name: string; role: string; order: number; consent: ConsentValue; photoKey: string | null; preview: string | null;
+  /** Instagram handle (shown on the site only while igOn = members.consent_public) */
+  instagram: string | null; igOn: boolean;
+  /** where the published value differs from a source document (for checking; never shown publicly) */
+  nameFromPoster: string | null; roleFromDoc: string | null;
+};
 
 /** Members of a year with their consent state and a 10-minute signed preview of the card (admin page only). */
 export async function consentRows(year: number): Promise<ConsentRow[]> {
   const db = adminClient();
-  const { data } = await db.from("members").select("id,name,role_title,sort_order,consent_photo,photo_key").eq("year", year).order("sort_order");
+  const { data } = await db.from("members").select("id,name,role_title,sort_order,consent_photo,photo_key,instagram,consent_public,name_from_poster,role_from_doc").eq("year", year).order("sort_order");
   const rows = data ?? [];
   const keys = rows.filter((r) => r.photo_key).map((r) => `${r.photo_key}-card.webp`);
   const { data: signed } = keys.length ? await db.storage.from("pending").createSignedUrls(keys, 600) : { data: [] };
@@ -23,6 +29,8 @@ export async function consentRows(year: number): Promise<ConsentRow[]> {
     id: r.id as string, name: r.name as string, role: r.role_title as string, order: r.sort_order as number,
     consent: (r.consent_photo as ConsentValue) ?? null, photoKey: (r.photo_key as string | null) ?? null,
     preview: r.photo_key ? url.get(`${r.photo_key}-card.webp`) ?? null : null,
+    instagram: (r.instagram as string | null) || null, igOn: !!r.consent_public,
+    nameFromPoster: (r.name_from_poster as string | null) ?? null, roleFromDoc: (r.role_from_doc as string | null) ?? null,
   }));
 }
 
@@ -47,4 +55,11 @@ export async function applyConsent(ids: string[], value: ConsentValue) {
   const { error } = await db.from("members").update({ consent_photo: value }).in("id", rows.map((r) => r.id));
   if (error) throw new Error(error.message);
   return rows.length;
+}
+
+/** Instagram / contact shown on the site (members.consent_public). */
+export async function applyIgConsent(ids: string[], on: boolean) {
+  const { error, count } = await adminClient().from("members").update({ consent_public: on }, { count: "exact" }).in("id", ids);
+  if (error) throw new Error(error.message);
+  return count ?? 0;
 }

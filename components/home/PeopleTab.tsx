@@ -22,6 +22,8 @@ type Person = {
   tier: "president" | "vice" | null;
   /** council member without photo consent yet: the placeholder says so */
   pendingPhoto: boolean;
+  /** shown in brackets after the name on the card */
+  nick?: L | null;
 };
 
 /** Builds the card/popup view of a member or advisor in the current language. */
@@ -29,22 +31,21 @@ function usePeople(kind: "council" | "advisor", members: Member[], advisors: Adv
   const t = useTranslations("people");
   const pick = useL();
   const has = (v: L) => !!v.th;
-  const join = (...parts: React.ReactNode[]) => parts.filter(Boolean).map((p, i) => <span key={i}>{i > 0 && " · "}{p}</span>);
 
   if (kind === "council") {
     return members.map((m) => {
       const r = rankOf(m.role.th);
       return {
         id: m.id, name: m.name, photo: m.photo, poster: m.poster, tier: r, pendingPhoto: !m.photo, line: m.role, gold: r === "president",
-        chip: has(m.party) ? t("partyChip", { party: pick(m.party).value }) : null,
+        chip: null, // party is plain text in the popup, never a badge on the card
         badge: r === "president" ? { label: t("president"), tone: "gold", icon: "crown" } : r === "vice" ? { label: t("vice"), tone: "silver", icon: "medal" } : null,
         rows: [
-          [t("nickname"), has(m.nickname) && <Tx v={m.nickname} />],
-          [t("roleTerm"), join(has(m.role) && <Tx v={m.role} />, m.termNo)],
-          [t("exec"), has(m.execTitle) && <Tx v={m.execTitle} />],
+          [t("nickname"), has(m.nickname) && pick(m.nickname).value], // names stay Thai: no "TH" badge
+          [t("roleShort"), has(m.role) && <Tx v={m.role} />],
           [t("dept"), has(m.dept) && <Tx v={m.dept} />],
           [t("party"), has(m.party) && <Tx v={m.party} />],
         ],
+        nick: has(m.nickname) ? m.nickname : null,
         contact: { instagram: m.instagram, contact: m.contact },
       };
     });
@@ -120,6 +121,11 @@ export function PeopleTab({ kind, members, advisors, year, query, onClear }: {
   );
 }
 
+/** A person's name (never translated): each word kept on one line, so a surname is not split in the middle. */
+function Name({ v }: { v: string }) {
+  return <>{v.split(" ").map((part, i) => <span key={i} className="whitespace-nowrap">{i > 0 && " "}{part}</span>)}</>;
+}
+
 function BadgeChip({ b, className }: { b: Badge; className?: string }) {
   const Icon = b.icon === "crown" ? IconCrown : b.icon === "medal" ? IconMedal : IconStar;
   return (
@@ -156,7 +162,7 @@ function PersonCard({ p, onOpen }: { p: Person; onOpen: () => void }) {
             {p.badge && <BadgeChip b={p.badge} className="absolute left-2.5 top-2.5" />}
           </div>
           <div className="flex flex-1 flex-col items-center gap-1 px-3 pb-4 pt-3 text-center">
-            <h3 className="font-display text-[0.95rem] font-semibold leading-snug text-strong sm:text-base"><Tx v={p.name} /></h3>
+            <h3 className="font-display text-[0.95rem] font-semibold leading-snug text-strong sm:text-base"><Name v={pick(p.name).value} />{p.nick && <span className="whitespace-nowrap font-normal text-muted"> ({pick(p.nick).value})</span>}</h3>
             <p className="text-[0.82rem] leading-snug text-muted"><Tx v={p.line} /></p>
             {p.chip && <span className="mt-auto rounded-full border border-line bg-surface-2 px-2.5 py-0.5 text-[0.72rem] font-medium text-ink">{p.chip}</span>}
           </div>
@@ -185,7 +191,7 @@ function PersonDetail({ p }: { p: Person }) {
         {p.badge && !p.poster && <BadgeChip b={p.badge} className="absolute left-3 top-3" />}
       </div>
       <div data-swap className="min-w-0">
-        <h3 className="text-2xl font-bold text-strong"><Tx v={p.name} /></h3>
+        <h3 className="text-2xl font-bold text-strong"><Name v={pick(p.name).value} /></h3>
         <p className="mt-0.5 text-muted"><Tx v={p.line} /></p>
         <hr className="my-4 border-line" />
         <dl className="grid gap-2.5 text-[0.95rem]">
@@ -202,7 +208,8 @@ function PersonDetail({ p }: { p: Person }) {
             <div className="space-y-2">
               {ig && (
                 <a
-                  href={`https://www.instagram.com/${encodeURIComponent(ig)}/`}
+                  href={`https://www.instagram.com/${ig}/`}
+                  aria-label={t("openInstagram", { name: pick(p.name).value })}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
                   className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#f58529] via-[#dd2a7b] to-[#8134af] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-glow"

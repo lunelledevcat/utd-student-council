@@ -2,8 +2,8 @@
   {
     "name": "banner-02-1",
     "source": "IMG_6115.pdf",
-    "w": 1920,
-    "h": 1280,
+    "w": 2048,
+    "h": 1365,
     "blur": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAACwAQCdASoQAAsAA4BaJbACsAEGRDnAAP7iklYvmfQ1LJyBKuiQdAMW5YGW+VY8frWdrc1iAVq0CcVURTbhuYSqrE3LJ1QDkw2+DtIk+ynEA1MvZmAAAA=="
   },
   {
@@ -16,8 +16,8 @@
   {
     "name": "banner-02-3",
     "source": "IMG_6118.pdf",
-    "w": 1920,
-    "h": 1280,
+    "w": 2048,
+    "h": 1365,
     "blur": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAAAwAgCdASoQAAsAA4BaJbAC7AEfTepVKJCAAAD+t/OcC9THc5AG5LTfMbeIZoqJ9Cu8B4AEAmehieWVmMRgNZaiC6nAJ2uRJ6MsjuJ2xNfKB72MQUAAAA=="
   }
 ]

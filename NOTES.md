@@ -306,3 +306,20 @@ Timing before speed work (local, 10 × 2400×1500 JPEG): upload 10 photos 56.7 s
 - Migrations 0007 (columns, window, lock), 0008 (AVIF in buckets), 0009 (anon column grant for the new member columns).
 - Lighthouse /th (mobile, local): before 81–83/96/100/92 CLS 0 · after 83/97/100/92 CLS 0; council tab 81/100/100/100;
   banner test page CLS 0.
+
+## 2569 members, second import (2026-10-20, main)
+- New `_import/members-2569.json` (built from SCC.pdf + เว็ปไซต์สภานักเรียน.pdf; the PDF itself was not in _import, so
+  the JSON is the only source used). `content/members-2569.json` regenerated: name (as in the council's document),
+  nickname, role (displayed as written), deptKey, partyKey, instagram (validated `^[A-Za-z0-9._]{1,30}$`), group,
+  nameFromPoster / roleFromDoc (review only: migration 0010 columns, not in the anon grant, shown on /dashboard/consent).
+- EN: `people.titles` (Chairperson of the Student Council, Vice Chairperson for …, Secretary, Treasurer, Head of …),
+  `people.depts`, `people.parties`. Names stay Thai (no transliteration, no "TH" badge on names).
+- IG: stored for all 16, shown only while consent_public is on (per person switch + "แสดง IG ทั้งหมด", asked twice) —
+  the source note says the handles still need each person's confirmation.
+- Card: name (nickname) + role, no party pill; popup rows nickname / position / department / party (plain text) + IG button.
+- Photos: SCC.pdf unchanged (same file, same 16 pages), crops from the first import reused. Photo consent was switched on
+  for everyone by the admin account on 2026-10-20 02:19 UTC ("เปิดทั้งหมด").
+- Banners now FILL the frame (object-cover + per-slide focal point, photos.focal) instead of contain; desktop frame 16:7
+  (≈2.3:1, was 16:5); widths 640/1280/1920/2048 (2K). banner-02-2's original is only 1574 px — not upscaled.
+- Lighthouse /th mobile: 80–81 (base 81–83) — within run-to-run noise (TTFB to Supabase 1.4–2.1 s locally); CLS 0.000
+  on /th, council tab (TH/EN 80–82 / 100 / 100 / 100) and the banner test page.

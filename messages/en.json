@@ -121,17 +121,17 @@
     "teacherChip": "Kru {nickname}",
     "titles": {
       "chair": "Chairperson of the Student Council",
-      "viceGeneralAdmin": "Vice Chairperson of the Student Council for General Administration",
-      "viceStudentAffairs": "Vice Chairperson of the Student Council for Student Affairs",
-      "viceExecutiveAdmin": "Vice Chairperson of the Student Council for Executive Administration",
-      "viceAcademic": "Vice Chairperson of the Student Council for Academic Affairs",
+      "viceGeneralAdmin": "Vice Chairperson for General Administration",
+      "viceStudentAffairs": "Vice Chairperson for Student Affairs",
+      "viceExecutiveAdmin": "Vice Chairperson for Executive Administration",
+      "viceAcademic": "Vice Chairperson for Academic Affairs",
       "headPolicy": "Head of Policy and Planning",
       "headPublicRelations": "Head of Public Relations",
-      "secretary": "Secretary of the Student Council",
+      "secretary": "Secretary",
       "headAudioVisual": "Head of Audio-Visual Services",
       "headActivities": "Head of Activities and Recreation",
       "headDiscipline": "Head of Discipline",
-      "headTreasury": "Head of Treasury",
+      "headTreasury": "Treasurer",
       "headEvaluation": "Head of Measurement and Evaluation",
       "headFacilities": "Head of Facilities and Hospitality",
       "headWelfare": "Head of Welfare",
@@ -143,7 +143,28 @@
       "heads": "Heads of Division and Secretary"
     },
     "poster": "Introduction poster of {name}",
-    "photoPending": "Photo awaiting permission"
+    "photoPending": "Photo awaiting permission",
+    "depts": {
+      "executive": "Executive Board",
+      "policy": "Policy and Planning",
+      "publicRelations": "Public Relations",
+      "secretariat": "Secretariat",
+      "audioVisual": "Audio-Visual Services",
+      "activities": "Activities and Recreation",
+      "discipline": "Discipline",
+      "treasury": "Treasury",
+      "evaluation": "Measurement and Evaluation",
+      "facilities": "Facilities and Hospitality",
+      "welfare": "Welfare",
+      "arts": "Arts and Culture"
+    },
+    "parties": {
+      "newGen": "The New Gen Party",
+      "independent": "Independent"
+    },
+    "fullName": "Full name",
+    "roleShort": "Position",
+    "openInstagram": "Open {name}'s Instagram (new tab)"
   },
   "empty": {
     "notFound": "Nothing found",
@@ -558,7 +579,16 @@
       "confirm1": "Show the photos of all {n} members of this year? Only if every member has agreed.",
       "confirm2": "Confirm again: every member has agreed in writing.",
       "noPhoto": "No photo file",
-      "saved": "Saved"
+      "saved": "Saved",
+      "ig": "Instagram",
+      "igOn": "Show IG",
+      "igOff": "Hide IG",
+      "igAll": "Show all IG",
+      "igConfirm1": "Show the Instagram of all {n} members? Only if everyone has confirmed.",
+      "igConfirm2": "Confirm again: everyone agreed to show their Instagram.",
+      "review": "Check: poster = {poster}",
+      "reviewRole": "Check: document = {role}",
+      "photo": "Photo"
     }
   },
   "setup": {

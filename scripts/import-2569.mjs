@@ -90,18 +90,18 @@ async function assets() {
     .composite([{ input: await lg(school), left: 200, top: 135 }, { input: await lg(council), left: 640, top: 135 }])
     .png({ palette: true, quality: 90 }).toFile("app/[locale]/opengraph-image.png");
 
-  // banner 02: the three images exactly as delivered (no crop, no edit) in 3 widths
+  // banner 02: the three images exactly as delivered (no crop, no edit), up to 2K (2048 px) — never upscaled
   const files = ["IMG_6115", "IMG_6116", "IMG_6118"];
   const meta = [];
   for (const [i, f] of files.entries()) {
     const [img] = pdfImages(`${SRC}/brander/${f}.pdf`);
     const name = `banner-02-${i + 1}`;
-    for (const w of [640, 1280, 1920]) {
+    for (const w of [640, 1280, 1920, 2048]) {
       const r = load(img).rotate().resize({ width: w, withoutEnlargement: true });
       await r.clone().avif({ quality: 55 }).toFile(`public/banners/${name}-${w}.avif`);
       await r.clone().webp({ quality: 80 }).toFile(`public/banners/${name}-${w}.webp`);
     }
-    const m = await load(img).rotate().resize({ width: 1920, withoutEnlargement: true }).toBuffer({ resolveWithObject: true });
+    const m = await load(img).rotate().resize({ width: 2048, withoutEnlargement: true }).toBuffer({ resolveWithObject: true });
     const blur = await load(img).rotate().resize(16).webp({ quality: 40 }).toBuffer();
     meta.push({ name, source: `${f}.pdf`, w: m.info.width, h: m.info.height, blur: `data:image/webp;base64,${blur.toString("base64")}` });
   }

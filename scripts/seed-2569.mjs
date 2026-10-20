@@ -1,6 +1,7 @@
 // Seeds the 2569 council (content/members-2569.json) and the banner 02 slides (content/banners-02.json) into Supabase.
 // Idempotent: fixed ids derived from year + order / banner name. Re-running updates names, roles, order, group and
-// files, but never touches what the back office decides: photo consent, Instagram/contact consent, hero on/off/window.
+// files, nickname / department / party / IG handle, but never touches what the back office decides: photo consent,
+// Instagram/contact consent (consent_public), hero on/off/window.
 //   node scripts/seed-2569.mjs          (needs NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in .env.local)
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -26,8 +27,9 @@ const insertOrUpdate = async (table, id, always, onlyNew) => {
   return row ? "updated" : "inserted";
 };
 
-const th = JSON.parse(readFileSync("messages/th.json", "utf8")).people.titles;
-const en = JSON.parse(readFileSync("messages/en.json", "utf8")).people.titles;
+const th = JSON.parse(readFileSync("messages/th.json", "utf8")).people;
+const en = JSON.parse(readFileSync("messages/en.json", "utf8")).people;
+const IG = /^[A-Za-z0-9._]{1,30}$/;
 const data = JSON.parse(readFileSync("content/members-2569.json", "utf8"));
 const Y = data.academicYearBE;
 
@@ -35,19 +37,27 @@ await rest("academic_years?on_conflict=year", { method: "POST", headers: { prefe
 
 const res = { inserted: 0, updated: 0 };
 for (const m of data.members) {
-  if (!th[m.roleKey] || !en[m.roleKey]) throw new Error(`no title for ${m.roleKey}`);
+  if (!en.titles[m.roleKey] || !th.depts[m.deptKey] || !th.parties[m.partyKey]) throw new Error(`missing message for member ${m.order}`);
+  if (m.instagram && !IG.test(m.instagram)) throw new Error(`bad Instagram handle for member ${m.order}`);
   const nn = String(m.order).padStart(2, "0");
   const r = await insertOrUpdate("members", uuid(`utd-member-${Y}-${nn}`), {
     year: Y,
     name: m.name,
-    role_title: th[m.roleKey],
-    role_title_en: en[m.roleKey],
+    nickname: m.nickname,
+    role_title: m.role, // the position as the council wrote it (displayed)
+    role_title_en: en.titles[m.roleKey],
+    dept: th.depts[m.deptKey],
+    dept_en: en.depts[m.deptKey],
+    party: th.parties[m.partyKey],
+    party_en: en.parties[m.partyKey],
+    instagram: m.instagram ?? "", // shown only once consent_public is switched on in the back office
+    name_from_poster: m.nameFromPoster,
+    role_from_doc: m.roleFromDoc,
     member_group: m.group,
     sort_order: m.order,
     photo_key: `members/${Y}/${nn}`,
-    dept: "",
     status: "approved",
-  }, { consent_photo: null, instagram: "", contact: "", consent_public: false });
+  }, { consent_photo: null, contact: "", consent_public: false });
   res[r]++;
 }
 console.log(`members ${Y}:`, res);
@@ -58,11 +68,13 @@ const ALT = [
   ["คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์ ในชุดสูทสภานักเรียน ถ่ายภาพหมู่", "Uttaradit School Student Council members in council blazers, group photo"],
   ["คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์ ในเสื้อสภานักเรียนสีม่วง ถ่ายภาพหมู่ที่สนาม", "Uttaradit School Student Council members in purple council shirts, group photo on the field"],
 ];
+// focal point for filling the banner frame (object-position), chosen so every face stays in view at 16:7 and 4:3
+const FOCAL = ["50% 64%", "50% 45%", "50% 53%"];
 const banners = JSON.parse(readFileSync("content/banners-02.json", "utf8"));
 for (const [i, b] of banners.entries()) {
   const r = await insertOrUpdate("photos", uuid(`utd-banner-${b.name}`), {
     static_path: `/banners/${b.name}`, width: b.w, height: b.h, blur: b.blur, credit: "council", caption: "",
-    alt_th: ALT[i][0], alt_en: ALT[i][1], status: "approved",
+    alt_th: ALT[i][0], alt_en: ALT[i][1], focal: FOCAL[i], status: "approved",
   }, { is_hero: false, hero_order: i + 2 });
   console.log(`${b.name}: ${r}`);
 }

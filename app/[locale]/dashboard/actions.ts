@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { ENTITIES, isEntity, rowColumns, type EntityKey } from "@/lib/admin/entities";
 import { parse, type Err } from "@/lib/admin/validate";
 import { checkIncoming, makeVariants, publishPhotos, removePhotoFiles, signedUpload } from "@/lib/admin/photos";
-import { applyConsent } from "@/lib/admin/consent";
+import { applyConsent, applyIgConsent } from "@/lib/admin/consent";
 import { MEMBERS, STAFF, audit, authorize } from "@/lib/auth";
 import { limit } from "@/lib/ratelimit";
 import { logSecurity } from "@/lib/security-log";
@@ -298,6 +298,41 @@ export async function setPhotoConsentAll(year: number, confirmedCount: number): 
     return fail("saveFailed");
   }
   after(() => audit(s, "consent:photo:all", "members", String(year), { n: ids.length }));
+  revalidatePath("/[locale]", "layout");
+  return { ok: true, n: ids.length };
+}
+
+/** One member's Instagram / contact on the site (consent_public). */
+export async function setIgConsent(memberId: string, on: boolean): Promise<Result> {
+  if (!UUID.test(memberId) || typeof on !== "boolean") return fail("badRequest");
+  const s = await role(["admin"]);
+  if (!s) return denied();
+  try {
+    await applyIgConsent([memberId], on);
+  } catch (err) {
+    console.error("[dashboard] ig consent", err);
+    return fail("saveFailed");
+  }
+  after(() => audit(s, "consent:ig", "members", memberId, { on }));
+  revalidatePath("/[locale]", "layout");
+  return { ok: true };
+}
+
+/** Every member of a year with an Instagram handle. Asked twice on the page; the server checks the confirmed count. */
+export async function setIgConsentAll(year: number, confirmedCount: number): Promise<Result & { n?: number }> {
+  if (!Number.isInteger(year) || !Number.isInteger(confirmedCount)) return fail("badRequest");
+  const s = await role(["admin"]);
+  if (!s) return denied();
+  const { data } = await adminClient().from("members").select("id").eq("year", year).neq("status", "hidden").neq("instagram", "");
+  const ids = (data ?? []).map((r) => r.id as string);
+  if (!ids.length || ids.length !== confirmedCount) return fail("badRequest");
+  try {
+    await applyIgConsent(ids, true);
+  } catch (err) {
+    console.error("[dashboard] ig consent all", err);
+    return fail("saveFailed");
+  }
+  after(() => audit(s, "consent:ig:all", "members", String(year), { n: ids.length }));
   revalidatePath("/[locale]", "layout");
   return { ok: true, n: ids.length };
 }
