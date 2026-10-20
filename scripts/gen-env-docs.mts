@@ -1,4 +1,4 @@
-// Writes .env.example and the README section "ตั้งค่า env หาจากไหน" from one source:
+// Writes .env.example from one source:
 // lib/env-spec.ts (names, public/secret, test-value rules, links) + messages/th.json setup.vars (Thai help).
 // Run after changing either: npm run env:docs
 import { readFileSync, writeFileSync } from "node:fs";
@@ -66,11 +66,4 @@ env.push("# --- Google OAuth (ไม่ใช่ค่าใน .env — ตั�
 md.push("### Google OAuth — ตั้งใน Supabase (ไม่ใช่ค่าใน .env)", `- **ใช้ทำอะไร:** ${g.purpose}`, `- **วิธีตั้ง:** ${g.where}`, `- **ถ้าไม่ตั้ง:** ${g.missingProd}`, "", "<!-- env:end -->");
 
 writeFileSync(new URL("../.env.example", import.meta.url), env.join("\n"));
-const readmeUrl = new URL("../README.md", import.meta.url);
-const readme = readFileSync(readmeUrl, "utf8");
-const block = md.join("\n");
-const next = /<!-- env:start[\s\S]*?<!-- env:end -->/.test(readme)
-  ? readme.replace(/<!-- env:start[\s\S]*?<!-- env:end -->/, block)
-  : readme.replace(/## Environment \(`\.env\.example`\)[\s\S]*?(?=\n## )/, `${block}\n`);
-writeFileSync(readmeUrl, next);
-console.log(".env.example + README env section written");
+console.log(".env.example written");

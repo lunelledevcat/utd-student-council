@@ -43,7 +43,7 @@ const load = (img) => sharp(img.input, img.raw ? { raw: img.raw } : undefined);
 // ───────────────────────── assets ─────────────────────────
 async function assets() {
   mkdirSync("public/brand", { recursive: true });
-  mkdirSync("public/banners", { recursive: true });
+  mkdirSync(`${SRC}/out/brander`, { recursive: true });
 
   // council logo: black background -> transparent (flood fill of near-black pixels connected to the edge only;
   // the logo's own dark outlines are not connected to the edge, so they stay)
@@ -96,7 +96,7 @@ async function assets() {
     .composite([{ input: await lg(school), left: 200, top: 135 }, { input: await lg(council), left: 640, top: 135 }])
     .png({ palette: true, quality: 90 }).toFile("app/[locale]/opengraph-image.png");
 
-  // brander/*.pdf: three council group photos (not banners) — extra hero slides, off by default; up to 2K, never upscaled
+  // brander/*.pdf: three council group photos (not banners) -> _import/out/brander (outside git; they live in Supabase Storage)
   const files = ["IMG_6115", "IMG_6116", "IMG_6118"];
   const meta = [];
   for (const [i, f] of files.entries()) {
@@ -104,14 +104,14 @@ async function assets() {
     const name = `brander-${i + 1}`;
     for (const w of [640, 1280, 1920, 2048]) {
       const r = load(img).rotate().resize({ width: w, withoutEnlargement: true });
-      await r.clone().avif({ quality: 55 }).toFile(`public/banners/${name}-${w}.avif`);
-      await r.clone().webp({ quality: 80 }).toFile(`public/banners/${name}-${w}.webp`);
+      await r.clone().avif({ quality: 55 }).toFile(`${SRC}/out/brander/${name}-${w}.avif`);
+      await r.clone().webp({ quality: 80 }).toFile(`${SRC}/out/brander/${name}-${w}.webp`);
     }
     const m = await load(img).rotate().resize({ width: 2048, withoutEnlargement: true }).toBuffer({ resolveWithObject: true });
     const blur = await load(img).rotate().resize(16).webp({ quality: 40 }).toBuffer();
     meta.push({ name, source: `${f}.pdf`, w: m.info.width, h: m.info.height, blur: `data:image/webp;base64,${blur.toString("base64")}` });
   }
-  writeFileSync("content/brander.json", JSON.stringify(meta, null, 2) + "\n");
+  writeFileSync(`${SRC}/out/brander/brander.json`, JSON.stringify(meta, null, 2) + "\n");
   console.log("assets done:", meta.map((m) => `${m.name} ${m.w}x${m.h}`).join(", "));
 }
 
@@ -133,7 +133,7 @@ async function members() {
   const env = Object.fromEntries(readFileSync(".env.local", "utf8").split(/\r?\n/).filter((l) => /^[A-Z0-9_]+=/.test(l))
     .map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1).trim()]));
   const url = env.NEXT_PUBLIC_SUPABASE_URL, key = env.SUPABASE_SERVICE_ROLE_KEY;
-  const data = JSON.parse(readFileSync("content/members-2569.json", "utf8"));
+  const data = JSON.parse(readFileSync(process.env.MEMBERS_FILE || `${SRC}/members-2569.content.json`, "utf8"));
   const pages = pdfImages(`${SRC}/SCC.pdf`);
   if (pages.length !== data.members.length) throw new Error(`SCC.pdf has ${pages.length} pages, expected ${data.members.length}`);
   for (const m of data.members) {
@@ -170,8 +170,8 @@ async function banners() {
     const name = `banner-02-${n}`;
     for (const w of [640, 1280, 1920]) {
       const r = sharp(src).rotate().resize({ width: w, withoutEnlargement: true });
-      await r.clone().avif({ quality: 60 }).toFile(`public/banners/${name}-${w}.avif`);
-      await r.clone().webp({ quality: 82 }).toFile(`public/banners/${name}-${w}.webp`);
+      await r.clone().avif({ quality: 60 }).toFile(`${SRC}/out/brander/${name}-${w}.avif`);
+      await r.clone().webp({ quality: 82 }).toFile(`${SRC}/out/brander/${name}-${w}.webp`);
     }
     const m = await sharp(src).rotate().resize({ width: 1920, withoutEnlargement: true }).toBuffer({ resolveWithObject: true });
     const blur = await sharp(src).rotate().resize(16).webp({ quality: 40 }).toBuffer();

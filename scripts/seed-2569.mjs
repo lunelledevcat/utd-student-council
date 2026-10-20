@@ -1,4 +1,5 @@
-// Seeds the 2569 council (content/members-2569.json) and the banner 02 slides (content/banners-02.json) into Supabase.
+// Seeds the 2569 council (MEMBERS_FILE, default _import/members-2569.content.json — outside git: students' personal
+// data never goes into the public repo) and the banner 02 slides (content/banners-02.json) into Supabase.
 // Idempotent: fixed ids derived from year + order / banner name. Re-running updates names, roles, order, group and
 // files, nickname / department / party / IG handle, but never touches what the back office decides: photo consent,
 // Instagram/contact consent (consent_public), hero on/off/window.
@@ -30,7 +31,7 @@ const insertOrUpdate = async (table, id, always, onlyNew) => {
 const th = JSON.parse(readFileSync("messages/th.json", "utf8")).people;
 const en = JSON.parse(readFileSync("messages/en.json", "utf8")).people;
 const IG = /^[A-Za-z0-9._]{1,30}$/;
-const data = JSON.parse(readFileSync("content/members-2569.json", "utf8"));
+const data = JSON.parse(readFileSync(env.MEMBERS_FILE || process.env.MEMBERS_FILE || "_import/members-2569.content.json", "utf8"));
 const Y = data.academicYearBE;
 
 await rest("academic_years?on_conflict=year", { method: "POST", headers: { prefer: "resolution=ignore-duplicates" }, body: JSON.stringify({ year: Y }) });
@@ -79,19 +80,5 @@ for (const [i, b] of JSON.parse(readFileSync("content/banners-02.json", "utf8"))
   console.log(`${b.name}: ${r}`);
 }
 
-// brander = three council group photos (from brander/*.pdf): extra slides, OFF until the admin picks them.
-// (These rows were first registered as banner-02-N; migration 0012 moved them, ids kept.)
-const BRANDER_ALT = [
-  ["คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์ ถ่ายภาพหมู่หน้าอาคารเรียน", "Uttaradit School Student Council group photo in front of a school building"],
-  ["คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์ ในชุดสูทสภานักเรียน ถ่ายภาพหมู่", "Uttaradit School Student Council members in council blazers, group photo"],
-  ["คณะกรรมการสภานักเรียนโรงเรียนอุตรดิตถ์ ในเสื้อสภานักเรียนสีม่วง ถ่ายภาพหมู่ที่สนาม", "Uttaradit School Student Council members in purple council shirts, group photo on the field"],
-];
-// focal point when the photo (≈1.5:1) is cropped to the banner frame, chosen so every face stays in view
-const FOCAL = ["50% 64%", "50% 45%", "50% 53%"];
-for (const [i, b] of JSON.parse(readFileSync("content/brander.json", "utf8")).entries()) {
-  const r = await insertOrUpdate("photos", uuid(`utd-banner-banner-02-${i + 1}`), {
-    static_path: `/banners/${b.name}`, width: b.w, height: b.h, blur: b.blur, credit: "council", caption: "",
-    alt_th: BRANDER_ALT[i][0], alt_en: BRANDER_ALT[i][1], focal: FOCAL[i], hero_seconds: null, status: "approved",
-  }, { is_hero: false, hero_order: i + 10 });
-  console.log(`${b.name}: ${r}`);
-}
+// The three council group photos (brander/*.pdf) are ordinary photos in Supabase Storage (managed on /dashboard/hero);
+// they are not part of the repository.
