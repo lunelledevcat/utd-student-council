@@ -205,8 +205,20 @@ h1, h2, h3, h4 {
   30% { filter: blur(3px); }
 }
 
+/* Council department heading rule: blue -> pink gradient drifting slowly back and forth (CSS only). */
+.dept-rule {
+  background-image: linear-gradient(90deg, var(--c-brand-mid), var(--c-pink), var(--c-brand-mid), var(--c-pink));
+  background-size: 300% 100%;
+  animation: dept-rule 7s ease-in-out infinite alternate;
+}
+@keyframes dept-rule {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  .dept-rule { animation: none !important; }
   .petal { display: none; }
   .gold-shimmer::after { display: none; }
   body::before { animation: none; }

@@ -97,8 +97,6 @@
   "people": {
     "council": "Student Council Committee",
     "advisors": "Student Council Teacher Advisors",
-    "president": "President",
-    "vice": "Vice President",
     "advisorRole": "Teacher advisor",
     "popupTitle": "Profile",
     "nickname": "Nickname",
@@ -117,12 +115,12 @@
     "titles": {
       "chair": "Chairperson of the Student Council",
       "viceGeneralAdmin": "Vice Chairperson for General Administration",
-      "viceStudentAffairs": "Vice Chairperson for Student Affairs",
+      "viceStudentAffairs": "Vice Chairperson for Student Affairs Administration",
       "viceExecutiveAdmin": "Vice Chairperson for Executive Administration",
-      "viceAcademic": "Vice Chairperson for Academic Affairs",
+      "viceAcademic": "Vice Chairperson for Academic Administration",
       "headPolicy": "Head of Policy and Planning",
       "headPublicRelations": "Head of Public Relations",
-      "secretary": "Secretary",
+      "secretary": "Head of Secretariat",
       "headAudioVisual": "Head of Audio-Visual Services",
       "headActivities": "Head of Activities and Recreation",
       "headDiscipline": "Head of Discipline",
@@ -132,34 +130,30 @@
       "headWelfare": "Head of Welfare",
       "headArts": "Head of Arts and Culture"
     },
-    "groups": {
-      "chair": "Chairperson of the Student Council",
-      "vice": "Vice Chairpersons",
-      "heads": "Heads of Division and Secretary"
-    },
     "poster": "Introduction poster of {name}",
     "photoPending": "Photo awaiting permission",
-    "depts": {
-      "executive": "Executive Board",
-      "policy": "Policy and Planning",
-      "publicRelations": "Public Relations",
-      "secretariat": "Secretariat",
-      "audioVisual": "Audio-Visual Services",
-      "activities": "Activities and Recreation",
-      "discipline": "Discipline",
-      "treasury": "Treasury",
-      "evaluation": "Measurement and Evaluation",
-      "facilities": "Facilities and Hospitality",
-      "welfare": "Welfare",
-      "arts": "Arts and Culture"
-    },
     "parties": {
       "newGen": "The New Gen Party",
       "independent": "Independent"
     },
     "fullName": "Full name",
     "roleShort": "Position",
-    "openInstagram": "Open {name}'s Instagram (new tab)"
+    "openInstagram": "Open {name}'s Instagram (new tab)",
+    "roles": {
+      "president": "Chairperson",
+      "vice_president": "Vice Chairperson",
+      "head": "Head",
+      "deputy_head": "Deputy Head",
+      "member": "Member"
+    },
+    "deptHeading": "{name}",
+    "otherDept": "Other",
+    "tba": "To be announced",
+    "filterRole": "Filter by position",
+    "filterDept": "Filter by department",
+    "clearFilters": "Clear filters",
+    "noMatch": "No council members match these filters",
+    "photoAlt": "{nickname}, {role}"
   },
   "empty": {
     "notFound": "Nothing found",
@@ -424,12 +418,13 @@
         "role_title": "Position",
         "term_no": "Term",
         "exec_title": "Executive position",
-        "dept": "Department",
         "party": "Party",
         "sort_order": "Display order",
         "instagram": "Instagram",
         "contact": "Other contact",
-        "consent_public": "The person agreed to show their contact details"
+        "consent_public": "The person agreed to show their contact details",
+        "council_role": "Role (tag and order)",
+        "dept_key": "Department"
       },
       "advisors": {
         "photo_id": "Portrait (3:4)",
@@ -458,10 +453,12 @@
         "sort_order": "Lower numbers come first"
       },
       "members": {
-        "role_title": "A Thai position containing “ประธาน” gets a crown, “รองประธาน” a medal",
-        "sort_order": "Lower numbers come first (president = 0)",
+        "role_title": "Full position shown on the card",
+        "sort_order": "Orders people with the same role in the same department (lower first)",
         "instagram": "Username only, e.g. utd_council",
-        "consent_public": "Unticked = IG / contact never shown on the site"
+        "consent_public": "Unticked = IG / contact never shown on the site",
+        "council_role": "The card tag and the order within the department come from this: Chairperson → Vice Chairperson → Head → Deputy Head → Member",
+        "dept_key": "Departments and their order come from content/council-departments.json"
       },
       "advisors": {
         "role_label": "e.g. Teacher advisor / Head teacher advisor",
@@ -474,6 +471,13 @@
         "planned": "Planned",
         "in-progress": "In progress",
         "done": "Done"
+      },
+      "council_role": {
+        "president": "Chairperson",
+        "vice_president": "Vice Chairperson",
+        "head": "Head",
+        "deputy_head": "Deputy Head",
+        "member": "Member"
       }
     },
     "image": {

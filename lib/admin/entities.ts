@@ -2,6 +2,8 @@
 // (app/[locale]/dashboard/actions.ts), so a field exists in exactly one place. Labels/hints are message keys:
 // dashboard.entities.<entity>, dashboard.fields.<entity>.<field>, dashboard.hints.<entity>.<field> (optional).
 // Shared by server and client: no secrets here.
+import { COUNCIL_ROLES } from "@/lib/council";
+import { DEPARTMENTS } from "@/lib/council-departments";
 
 type Base = { name: string; hint?: true };
 export type Field =
@@ -11,7 +13,8 @@ export type Field =
   | (Base & { kind: "date"; required?: boolean })
   | (Base & { kind: "url" })
   | (Base & { kind: "number"; min: number; max: number })
-  | (Base & { kind: "select"; options: string[] })
+  /** option labels: messages dashboard.options.<field>.<option>, or `labels` when the options come from a data file */
+  | (Base & { kind: "select"; options: string[]; default?: string; labels?: Record<string, { th: string; en: string }> })
   | (Base & { kind: "checkbox" })
   /** jsonb [{date, text, text_en?}]: Thai lines "YYYY-MM-DD | text" on the Thai tab, one English line per step on the English tab */
   | (Base & { kind: "timeline" })
@@ -91,7 +94,8 @@ export const ENTITIES: Record<EntityKey, Entity> = {
       { name: "role_title", kind: "text", required: true, max: 120, en: true, hint: true },
       { name: "term_no", kind: "text", max: 40 },
       { name: "exec_title", kind: "text", max: 120, en: true },
-      { name: "dept", kind: "text", required: true, max: 80, en: true },
+      { name: "council_role", kind: "select", options: [...COUNCIL_ROLES], default: "member", hint: true },
+      { name: "dept_key", kind: "select", options: DEPARTMENTS.map((d) => d.key), labels: Object.fromEntries(DEPARTMENTS.map((d) => [d.key, d])), hint: true },
       { name: "party", kind: "text", max: 80, en: true },
       { name: "sort_order", kind: "number", min: 0, max: 999, hint: true },
       { name: "instagram", kind: "text", max: 31, pattern: IG, hint: true },

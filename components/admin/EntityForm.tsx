@@ -231,8 +231,8 @@ function FormBody({
         return <input {...common} type="number" min={f.min} max={f.max} defaultValue={String(row[name] ?? f.min)} className={cn(INPUT, "max-w-40")} />;
       case "select":
         return (
-          <select {...common} defaultValue={val(name) || f.options[0]} className={INPUT}>
-            {f.options.map((o) => <option key={o} value={o}>{t(`options.${f.name}.${o}`)}</option>)}
+          <select {...common} defaultValue={val(name) || f.default || f.options[0]} className={INPUT}>
+            {f.options.map((o) => <option key={o} value={o}>{f.labels?.[o] ? f.labels[o][locale === "en" ? "en" : "th"] : t(`options.${f.name}.${o}`)}</option>)}
           </select>
         );
       case "timeline":

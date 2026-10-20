@@ -12,6 +12,14 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // local-only folders (gitignored): source files, test output
+    "_import/**",
+    "test-results/**",
+    "playwright-report/**",
+    "e2e/.auth/**",
+    // Cloudflare (OpenNext / wrangler) build output
+    ".open-next/**",
+    ".wrangler/**",
   ]),
 ]);
 

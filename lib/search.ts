@@ -38,10 +38,3 @@ export function filterContent(c: YearContent, query: string) {
 
 export const tabCount = (c: Pick<YearContent, "announcements" | "activities" | "policies" | "members" | "advisors">, t: TabKey) =>
   t === "news" ? c.announcements.length + c.activities.length : t === "policy" ? c.policies.length : t === "council" ? c.members.length : c.advisors.length;
-
-/** Badge for a council position (reference: crown = president, medal = vice). Decided from the Thai title. */
-export function rankOf(role: string): "president" | "vice" | null {
-  if (role.includes("รองประธาน")) return "vice";
-  if (role.includes("ประธาน")) return "president";
-  return null;
-}

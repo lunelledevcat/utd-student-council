@@ -1,11 +1,13 @@
 // Seeds the 2569 council (MEMBERS_FILE, default _import/members-2569.content.json — outside git: students' personal
 // data never goes into the public repo) and the banner 02 slides (content/banners-02.json) into Supabase.
-// Idempotent: fixed ids derived from year + order / banner name. Re-running updates names, roles, order, group and
-// files, nickname / department / party / IG handle, but never touches what the back office decides: photo consent,
+// Idempotent: fixed ids derived from year + order / banner name. Re-running updates names, titles, role (councilRole,
+// or derived from the Thai title), department (deptKey -> content/council-departments.json), order, files, nickname,
+// party, IG handle, but never touches what the back office decides: photo consent,
 // Instagram/contact consent (consent_public), hero on/off/window.
 //   node scripts/seed-2569.mjs          (needs NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in .env.local)
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { isCouncilRole, roleFromTitle } from "../lib/council.ts";
 
 const env = Object.fromEntries(readFileSync(".env.local", "utf8").split(/\r?\n/).filter((l) => /^[A-Z0-9_]+=/.test(l))
   .map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1).trim()]));
@@ -31,6 +33,7 @@ const insertOrUpdate = async (table, id, always, onlyNew) => {
 const th = JSON.parse(readFileSync("messages/th.json", "utf8")).people;
 const en = JSON.parse(readFileSync("messages/en.json", "utf8")).people;
 const IG = /^[A-Za-z0-9._]{1,30}$/;
+const depts = new Map(JSON.parse(readFileSync("content/council-departments.json", "utf8")).departments.map((d) => [d.key, d]));
 const data = JSON.parse(readFileSync(env.MEMBERS_FILE || process.env.MEMBERS_FILE || "_import/members-2569.content.json", "utf8"));
 const Y = data.academicYearBE;
 
@@ -38,7 +41,9 @@ await rest("academic_years?on_conflict=year", { method: "POST", headers: { prefe
 
 const res = { inserted: 0, updated: 0 };
 for (const m of data.members) {
-  if (!en.titles[m.roleKey] || !th.depts[m.deptKey] || !th.parties[m.partyKey]) throw new Error(`missing message for member ${m.order}`);
+  if (!en.titles[m.roleKey] || !depts.has(m.deptKey) || !th.parties[m.partyKey]) throw new Error(`missing title / department / party for member ${m.order}`);
+  if (m.councilRole != null && !isCouncilRole(m.councilRole)) throw new Error(`bad councilRole for member ${m.order}`);
+  const dept = depts.get(m.deptKey);
   if (m.instagram && !IG.test(m.instagram)) throw new Error(`bad Instagram handle for member ${m.order}`);
   const nn = String(m.order).padStart(2, "0");
   const r = await insertOrUpdate("members", uuid(`utd-member-${Y}-${nn}`), {
@@ -47,14 +52,15 @@ for (const m of data.members) {
     nickname: m.nickname,
     role_title: m.role, // the position as the council wrote it (displayed)
     role_title_en: en.titles[m.roleKey],
-    dept: th.depts[m.deptKey],
-    dept_en: en.depts[m.deptKey],
+    council_role: m.councilRole ?? roleFromTitle(m.role),
+    dept_key: m.deptKey,
+    dept: dept.th,
+    dept_en: dept.en,
     party: th.parties[m.partyKey],
     party_en: en.parties[m.partyKey],
     instagram: m.instagram ?? "", // shown only once consent_public is switched on in the back office
     name_from_poster: m.nameFromPoster,
     role_from_doc: m.roleFromDoc,
-    member_group: m.group,
     sort_order: m.order,
     photo_key: `members/${Y}/${nn}`,
     status: "approved",

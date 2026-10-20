@@ -57,7 +57,7 @@ export function parse(e: Entity, fd: FormData): Parsed {
         values[f.name] = check(f.name, z.coerce.number().int().min(f.min).max(f.max), v === "" ? f.min : v, { key: "badNumber", values: { min: f.min, max: f.max } }) ?? f.min;
         break;
       case "select":
-        values[f.name] = check(f.name, z.enum(f.options as [string, ...string[]]), v, { key: "badChoice" }) ?? f.options[0];
+        values[f.name] = check(f.name, z.enum(f.options as [string, ...string[]]), v, { key: "badChoice" }) ?? f.default ?? f.options[0];
         break;
       case "checkbox":
         values[f.name] = fd.get(f.name) === "on";

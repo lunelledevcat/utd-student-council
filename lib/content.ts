@@ -1,6 +1,8 @@
 import "server-only";
 import banner from "@/content/banner.json";
 import seed from "@/content/seed.json";
+import { isCouncilRole, roleFromTitle, type CouncilRole } from "@/lib/council";
+import { deptByKey, deptKeyFromLabel } from "@/lib/council-departments";
 import { supabaseConfigured } from "@/lib/env";
 import { adminClient } from "@/lib/supabase/admin";
 import { publicClient, publicImageUrl } from "@/lib/supabase/public";
@@ -27,10 +29,12 @@ export type Policy = {
   owner: L; timeline: TimelineStep[]; cover: Img | null; photos: Img[];
 };
 export type Contact = { instagram: string | null; contact: string | null };
-export type MemberGroup = "executive" | "head" | null;
 export type Member = {
   id: string; name: L; nickname: L; role: L; termNo: string; execTitle: L; dept: L; party: L; photo: Img | null; rank: number;
-  group: MemberGroup;
+  /** fixed role (tag + order on the council tab); from members.council_role, else from the Thai title */
+  councilRole: CouncilRole;
+  /** department (content/council-departments.json); null = not one of them */
+  deptKey: string | null;
   /** whole introduction poster, for the popup (same consent rule as photo) */
   poster: Img | null;
 } & Contact;
@@ -115,12 +119,17 @@ const memberPhotos = (r: Row): { photo: Img | null; poster: Img | null } => {
   return { photo: file("card", 440, 550), poster: file("poster", 720, 900) };
 };
 
-const toMember = (r: Row, contact: Contact): Member => ({
-  id: r.id, name: l(s(r, "name"), s(r, "name_en")), nickname: l(s(r, "nickname"), s(r, "nickname_en")),
-  role: l(s(r, "role_title"), s(r, "role_title_en")), termNo: s(r, "term_no"), execTitle: l(s(r, "exec_title"), s(r, "exec_title_en")),
-  dept: l(s(r, "dept"), s(r, "dept_en")), party: l(s(r, "party"), s(r, "party_en")),
-  rank: Number(r.sort_order ?? 0), group: (r.member_group as MemberGroup) ?? null, ...contact, ...memberPhotos(r),
-});
+const toMember = (r: Row, contact: Contact): Member => {
+  const deptKey = deptByKey(r.dept_key as string | null)?.key ?? deptKeyFromLabel(s(r, "dept"));
+  const d = deptByKey(deptKey);
+  return {
+    id: r.id, name: l(s(r, "name"), s(r, "name_en")), nickname: l(s(r, "nickname"), s(r, "nickname_en")),
+    role: l(s(r, "role_title"), s(r, "role_title_en")), termNo: s(r, "term_no"), execTitle: l(s(r, "exec_title"), s(r, "exec_title_en")),
+    dept: d ? l(d.th, d.en) : l(s(r, "dept"), s(r, "dept_en")), party: l(s(r, "party"), s(r, "party_en")),
+    rank: Number(r.sort_order ?? 0), councilRole: isCouncilRole(r.council_role) ? r.council_role : roleFromTitle(s(r, "role_title")),
+    deptKey, ...contact, ...memberPhotos(r),
+  };
+};
 const toAdvisor = (r: Row, contact: Contact): Advisor => ({
   id: r.id, name: l(s(r, "name"), s(r, "name_en")), nickname: l(s(r, "nickname"), s(r, "nickname_en")),
   role: l(s(r, "role_label"), s(r, "role_label_en")), subject: l(s(r, "subject_group"), s(r, "subject_group_en")),
@@ -167,7 +176,7 @@ function fromSeed(year: number): Lists {
 const ANN = `id,title,title_en,body,body_en,published_on,link_url,pinned,cover:photos!cover_photo_id(${IMG_COLS})`;
 const ACT = `id,title,title_en,body,body_en,event_date,photos:photos!activity_id(${IMG_COLS})`;
 const POL = `id,year,slug,title,title_en,summary,summary_en,body,body_en,progress_status,progress,owner,owner_en,timeline,sort_order,cover:photos!cover_photo_id(${IMG_COLS}),photos:photos!policy_id(${IMG_COLS})`;
-const MEM = `id,name,name_en,nickname,nickname_en,role_title,role_title_en,term_no,exec_title,exec_title_en,dept,dept_en,party,party_en,sort_order,member_group,consent_photo,photo_key,photo:photos!photo_id(${IMG_COLS})`;
+const MEM = `id,name,name_en,nickname,nickname_en,role_title,role_title_en,term_no,exec_title,exec_title_en,dept,dept_en,party,party_en,sort_order,council_role,dept_key,consent_photo,photo_key,photo:photos!photo_id(${IMG_COLS})`;
 const ADV = `id,name,name_en,nickname,nickname_en,role_label,role_label_en,subject_group,subject_group_en,position,position_en,sort_order,photo:photos!photo_id(${IMG_COLS})`;
 
 async function fromDb(year: number): Promise<Lists> {
