@@ -738,11 +738,18 @@
     "retry": "Try again"
   },
   "contact": {
-    "title": "Contact the Student Council",
-    "lead": "News and contact of the Uttaradit School Student Council",
     "facebook": "Facebook",
     "instagram": "Instagram",
     "tiktok": "TikTok",
     "opens": "(opens in a new tab)"
+  },
+  "dock": {
+    "label": "Contact and language",
+    "language": "Change language",
+    "email": "E-mail",
+    "copyEmail": "Copy e-mail {email}",
+    "copied": "Copied",
+    "copyFailed": "Could not copy",
+    "sendEmail": "Send an e-mail to {email}"
   }
 }

@@ -323,3 +323,17 @@ Timing before speed work (local, 10 × 2400×1500 JPEG): upload 10 photos 56.7 s
   (≈2.3:1, was 16:5); widths 640/1280/1920/2048 (2K). banner-02-2's original is only 1574 px — not upscaled.
 - Lighthouse /th mobile: 80–81 (base 81–83) — within run-to-run noise (TTFB to Supabase 1.4–2.1 s locally); CLS 0.000
   on /th, council tab (TH/EN 80–82 / 100 / 100 / 100) and the banner test page.
+
+## Phone contact dock (2026-10-20, main)
+- `lib/contact.ts` = the only place for channels (IG, Facebook, TikTok) and e-mails. E-mails are stored as
+  [local, domain] and joined in the browser only when the e-mail item is opened: no address in the SSR HTML, sitemap
+  or JSON-LD (checked: 0 matches in /th HTML and /sitemap.xml).
+- < md: `components/layout/MobileDock.tsx` — burger morphs to X, rail of 44 px icons (globe, IG, FB, TikTok, mail)
+  under it, right-aligned, staggered in; one capsule open at a time (tap again closes); capsule growth = motion layout
+  (transform) animation; closes on outside tap / Esc (focus back to the button) / scroll / page change; light focus
+  trap; reduced motion = no animation. Language capsule uses the existing switch + overlay. Copy button -> toast.
+- >= md: unchanged header (channel buttons + globe menu). The "ช่องทางติดต่อสภานักเรียน" box (home) and the
+  footer channel row are removed; footer keeps copyright/address/voice/sign-in.
+- Checked at 360/390/430 px: rail inside the screen, no horizontal scroll, no overlap with the sticky control bar,
+  accordion, Esc / outside tap / scroll close, copy -> clipboard + "คัดลอกแล้ว", language switch; 767 px = dock,
+  768 px = desktop. Lighthouse /th mobile 81 / 97 / 100 / 92, CLS 0.000.

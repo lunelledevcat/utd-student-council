@@ -1,14 +1,12 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
 import { LocaleSwitch } from "@/components/i18n/LocaleSwitch";
-import { Icon } from "@/components/icons/Icon";
 import { Link } from "@/i18n/navigation";
+import { MobileDock } from "@/components/layout/MobileDock";
 import { ChannelLinks } from "@/components/ui/ChannelLinks";
 
-/** Round logo slot. [placeholder] until the real crest / council logo files are added to /public. */
 /** Emblem in the header: transparent AVIF (WebP / PNG fallback), fixed box so nothing shifts while it loads. */
 function Logo({ name, alt, delay, className }: { name: "school" | "council"; alt: string; delay: number; className?: string }) {
   const reduce = useReducedMotion();
@@ -31,9 +29,8 @@ function Logo({ name, alt, delay, className }: { name: "school" | "council"; alt
 export function Navbar() {
   const t = useTranslations();
   const locale = useLocale();
-  const [menu, setMenu] = useState(false);
   return (
-    // no overflow-hidden here: the language menu drops below the header; only the glow is clipped
+    // no overflow-hidden here: the language menu / phone rail drop below the header; only the glow is clipped
     <header className="relative z-30 bg-gradient-to-r from-brand-deep via-[#0a1a40] to-[#0e2a66] text-on-brand shadow-[0_6px_24px_-8px_rgb(5_13_36/0.6)]">
       <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden"><span className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-pink/20 blur-3xl" /></span>
       <nav aria-label={t("header.nav")} className="relative mx-auto flex max-w-[1320px] items-center justify-between gap-3 px-4 py-3 md:py-4">
@@ -51,36 +48,13 @@ export function Navbar() {
           </span>
         </Link>
 
-        <div className="hidden shrink-0 items-center gap-2 sm:flex">
-          <ChannelLinks variant="pill" />
+        <div className="hidden shrink-0 items-center gap-2 md:flex">
+          <ChannelLinks />
           <LocaleSwitch />
         </div>
-        {/* phones: one menu button holding the socials and the language choice */}
-        <button
-          type="button"
-          onClick={() => setMenu((m) => !m)}
-          aria-expanded={menu}
-          aria-controls="phone-menu"
-          aria-label={t(menu ? "lang.closeMenu" : "lang.openMenu")}
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/25 bg-white/10 sm:hidden"
-        >
-          <Icon name={menu ? "close" : "menu"} size={20} className="text-white" />
-        </button>
+        {/* phones (< md): menu button + vertical contact / language rail */}
+        <MobileDock />
       </nav>
-      <AnimatePresence>
-        {menu && (
-          <motion.div
-            id="phone-menu"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="absolute inset-x-0 top-full z-40 space-y-3 border-t border-white/10 bg-brand-deep/95 p-4 backdrop-blur-md sm:hidden"
-          >
-            <LocaleSwitch variant="row" />
-            <ChannelLinks className="text-on-brand" />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </header>
   );
 }

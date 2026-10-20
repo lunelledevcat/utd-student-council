@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ChannelLinks } from "@/components/ui/ChannelLinks";
 import { Link } from "@/i18n/navigation";
 
 export function Footer() {
@@ -13,7 +12,6 @@ export function Footer() {
       <div data-swap className="relative mx-auto max-w-[1320px] space-y-2 px-4 py-8 text-[0.88rem]">
         <p className="font-display text-base font-medium">{t("footer.copyright", { school: t("site.school") })}</p>
         <p className="text-on-brand/65">{t("site.address")}</p>
-        <ChannelLinks className="justify-center pt-2 text-on-brand" />
         <p className="flex flex-wrap justify-center gap-x-4 gap-y-1 pt-1 text-on-brand/70">
           <Link href="/voice" className="hover:text-pink-400">{t("footer.voice")}</Link>
           <Link href="/login" className="hover:text-pink-400">{t("footer.login")}</Link>

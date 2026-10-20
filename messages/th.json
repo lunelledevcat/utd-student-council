@@ -738,11 +738,18 @@
     "retry": "ลองใหม่"
   },
   "contact": {
-    "title": "ช่องทางติดต่อสภานักเรียน",
-    "lead": "ติดตามข่าวสารและติดต่อสภานักเรียนโรงเรียนอุตรดิตถ์",
     "facebook": "Facebook",
     "instagram": "Instagram",
     "tiktok": "TikTok",
     "opens": "(เปิดในแท็บใหม่)"
+  },
+  "dock": {
+    "label": "ช่องทางติดต่อและภาษา",
+    "language": "เปลี่ยนภาษา",
+    "email": "อีเมล",
+    "copyEmail": "คัดลอกอีเมล {email}",
+    "copied": "คัดลอกแล้ว",
+    "copyFailed": "คัดลอกไม่สำเร็จ",
+    "sendEmail": "ส่งอีเมลถึง {email}"
   }
 }
