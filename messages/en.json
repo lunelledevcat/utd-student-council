@@ -19,10 +19,6 @@
   "header": {
     "nav": "Header",
     "home": "{name} home",
-    "schoolLogo": "[Crest]",
-    "councilLogo": "[Logo]",
-    "schoolLogoLabel": "[School logo]",
-    "councilLogoLabel": "[Student council logo]",
     "language": "Language",
     "th": "TH",
     "en": "EN",

@@ -14,9 +14,10 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
       <div className="absolute right-4 top-4"><LocaleSwitch /></div>
       <div className="relative w-full max-w-md space-y-6 rounded-[24px] border border-white/15 bg-surface p-8 text-ink shadow-soft">
         <Link href="/" className="flex items-center gap-3" aria-label={t("auth.back")}>
-          <span className="no-select grid h-11 w-11 place-items-center rounded-full bg-gold font-display text-[0.65rem] font-semibold text-brand-deep" title={t("header.councilLogoLabel")}>
-            {t("header.councilLogo")}
-          </span>
+          <picture className="shrink-0">
+            <source type="image/avif" srcSet="/brand/logo-council-128.avif 1x, /brand/logo-council-256.avif 2x" />
+            <img src="/brand/logo-council-128.png" srcSet="/brand/logo-council-128.webp 1x, /brand/logo-council-256.webp 2x" alt={t("header.councilLogoAlt")} width={44} height={44} className="no-select h-11 w-11 object-contain" />
+          </picture>
           <span className="font-display text-lg font-semibold text-strong">{t("site.name")}</span>
         </Link>
         {children}

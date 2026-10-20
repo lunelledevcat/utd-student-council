@@ -19,10 +19,6 @@
   "header": {
     "nav": "ส่วนหัว",
     "home": "{name} หน้าแรก",
-    "schoolLogo": "[ตรา]",
-    "councilLogo": "[สภา]",
-    "schoolLogoLabel": "[โลโก้โรงเรียน]",
-    "councilLogoLabel": "[โลโก้สภานักเรียน]",
     "language": "เลือกภาษา",
     "th": "TH",
     "en": "EN",
