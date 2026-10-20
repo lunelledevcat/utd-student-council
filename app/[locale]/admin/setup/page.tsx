@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { activeSharedAccounts } from "@/lib/admin/users";
 import { requireRole } from "@/lib/auth";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from "@/lib/env";
 import { ENV_VARS, envStatus, type EnvStatus } from "@/lib/env-spec";
@@ -33,7 +34,7 @@ export default async function SetupPage({ params }: { params: Promise<{ locale: 
   await requireRole(["admin"]);
   const t = await getTranslations("setup");
   const rows = ENV_VARS.map((v) => ({ v, status: envStatus(v) as Status }));
-  const google = await googleStatus();
+  const [google, shared] = await Promise.all([googleStatus(), activeSharedAccounts()]);
 
   // plain render helper (not a component), keyed by the caller
   const row = ({ name, status, url, need, pub }: { name: string; status: Status; url?: string; need?: "required" | "optional"; pub?: boolean }) => (
@@ -68,6 +69,12 @@ export default async function SetupPage({ params }: { params: Promise<{ locale: 
         <p className="text-sm text-muted">{t("sub")}</p>
         <p className="mt-1 text-xs text-muted">{t("mode", { mode: process.env.NODE_ENV ?? "?" })} · {t("restart")}</p>
       </header>
+      {shared.length > 0 && (
+        <div role="note" className="rounded-[20px] border border-progress/40 bg-progress/10 p-4 text-sm">
+          <p className="font-semibold text-strong">{t("sharedTitle")}</p>
+          <p className="mt-1 text-ink">{t("sharedBody", { emails: shared.join(", ") })}</p>
+        </div>
+      )}
       <ul className="space-y-3">
         {rows.map(({ v, status }) => row({ name: v.name, status, url: v.url, need: v.need, pub: v.public }))}
         {row({ name: "GOOGLE_OAUTH", status: google, url: "https://supabase.com/dashboard/project/_/auth/providers" })}

@@ -515,7 +515,8 @@
       "yearFailed": "เพิ่มปีไม่สำเร็จ",
       "forbidden": "ไม่มีสิทธิ์ทำรายการนี้",
       "badFile": "ไฟล์นี้ไม่ใช่รูปภาพที่รองรับ (ใช้ JPG, PNG หรือ WebP)",
-      "heroWindow": "วันเริ่มต้องไม่หลังวันสิ้นสุด"
+      "heroWindow": "วันเริ่มต้องไม่หลังวันสิ้นสุด",
+      "badEmail": "อีเมลไม่ถูกต้อง"
     },
     "years": {
       "heading": "ปีการศึกษา",
@@ -692,8 +693,16 @@
         "where": "1) console.cloud.google.com → APIs & Services → Credentials → Create credentials → OAuth client ID → Web application → Authorized redirect URI: https://<project>.supabase.co/auth/v1/callback  2) supabase.com → Authentication → Sign In / Providers → Google → เปิด แล้วใส่ Client ID + Client Secret  3) Authentication → URL Configuration → Site URL = NEXT_PUBLIC_SITE_URL และเพิ่ม <SITE_URL>/auth/callback ใน Redirect URLs",
         "missingDev": "ปุ่มเข้าสู่ระบบใช้ไม่ได้",
         "missingProd": "ปุ่มเข้าสู่ระบบใช้ไม่ได้"
+      },
+      "COUNCIL_EMAILS": {
+        "purpose": "บัญชีล็อกอินหลังบ้านบทบาท \"สภานักเรียน\" (คั่นด้วยจุลภาค, ต่อท้าย :shared ถ้าเป็นบัญชีที่ใช้ร่วมกันหลายคน) ใช้ตอนรัน node scripts/seed-allowed-users.mjs เพื่อใส่ลงตาราง allowed_users ครั้งแรก หลังจากนั้นจัดการที่หน้า /admin/users",
+        "where": "รายชื่ออีเมลบัญชีสภานักเรียนจากผู้ดูแล (ห้ามใส่ในไฟล์ที่ commit) — ไม่ต้องตั้งบน Vercel",
+        "missingDev": "ไม่เพิ่มบัญชีอัตโนมัติ (เพิ่มเองที่ /admin/users ได้)",
+        "missingProd": "ไม่มีผล — แอปอ่านสิทธิ์จากตาราง allowed_users"
       }
-    }
+    },
+    "sharedTitle": "บัญชีรวม (shared account)",
+    "sharedBody": "บัญชีเหล่านี้มีหลายคนใช้ร่วมกัน: {emails} — แนะนำให้เปิดการยืนยันสองขั้นตอน (2FA) ของ Google ให้บัญชีนี้ และตรวจ audit log (มีเวลา, IP แบบแฮช และ user agent ทุกครั้งที่เข้าสู่ระบบ/แก้ไข)"
   },
   "lang": {
     "button": "เปลี่ยนภาษา (ตอนนี้: {current})",
@@ -745,11 +754,28 @@
   },
   "dock": {
     "label": "ช่องทางติดต่อและภาษา",
-    "language": "เปลี่ยนภาษา",
+    "language": "เปลี่ยนภาษา"
+  },
+  "users": {
+    "nav": "ผู้ใช้หลังบ้าน",
+    "title": "ผู้ใช้หลังบ้าน",
+    "lead": "อีเมลที่ล็อกอินหลังบ้านได้และบทบาท (ผู้ดูแลระบบกำหนดผ่าน ADMIN_EMAILS) อีเมล @utd.ac.th ที่ไม่อยู่ในรายการเข้าสู่ระบบได้แต่ยังไม่เข้าหลังบ้าน อีเมลโดเมนอื่นเข้าไม่ได้ ทุกการเปลี่ยนแปลงบันทึกใน audit log",
     "email": "อีเมล",
-    "copyEmail": "คัดลอกอีเมล {email}",
-    "copied": "คัดลอกแล้ว",
-    "copyFailed": "คัดลอกไม่สำเร็จ",
-    "sendEmail": "ส่งอีเมลถึง {email}"
+    "role": "บทบาท",
+    "roles": {
+      "council": "สภานักเรียน",
+      "teacher": "ครู"
+    },
+    "shared": "บัญชีใช้ร่วมกันหลายคน",
+    "sharedBadge": "บัญชีรวม",
+    "markShared": "ตั้งเป็นบัญชีรวม",
+    "unmarkShared": "ไม่ใช่บัญชีรวม",
+    "add": "เพิ่ม / เปิดสิทธิ์",
+    "active": "เปิดสิทธิ์อยู่",
+    "inactive": "ปิดสิทธิ์แล้ว",
+    "confirmOff": "ปิดสิทธิ์ {email}? ผู้ใช้จะออกจากหลังบ้านในคำขอถัดไป",
+    "addedBy": "เพิ่มโดย {by}",
+    "empty": "ยังไม่มีผู้ใช้",
+    "saved": "บันทึกแล้ว"
   }
 }

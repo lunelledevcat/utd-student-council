@@ -70,6 +70,11 @@ npm run build && npm start   # production (needs APP_SECRET, Supabase, Turnstile
 - **หาจากไหน:** โดเมนอีเมลโรงเรียน ค่าเริ่มต้น utd.ac.th — ใส่เฉพาะเมื่อต้องการเปลี่ยน (https://admin.google.com/)
 - **ถ้าไม่ใส่:** dev → ใช้ utd.ac.th · production → ใช้ utd.ac.th
 
+### `COUNCIL_EMAILS` — ไม่บังคับ · **ห้ามเปิดเผย**
+- **ใช้ทำอะไร:** บัญชีล็อกอินหลังบ้านบทบาท "สภานักเรียน" (คั่นด้วยจุลภาค, ต่อท้าย :shared ถ้าเป็นบัญชีที่ใช้ร่วมกันหลายคน) ใช้ตอนรัน node scripts/seed-allowed-users.mjs เพื่อใส่ลงตาราง allowed_users ครั้งแรก หลังจากนั้นจัดการที่หน้า /admin/users
+- **หาจากไหน:** รายชื่ออีเมลบัญชีสภานักเรียนจากผู้ดูแล (ห้ามใส่ในไฟล์ที่ commit) — ไม่ต้องตั้งบน Vercel (https://admin.google.com/)
+- **ถ้าไม่ใส่:** dev → ไม่เพิ่มบัญชีอัตโนมัติ (เพิ่มเองที่ /admin/users ได้) · production → ไม่มีผล — แอปอ่านสิทธิ์จากตาราง allowed_users
+
 ### `ADMIN_EMAILS` — จำเป็นตอนใช้งานจริง · **ห้ามเปิดเผย**
 - **ใช้ทำอะไร:** อีเมลผู้ดูแลระบบ (คั่นด้วย ,) — ได้สิทธิ์ admin ทันที และเป็นข้อยกเว้นเดียวที่ล็อกอินได้แม้ไม่ใช่โดเมนโรงเรียน (ต้องเป็นอีเมลที่ Google ยืนยันแล้ว)
 - **หาจากไหน:** ใส่อีเมล Google ของผู้ดูแลเอง เช่น admin1@utd.ac.th,someone@gmail.com — เอาออกจากรายการ = ถอนสิทธิ์ทันที (https://supabase.com/dashboard/project/_/auth/users)

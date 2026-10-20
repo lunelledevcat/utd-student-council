@@ -6,6 +6,7 @@ import { ENTITIES, isEntity, rowColumns, type EntityKey } from "@/lib/admin/enti
 import { parse, type Err } from "@/lib/admin/validate";
 import { checkIncoming, makeVariants, publishPhotos, removePhotoFiles, signedUpload } from "@/lib/admin/photos";
 import { applyConsent, applyIgConsent } from "@/lib/admin/consent";
+import { EMAIL_RE, updateAllowed, upsertAllowed } from "@/lib/admin/users";
 import { MEMBERS, STAFF, audit, authorize } from "@/lib/auth";
 import { limit } from "@/lib/ratelimit";
 import { logSecurity } from "@/lib/security-log";
@@ -335,4 +336,44 @@ export async function setIgConsentAll(year: number, confirmedCount: number): Pro
   after(() => audit(s, "consent:ig:all", "members", String(year), { n: ids.length }));
   revalidatePath("/[locale]", "layout");
   return { ok: true, n: ids.length };
+}
+
+// ───────────────────────── back-office users (admin) ─────────────────────────
+
+/** Adds / re-enables an address with a role. Every change goes to the audit log (with IP hash + user agent). */
+export async function addAllowedUser(_prev: FormState, fd: FormData): Promise<FormState> {
+  const s = await role(["admin"]);
+  if (!s) return denied();
+  const email = String(fd.get("email") ?? "").trim().toLowerCase();
+  const r = String(fd.get("role") ?? "");
+  const shared = fd.get("shared") === "on";
+  if (!EMAIL_RE.test(email) || email.length > 254) return { ok: false, fieldErrors: { email: { key: "badEmail" } } };
+  if (r !== "council" && r !== "teacher") return fail("badChoice");
+  try {
+    await upsertAllowed(email, r, shared, s.email);
+  } catch (err) {
+    console.error("[dashboard] allowed user", err);
+    return fail("saveFailed");
+  }
+  await audit(s, "user:allow", "allowed_users", email, { role: r, shared });
+  revalidatePath("/[locale]/admin/users", "page");
+  return { ok: true };
+}
+
+/** Switch an address on/off, or mark it as a shared account. */
+export async function setAllowedUser(email: string, patch: { active?: boolean; shared?: boolean }): Promise<Result> {
+  const e = String(email ?? "").trim().toLowerCase();
+  const clean = { ...(typeof patch?.active === "boolean" ? { active: patch.active } : {}), ...(typeof patch?.shared === "boolean" ? { shared: patch.shared } : {}) };
+  if (!EMAIL_RE.test(e) || !Object.keys(clean).length) return fail("badRequest");
+  const s = await role(["admin"]);
+  if (!s) return denied();
+  try {
+    await updateAllowed(e, clean);
+  } catch (err) {
+    console.error("[dashboard] allowed user update", err);
+    return fail("saveFailed");
+  }
+  await audit(s, "user:update", "allowed_users", e, clean);
+  revalidatePath("/[locale]/admin/users", "page");
+  return { ok: true };
 }

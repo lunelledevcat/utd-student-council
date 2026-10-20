@@ -337,3 +337,19 @@ Timing before speed work (local, 10 × 2400×1500 JPEG): upload 10 photos 56.7 s
 - Checked at 360/390/430 px: rail inside the screen, no horizontal scroll, no overlap with the sticky control bar,
   accordion, Esc / outside tap / scroll close, copy -> clipboard + "คัดลอกแล้ว", language switch; 767 px = dock,
   768 px = desktop. Lighthouse /th mobile 81 / 97 / 100 / 92, CLS 0.000.
+
+## Back-office access: allowed_users (2026-10-20, main)
+- The council's two addresses are sign-in accounts, not public contacts: removed from the phone dock / lib/contact.ts /
+  messages (0 matches in .next/static, the server output and the repo; they remain in git history of 9a47d25).
+- Migration 0011 `allowed_users` (email, role council|teacher, active, shared, created_at, created_by), RLS on, no
+  policies. Existing profile roles + pending role_invites copied in (role_invites no longer read; drop later).
+- `lib/env.ts decideAccess`: not verified / malformed -> denied · ADMIN_EMAILS -> admin · active allowed_users row ->
+  role · other @utd.ac.th -> pending (/pending-access) · else denied. Used by /auth/callback and every getSession();
+  profiles.role is kept equal to the result (RLS reads it). Unit tests: `npm run test:auth` (17 cases).
+- Seed: `COUNCIL_EMAILS` (env / .env.local, comma-separated, ":shared" marks a shared account) ->
+  `node scripts/seed-allowed-users.mjs` (insert-only: never re-enables or changes an existing row). In env-spec,
+  /admin/setup and .env.example (empty).
+- /admin/users (admin): add / re-enable with role + shared flag, switch off, mark shared — each change audited.
+  audit() now adds ip_hash + user agent to every entry (sign-in included). /admin/setup shows a "shared account" notice
+  recommending Google 2-Step Verification while an active shared account exists.
+- e2e: the council test account is granted through allowed_users (created_by "e2e", removed in teardown).

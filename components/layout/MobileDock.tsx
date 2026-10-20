@@ -7,20 +7,19 @@ import { useEffect, useRef, useState } from "react";
 import { useLocaleSwitch } from "@/components/i18n/LocaleProvider";
 import { Icon, type IconName } from "@/components/icons/Icon";
 import { routing } from "@/i18n/routing";
-import { CHANNELS, EMAIL_PARTS, joinEmail } from "@/lib/contact";
+import { CHANNELS } from "@/lib/contact";
 import { cn } from "@/lib/utils";
 
-type Key = "language" | (typeof CHANNELS)[number]["key"] | "email";
-const ORDER: Key[] = ["language", "instagram", "facebook", "tiktok", "email"];
-const ICON: Record<Key, IconName> = { language: "globe", instagram: "instagram", facebook: "facebook", tiktok: "tiktok", email: "mail" };
+type Key = "language" | (typeof CHANNELS)[number]["key"];
+const ORDER: Key[] = ["language", "instagram", "facebook", "tiktok"];
+const ICON: Record<Key, IconName> = { language: "globe", instagram: "instagram", facebook: "facebook", tiktok: "tiktok" };
 const SPRING = { type: "spring", stiffness: 520, damping: 40 } as const;
 
 /**
  * Phones (< md): the menu button opens a vertical rail of 44 px round icons under it, right-aligned:
- * language → Instagram → Facebook → TikTok → e-mail. Tapping an icon stretches it into a capsule with its text
+ * language → Instagram → Facebook → TikTok. Tapping an icon stretches it into a capsule with its text
  * (one at a time; tapping again closes it). The capsule grows with a layout (transform) animation, so only the
  * compositor works. Closes on outside tap, Esc, scroll and page change. Reduced motion: no animation.
- * E-mail addresses are joined in the browser only when the e-mail item is opened (not in the HTML).
  */
 export function MobileDock() {
   const t = useTranslations();
@@ -29,8 +28,6 @@ export function MobileDock() {
   const { locale, switchLocale, switching } = useLocaleSwitch();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<Key | null>(null);
-  const [emails, setEmails] = useState<string[]>([]);
-  const [toast, setToast] = useState<string | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const firstItem = useRef<HTMLButtonElement>(null);
@@ -62,26 +59,7 @@ export function MobileDock() {
     };
   }, [open]);
 
-  useEffect(() => {
-    if (!toast) return;
-    const id = setTimeout(() => setToast(null), 1800);
-    return () => clearTimeout(id);
-  }, [toast]);
-
-  const toggle = (k: Key) => {
-    const next = active === k ? null : k;
-    if (next === "email" && !emails.length) setEmails(EMAIL_PARTS.map(joinEmail));
-    setActive(next);
-  };
-
-  const copy = async (email: string) => {
-    try {
-      await navigator.clipboard.writeText(email);
-      setToast(t("dock.copied"));
-    } catch {
-      setToast(t("dock.copyFailed"));
-    }
-  };
+  const toggle = (k: Key) => setActive(active === k ? null : k);
 
   // light focus trap: Tab cycles between the menu button and the rail while it is open; Esc closes
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -103,7 +81,7 @@ export function MobileDock() {
     }
   };
 
-  const label = (k: Key) => (k === "language" ? t("dock.language") : k === "email" ? t("dock.email") : t(`contact.${k}`));
+  const label = (k: Key) => (k === "language" ? t("dock.language") : t(`contact.${k}`));
   const channel = (k: Key) => CHANNELS.find((c) => c.key === k);
 
   return (
@@ -203,20 +181,6 @@ export function MobileDock() {
                               {c.label}
                             </a>
                           )}
-                          {k === "email" && (
-                            <ul className="space-y-0.5">
-                              {emails.map((m) => (
-                                <li key={m} className="flex items-center gap-1">
-                                  <a href={`mailto:${m}`} aria-label={t("dock.sendEmail", { email: m })} className="min-w-0 truncate py-2 font-semibold underline-offset-4 hover:underline">
-                                    {m}
-                                  </a>
-                                  <button type="button" onClick={() => copy(m)} aria-label={t("dock.copyEmail", { email: m })} className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-white/10">
-                                    <Icon name="copy" size={16} className="text-white" />
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -228,22 +192,6 @@ export function MobileDock() {
         )}
       </AnimatePresence>
 
-      {/* copy feedback */}
-      <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center">
-        <AnimatePresence>
-          {toast && (
-            <motion.span
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              transition={reduce ? { duration: 0 } : { duration: 0.2 }}
-              className="rounded-full bg-brand-deep px-4 py-2 text-sm font-semibold text-on-brand shadow-lg"
-            >
-              {toast}
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </div>
     </div>
   );
 }

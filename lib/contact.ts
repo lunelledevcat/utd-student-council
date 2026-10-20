@@ -1,4 +1,5 @@
-// The council's official contact channels — the ONE place to change them (header links, phone dock).
+// The council's official public channels — the ONE place to change them (header links, phone dock).
+// No e-mail here: the council's addresses are back-office sign-in accounts, not public contacts.
 // Links only: nothing is fetched from Facebook / Instagram / TikTok.
 // Instagram "utd_scc" is still waiting for confirmation against "utd_stdcc" — change it here only.
 
@@ -9,12 +10,3 @@ export const CHANNELS = [
 ] as const;
 export type Channel = (typeof CHANNELS)[number];
 
-/**
- * E-mail addresses, kept as [local part, domain] so no complete address exists in the server-rendered HTML, the
- * sitemap or structured data. The phone dock joins them in the browser only when the e-mail item is opened.
- */
-export const EMAIL_PARTS: readonly (readonly [string, string])[] = [
-  ["scutd", "utd.ac.th"],
-  ["it40810", "utd.ac.th"],
-];
-export const joinEmail = ([local, domain]: readonly [string, string]) => `${local}@${domain}`;

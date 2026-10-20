@@ -18,5 +18,6 @@ export default async function globalTeardown() {
   await db.from("audit_logs").delete().eq("action", "role.change").in("target_id", ids);
   await db.from("security_events").delete().in("user_id", ids);
   await db.from("profiles").delete().in("id", ids);
+  await db.from("allowed_users").delete().eq("created_by", "e2e");
   for (const id of ids) await db.auth.admin.deleteUser(id);
 }

@@ -17,19 +17,30 @@ export function isAllowedEmail(email: string | null | undefined) {
   return e.endsWith(`@${allowedDomain()}`) && e.split("@").length === 2;
 }
 
+/** Emails are compared trimmed + lower-case everywhere. */
+export const normalizeEmail = (e: string | null | undefined) => (e ?? "").trim().toLowerCase();
+
+export type Access = "admin" | "council" | "teacher" | "pending" | "denied";
+/** A row of public.allowed_users for this address (null = not in the table). */
+export type AllowedRow = { role: string; active: boolean } | null;
+
 /**
- * Who may hold a session at all (checked on the server for every request and at the OAuth callback):
- * a Google-verified address that is either on ALLOWED_EMAIL_DOMAIN or listed in ADMIN_EMAILS. The admin list is the
- * only exception to the domain rule. Comparison is trimmed + lower-case.
+ * The one sign-in / role decision (OAuth callback and every request). Order:
+ *   1. Google did not verify the address, or it is malformed  -> denied
+ *   2. listed in ADMIN_EMAILS                                   -> admin
+ *   3. active row in allowed_users                              -> that role (council / teacher)
+ *   4. other address on ALLOWED_EMAIL_DOMAIN                    -> pending (signed in, no back office: /pending-access)
+ *   5. anything else                                            -> denied
  */
-export function canSignIn(email: string | null | undefined, googleVerified: boolean) {
-  if (!email || !googleVerified) return false;
-  const e = email.trim().toLowerCase();
-  return isAllowedEmail(e) || adminEmails().includes(e);
+export function decideAccess(email: string | null | undefined, googleVerified: boolean, allowed: AllowedRow): Access {
+  const e = normalizeEmail(email);
+  if (!googleVerified || e.split("@").length !== 2 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return "denied";
+  if (adminEmails().includes(e)) return "admin";
+  if (allowed?.active && (allowed.role === "council" || allowed.role === "teacher")) return allowed.role;
+  if (isAllowedEmail(e)) return "pending";
+  return "denied";
 }
 
-/** Role from ADMIN_EMAILS (re-evaluated every request) or the role stored in profiles; null = signed in, no access yet. */
-export function roleFor(email: string, storedRole: string | null | undefined): "admin" | "council" | "teacher" | null {
-  if (adminEmails().includes(email.trim().toLowerCase())) return "admin";
-  return storedRole === "council" || storedRole === "teacher" ? storedRole : null;
-}
+/** Comma-separated list from COUNCIL_EMAILS (seed input for allowed_users; ":shared" marks a shared account). */
+export const councilEmails = () =>
+  list(process.env.COUNCIL_EMAILS).map((x) => ({ email: x.replace(/:shared$/, ""), shared: x.endsWith(":shared") }));

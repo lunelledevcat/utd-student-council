@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { audit, getSession, googleVerified, syncProfile } from "@/lib/auth";
-import { canSignIn } from "@/lib/env";
+import { audit, googleVerified, resolveAccess, syncProfile } from "@/lib/auth";
+import { normalizeEmail } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(req: NextRequest) {
@@ -14,17 +14,18 @@ export async function GET(req: NextRequest) {
 
   const { data } = await sb.auth.getUser();
   const user = data.user;
-  const email = user?.email?.toLowerCase();
+  const email = normalizeEmail(user?.email);
 
-  // Enforced HERE on the server: Google-verified address on the school domain, or listed in ADMIN_EMAILS.
-  // Anything else is logged out at once.
-  if (!user || !email || !canSignIn(email, googleVerified(user)) || user.email_confirmed_at == null) {
+  // Enforced HERE on the server (lib/env.ts decideAccess): Google-verified address that is in ADMIN_EMAILS, an active
+  // allowed_users row, or on the school domain (no role yet -> /pending-access). Anything else is logged out at once.
+  const access = user && email && user.email_confirmed_at != null ? await resolveAccess(user.id, email, googleVerified(user)) : "denied";
+  if (!user || access === "denied") {
     await sb.auth.signOut();
     return NextResponse.redirect(`${origin}/login?error=domain`);
   }
 
   await syncProfile(user.id, email);
-  const session = await getSession();
-  if (session) await audit(session, "login");
-  return NextResponse.redirect(`${origin}${session?.role ? "/dashboard" : "/pending-access"}`);
+  // ip hash + user agent are added by audit() (shared accounts are used by several people)
+  await audit({ id: user.id, email }, "login", undefined, undefined, { access });
+  return NextResponse.redirect(`${origin}${access === "pending" ? "/pending-access" : "/dashboard"}`);
 }

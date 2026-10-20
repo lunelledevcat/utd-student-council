@@ -515,7 +515,8 @@
       "yearFailed": "Could not add the year",
       "forbidden": "You are not allowed to do this",
       "badFile": "This file is not a supported image (use JPG, PNG or WebP).",
-      "heroWindow": "The start date must not be after the end date."
+      "heroWindow": "The start date must not be after the end date.",
+      "badEmail": "Not a valid e-mail address."
     },
     "years": {
       "heading": "Academic years",
@@ -692,8 +693,16 @@
         "where": "1) console.cloud.google.com → APIs & Services → Credentials → Create credentials → OAuth client ID → Web application → Authorized redirect URI: https://<project>.supabase.co/auth/v1/callback  2) supabase.com → Authentication → Sign In / Providers → Google → enable, paste Client ID + Client Secret  3) Authentication → URL Configuration → Site URL = NEXT_PUBLIC_SITE_URL, add <SITE_URL>/auth/callback to Redirect URLs",
         "missingDev": "Sign-in button doesn't work",
         "missingProd": "Sign-in button doesn't work"
+      },
+      "COUNCIL_EMAILS": {
+        "purpose": "Back-office sign-in accounts with the \"council\" role (comma-separated; append :shared for an account several people use). Read by node scripts/seed-allowed-users.mjs to fill the allowed_users table once; afterwards manage them on /admin/users",
+        "where": "The council account addresses from the administrator (never in a committed file) — not needed on Vercel",
+        "missingDev": "no accounts are seeded (add them on /admin/users)",
+        "missingProd": "no effect — the app reads access from the allowed_users table"
       }
-    }
+    },
+    "sharedTitle": "Shared accounts",
+    "sharedBody": "Several people use these accounts: {emails} — turn on Google 2-Step Verification for them and review the audit log (time, hashed IP and user agent for every sign-in and change)."
   },
   "lang": {
     "button": "Change language (now: {current})",
@@ -745,11 +754,28 @@
   },
   "dock": {
     "label": "Contact and language",
-    "language": "Change language",
+    "language": "Change language"
+  },
+  "users": {
+    "nav": "Back-office users",
+    "title": "Back-office users",
+    "lead": "Addresses that may use the back office and their role (administrators come from ADMIN_EMAILS). Other @utd.ac.th addresses can sign in but get no back office; other domains cannot sign in. Every change is written to the audit log.",
     "email": "E-mail",
-    "copyEmail": "Copy e-mail {email}",
-    "copied": "Copied",
-    "copyFailed": "Could not copy",
-    "sendEmail": "Send an e-mail to {email}"
+    "role": "Role",
+    "roles": {
+      "council": "Student council",
+      "teacher": "Teacher"
+    },
+    "shared": "Shared by several people",
+    "sharedBadge": "Shared account",
+    "markShared": "Mark as shared",
+    "unmarkShared": "Not shared",
+    "add": "Add / enable",
+    "active": "Enabled",
+    "inactive": "Disabled",
+    "confirmOff": "Disable {email}? They lose the back office on their next request.",
+    "addedBy": "added by {by}",
+    "empty": "No users yet",
+    "saved": "Saved"
   }
 }

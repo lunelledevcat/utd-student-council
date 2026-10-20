@@ -1,7 +1,9 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
-import { canSignIn, roleFor, supabaseConfigured } from "@/lib/env";
+import { headers } from "next/headers";
+import { decideAccess, normalizeEmail, supabaseConfigured, type Access, type AllowedRow } from "@/lib/env";
+import { hashIp } from "@/lib/security";
 import { adminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,25 +11,28 @@ export type Role = "council" | "teacher" | "admin";
 export type Session = { id: string; email: string; role: Role | null };
 
 
+/** The address's row in allowed_users (service role: the table is not readable by any token). */
+async function allowedRow(email: string): Promise<AllowedRow> {
+  const { data } = await adminClient().from("allowed_users").select("role,active").eq("email", email).maybeSingle();
+  return data ? { role: data.role as string, active: !!data.active } : null;
+}
+
 /**
- * Role is NOT derived from the email domain (students have @utd.ac.th too):
- *  - admin  = address listed in ADMIN_EMAILS (re-evaluated on every request, so removing it revokes access)
- *  - others = profiles.role, set by an admin in /admin/users
+ * Sign-in rule + role for a verified Google address (lib/env.ts decideAccess: ADMIN_EMAILS -> allowed_users ->
+ * school domain = pending -> denied), re-evaluated on every request so a change takes effect at once.
+ * profiles.role is kept equal to the result, because RLS (public.is_staff / is_member) reads it: removing someone
+ * from ADMIN_EMAILS or switching off their allowed_users row also removes their rights against the REST API.
  */
-async function resolveRole(id: string, email: string): Promise<Role | null> {
+export async function resolveAccess(id: string, email: string, verified: boolean): Promise<Access> {
+  const access = decideAccess(email, verified, await allowedRow(normalizeEmail(email)));
+  const want = access === "admin" || access === "council" || access === "teacher" ? access : null;
   const db = adminClient();
   const { data } = await db.from("profiles").select("role").eq("id", id).maybeSingle();
-  const stored = data?.role ?? null;
-  const role = roleFor(email, stored);
-  // Keep the database in step with ADMIN_EMAILS: RLS (public.is_staff) reads profiles.role, so an admin must be stored
-  // as 'admin' to see/review others' rows through their own session, and someone removed from ADMIN_EMAILS must lose
-  // that at the database level too (not only in the app), or their token would keep staff rights against the REST API.
-  const want = role === "admin" ? "admin" : stored === "admin" ? null : stored;
-  if (want !== stored) {
-    const { error } = await db.from("profiles").upsert({ id, email, role: want });
+  if ((data?.role ?? null) !== want) {
+    const { error } = await db.from("profiles").upsert({ id, email: normalizeEmail(email), role: want });
     if (error) console.error("[auth] role sync failed", error.message);
   }
-  return role;
+  return access;
 }
 
 /** Google's own "email verified" claim (Supabase keeps it in user_metadata and in the identity data). */
@@ -40,9 +45,11 @@ export async function getSession(): Promise<Session | null> {
   if (!supabaseConfigured()) return null;
   const { data } = await (await createClient()).auth.getUser();
   const u = data.user;
-  const email = u?.email?.toLowerCase();
-  if (!u || !email || !canSignIn(email, googleVerified(u))) return null;
-  return { id: u.id, email, role: await resolveRole(u.id, email) };
+  const email = normalizeEmail(u?.email);
+  if (!u || !email) return null;
+  const access = await resolveAccess(u.id, email, googleVerified(u));
+  if (access === "denied") return null;
+  return { id: u.id, email, role: access === "pending" ? null : access };
 }
 
 /**
@@ -74,19 +81,24 @@ export async function assertRole(allowed: Role[]): Promise<Session & { role: Rol
 export const STAFF: Role[] = ["teacher", "admin"];
 export const MEMBERS: Role[] = ["council", "teacher", "admin"];
 
-/** Called from the OAuth callback: create/refresh the profile and apply any pre-assigned role. */
+/** Called from the OAuth callback: create/refresh the profile and stamp the login (the role comes from resolveAccess). */
 export async function syncProfile(userId: string, email: string) {
   const db = adminClient();
-  const { data: existing } = await db.from("profiles").select("role").eq("id", userId).maybeSingle();
-  let role: Role | null = existing?.role === "council" || existing?.role === "teacher" ? existing.role : null;
-  if (!role) {
-    const { data: invite } = await db.from("role_invites").select("role").eq("email", email).maybeSingle();
-    if (invite?.role === "council" || invite?.role === "teacher") {
-      role = invite.role;
-      await db.from("role_invites").delete().eq("email", email);
-    }
+  const { data } = await db.from("profiles").select("id").eq("id", userId).maybeSingle();
+  const stamp = { email: normalizeEmail(email), last_login_at: new Date().toISOString() };
+  const { error } = data ? await db.from("profiles").update(stamp).eq("id", userId) : await db.from("profiles").insert({ id: userId, role: null, ...stamp });
+  if (error) console.error("[auth] profile sync failed", error.message);
+}
+
+/** Who did it, from where: hashed IP + user agent (shared accounts like the council's address are used by several people). */
+async function requestMeta() {
+  try {
+    const h = await headers();
+    const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "";
+    return { ip_hash: ip ? hashIp(ip) : null, ua: (h.get("user-agent") ?? "").slice(0, 200) };
+  } catch {
+    return {}; // outside a request
   }
-  await db.from("profiles").upsert({ id: userId, email, role, last_login_at: new Date().toISOString() });
 }
 
 export async function audit(actor: Pick<Session, "id" | "email">, action: string, table?: string, targetId?: string, detail: Record<string, unknown> = {}) {
@@ -96,7 +108,7 @@ export async function audit(actor: Pick<Session, "id" | "email">, action: string
     action,
     target_table: table ?? null,
     target_id: targetId ?? null,
-    detail,
+    detail: { ...(await requestMeta()), ...detail },
   });
   if (error) console.error("[audit] insert failed", error.message);
 }

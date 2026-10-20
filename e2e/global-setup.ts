@@ -35,6 +35,8 @@ export default async function globalSetup() {
       : await admin.auth.admin.createUser({ email, ...meta });
     if (error || !data.user) throw new Error(`create ${email}: ${error?.message}`);
     await admin.from("profiles").upsert({ id: data.user.id, email, role });
+    // roles come from allowed_users (the admin from ADMIN_EMAILS of the test server)
+    if (role) await admin.from("allowed_users").upsert({ email, role, active: true, created_by: "e2e" });
 
     const jar = new Map<string, string>();
     const sb = createServerClient(url, anon, {

@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     options: {
       redirectTo: `${origin}/auth/callback`,
       // No `hd` hint: it would hide non-school accounts, and ADMIN_EMAILS may be outside the domain.
-      // Who may sign in is enforced server-side in /auth/callback (lib/env.ts canSignIn).
+      // Who may sign in is enforced server-side in /auth/callback (lib/env.ts decideAccess).
       queryParams: { prompt: "select_account" },
     },
   });

@@ -70,7 +70,7 @@ test("activity with photos: upload 2, approve publishes files, site shows them; 
 
   const admin = await as(browser, "admin");
   await approve(admin, "activities", title);
-  const { data: after } = await db().from("photos").select("id,status").eq("activity_id", act!.id);
+  const { data: after } = await db().from("photos").select("id,status").eq("activity_id", act!.id).order("sort_order");
   expect(after!.every((p) => p.status === "approved")).toBe(true);
   const id = after![0].id;
   for (const w of [480, 960, 1920]) expect((await fetch(publicUrl(`photos/${id}/${w}.webp`))).status).toBe(200);
@@ -92,8 +92,8 @@ test("activity with photos: upload 2, approve publishes files, site shows them; 
   await card.getByRole("button", { name: "ลบรูป" }).click();
   await expect(admin.locator(`img[src*="${id}"]`)).toHaveCount(0);
   // check the bucket itself: the CDN may keep serving a cached copy of a public object for a while
-  const { data: left } = await db().storage.from("public").list(`photos/${id}`);
-  expect(left ?? []).toHaveLength(0);
+  // the card disappears before the server confirms: wait for the bucket itself
+  await expect.poll(async () => (await db().storage.from("public").list(`photos/${id}`)).data ?? [], { timeout: 15_000 }).toHaveLength(0);
   const { count } = await db().from("photos").select("id", { count: "exact", head: true }).eq("id", id);
   expect(count).toBe(0);
 });
